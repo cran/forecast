@@ -1,0 +1,36 @@
+importFrom("stats", "simulate")
+importFrom("stats", "tsdiag")
+
+export(Arima, arima.errors, auto.arima, BoxCox, croston,
+fitted.Arima, forecast, forecast.ar, forecast.Arima,
+forecast.StructTS, accuracy, holt, hw, InvBoxCox,
+meanf, forecast.HoltWinters, logLik.ets,
+monthdays, na.interp, ets, plot.ets, plot.forecast,
+plot.splineforecast, rwf, seasadj, seasonaldummy,
+seasonaldummyf, seasonplot, ses, sindexf, splinef,
+thetaf, tsdisplay, simulate.ets, ndiffs, dm.test)
+
+S3method(fitted,Arima)
+S3method(forecast,default)
+S3method(forecast,ar)
+S3method(forecast,Arima)
+S3method(forecast,ets)
+S3method(forecast,HoltWinters)
+S3method(forecast,StructTS)
+S3method(forecast,ts)
+S3method(plot,ets)
+S3method(plot,forecast)
+S3method(plot,splineforecast)
+S3method(print,Arima)
+S3method(predict,Arima)
+S3method(print,ets)
+S3method(print,forecast)
+S3method(summary,forecast)
+S3method(summary,ets)
+S3method(summary,Arima)
+S3method(coef,ets)
+S3method(simulate,ets)
+S3method(predict,default)
+S3method(logLik,ets)
+S3method(tsdiag,ets)
+S3method(as.data.frame,forecast)
