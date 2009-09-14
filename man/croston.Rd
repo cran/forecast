@@ -26,7 +26,8 @@ has no underlying stochastic model.}
 
 \value{
 An object of class \code{"forecast"} is a list containing at least the following elements:
-\item{model}{A list containing information about the fitted model}
+\item{model}{A list containing information about the fitted model. The first element gives the SES model used for non-zero demands.
+ The second element gives the SES model used for times between non-zero demands. Both models are of class \code{forecast}.}
 \item{method}{The name of the forecasting method as a character string}
 \item{mean}{Point forecasts as a time series}
 \item{x}{The original time series (either \code{object} itself or the time series used to create the model stored as \code{object}).}

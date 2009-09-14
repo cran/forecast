@@ -231,6 +231,7 @@ croston <- function(x,h=10,alpha=0.1)
 
 croston2 <- function(x,h=10,alpha=0.1,nofits=FALSE)
 {
+    x <- as.ts(x)
     y <- x[x>0]
     tt <- diff(c(0,(1:length(x))[x>0]))
     if(length(y)==1 & length(tt)==1)
@@ -239,14 +240,27 @@ croston2 <- function(x,h=10,alpha=0.1,nofits=FALSE)
         return(rep(NA,h))
     y.f <- forecast(HoltWinters(y,beta=FALSE,gamma=FALSE,alpha=alpha),h=h)
     p.f <- forecast(HoltWinters(tt,beta=FALSE,gamma=FALSE,alpha=alpha),h=h)
+    freq <- frequency(x)
+    tsp.x <- tsp(x)
+    if (!is.null(tsp.x)) 
+    {
+        start.f <- tsp.x[2] + 1/tsp.x[3]
+        freq.x <- tsp.x[3]
+    }
+    else 
+    {
+        start.f <- length(x) + 1
+        freq.x <- 1
+    }
+    ratio <- ts(y.f$mean/p.f$mean,start=start.f, f = freq.x)
     if(nofits)
-        return(y.f$mean/p.f$mean)
+        return(ratio)
     else
     {
         n <- length(x)
         junk <- x*NA
         for(i in 1:(n-1))
             junk[i+1] <- croston2(x[1:i],h=1,alpha=alpha,nofits=TRUE)
-        return(list(mean = y.f$mean/p.f$mean, fitted = junk, model=list(demand=y.f,period=p.f)))
+        return(list(mean = ratio, fitted = junk, model=list(demand=y.f,period=p.f)))
     }
 }
