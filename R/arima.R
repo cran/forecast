@@ -42,7 +42,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         # Refit using ML if approximation used for IC
         if(approximation)
         {
-            constant <- length(bestfit$coef) > sum(bestfit$arma[1:4])
+            constant <- length(bestfit$coef) - ncol(xreg) > sum(bestfit$arma[1:4])
             newbestfit <- myarima(x,order=bestfit$arma[c(1,6,2)],
                 seasonal=bestfit$arma[c(3,7,4)],constant=constant,ic,trace=FALSE,approximation=FALSE,xreg=xreg)
             if(newbestfit$ic > 1e19)

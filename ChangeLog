@@ -1,3 +1,6 @@
+Version 2.02 (23 December 2009)
+    * Fixed bug in auto.arima() that occurred when there was an xreg but no drift, approximation=TRUE and stepwise=FALSE.
+
 Version 2.01 (14 September 2009)
     * Fixed bug in time index of croston() output.
 	* Added further explanation about models to croston() help file.

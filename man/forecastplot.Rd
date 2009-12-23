@@ -35,7 +35,7 @@ backtransforms data and forecasts using \code{\link{InvBoxCox}}.}
 \value{None.
 }
 \references{Makridakis, Wheelwright and Hyndman (1998) \emph{Forecasting:
-methods and applications}, Wiley: New York. \url{http://www.robhyndman.info/forecasting}.
+methods and applications}, Wiley: New York. \url{http://robjhyndman.com/forecasting}.
 }
 \author{Rob J Hyndman}
 \seealso{\code{\link[stats]{plot.ts}}}

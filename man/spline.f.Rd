@@ -44,7 +44,7 @@ An object of class \code{"forecast"} is a list containing at least the following
 
 \references{Hyndman, King, Pitrun and Billah (2005) Local linear forecasts using cubic smoothing
 splines. \emph{Australian and New Zealand Journal of Statistics}, \bold{47}(1), 87-99.
-\url{http://www.robhyndman.info/papers/splinefcast.htm}.}
+\url{http://robjhyndman.com/papers/splinefcast.htm}.}
 
 \seealso{\code{\link[stats]{smooth.spline}},
 \code{\link[stats]{arima}}, \code{\link{holt}}.}

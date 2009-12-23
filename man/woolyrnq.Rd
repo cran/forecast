@@ -4,7 +4,7 @@
 \description{Quarterly production of woollen yarn in Australia: tonnes. Mar 1965 -- Sep 1994.}
 \usage{woolyrnq}
 \format{Time series data}
-\source{Time Series Data Library. \url{http://www.robhyndman.info/TSDL/}}
+\source{Time Series Data Library. \url{http://robjhyndman.com/TSDL/}}
 
 \keyword{datasets}
 \examples{tsdisplay(woolyrnq)
