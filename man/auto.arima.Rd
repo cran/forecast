@@ -9,7 +9,7 @@ auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
            stationary = FALSE, ic = c("aic","aicc", "bic"), 
            stepwise=TRUE, trace=FALSE, 
            approximation=length(x)>100 | frequency(x)>12, xreg=NULL,
-           test=c("kpss","adf"))
+           test=c("kpss","adf"), allowdrift=TRUE)
 }
 
 \arguments{
@@ -38,6 +38,7 @@ auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
     times.}
 \item{xreg}{Optionally, a vector or matrix of external regressors, which must have the same number of rows as x.}
 \item{test}{Type of unit root test to use. See \code{\link{ndiffs}} for details.}
+\item{allowdrift}{If \code{TRUE}, models with drift terms are considered.}
 }
 \description{Returns best ARIMA model according to either AIC, AICc or BIC value.
 The function conducts a search over

@@ -1,3 +1,6 @@
+Version 2.03 (23 December 2009)
+    * Added an option to auto.arima() to allow drift terms to be excluded from the models considered.
+
 Version 2.02 (23 December 2009)
     * Fixed bug in auto.arima() that occurred when there was an xreg but no drift, approximation=TRUE and stepwise=FALSE.
 

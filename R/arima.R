@@ -1,6 +1,6 @@
 search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     max.P=2, max.Q=2, max.order=5, stationary=FALSE, ic=c("aic","aicc","bic"),
-    trace=FALSE,approximation=FALSE,xreg=NULL,offset=offset)
+    trace=FALSE,approximation=FALSE,xreg=NULL,offset=offset,allowdrift=TRUE)
 {
     ic <- match.arg(ic)
     m <- frequency(x)
@@ -9,6 +9,10 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     options(warn=-1)
     on.exit(options(warn=oldwarn))
 
+    if(allowdrift)
+        maxK <- (d+D <= 1)
+    else
+        maxK <- ((d+D) == 0)
 
     # Choose model orders
     best.ic <- 1e20
@@ -22,7 +26,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
                 {
                     if(i+j+I+J <= max.order)
                     {
-                        for(K in 0:(d+D <= 1))
+                        for(K in 0:maxK)
                         {
                             fit <- myarima(x,order=c(i,d,j),seasonal=c(I,D,J),constant=(K==1),trace=trace,ic=ic,approximation=approximation,offset=offset,xreg=xreg)
                             if(fit$ic < best.ic)

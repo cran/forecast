@@ -3,7 +3,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     start.p=2, start.q=2, start.P=1, start.Q=1,
     stationary=FALSE, ic=c("aic","aicc","bic"),
     stepwise=TRUE, trace=FALSE,
-    approximation=length(x)>100 | frequency(x)>12,xreg=NULL,test=c("kpss","adf"))
+    approximation=length(x)>100 | frequency(x)>12,xreg=NULL,test=c("kpss","adf"),allowdrift=TRUE)
 {
     ic <- match.arg(ic)
     test <- match.arg(test)
@@ -65,7 +65,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 
     if(!stepwise)
     {
-        bestfit <- search.arima(x,d,D,max.p,max.q,max.P,max.Q,max.order,stationary,ic,trace,approximation,xreg=xreg,offset=offset)
+        bestfit <- search.arima(x,d,D,max.p,max.q,max.P,max.Q,max.order,stationary,ic,trace,approximation,xreg=xreg,offset=offset,allowdrift=allowdrift)
         bestfit$call <- match.call()
         return(bestfit)
     }
@@ -75,7 +75,11 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     q <- start.q <- min(start.q,max.q)
     P <- start.P <- min(start.P,max.P)
     Q <- start.Q <- min(start.Q,max.Q)
-    constant <- (d+D <= 1)
+    if(allowdrift)
+        constant <- (d+D <= 1)
+    else 
+        constant <- ((d+D) == 0)
+        
     results <- matrix(NA,nrow=100,ncol=8)
    
     oldwarn <- options()$warn
@@ -275,15 +279,18 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
                 p <- (p+1)
             }
         }
-        if(newmodel(p,d,q,P,D,Q,!constant,results[1:k,]))
+        if(allowdrift | (d+D)==0)
         {
-            k <- k + 1
-            fit <- myarima(x,order=c(p,d,q),seasonal=c(P,D,Q),constant=!constant,ic,trace,approximation,offset=offset,xreg=xreg)
-            results[k,] <- c(p,d,q,P,D,Q,!constant,fit$ic)
-            if(fit$ic < bestfit$ic)
+            if(newmodel(p,d,q,P,D,Q,!constant,results[1:k,]))
             {
-                bestfit <- fit
-                constant <- !constant
+                k <- k + 1
+                fit <- myarima(x,order=c(p,d,q),seasonal=c(P,D,Q),constant=!constant,ic,trace,approximation,offset=offset,xreg=xreg)
+                results[k,] <- c(p,d,q,P,D,Q,!constant,fit$ic)
+                if(fit$ic < bestfit$ic)
+                {
+                    bestfit <- fit
+                    constant <- !constant
+                }
             }
         }
     }
