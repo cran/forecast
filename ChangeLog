@@ -1,3 +1,6 @@
+Version 2.04 (16 April 2010)
+    * Fixed bug in auto.arima() that occurred rarely.
+
 Version 2.03 (23 December 2009)
     * Added an option to auto.arima() to allow drift terms to be excluded from the models considered.
 

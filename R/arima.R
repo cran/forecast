@@ -33,6 +33,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
                             {
                                 best.ic <- fit$ic
                                 bestfit <- fit
+                                constant <- (K==1)
                             }
                         }
                     }
@@ -46,7 +47,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         # Refit using ML if approximation used for IC
         if(approximation)
         {
-            constant <- length(bestfit$coef) - ncol(xreg) > sum(bestfit$arma[1:4])
+            #constant <- length(bestfit$coef) - ncol(xreg) > sum(bestfit$arma[1:4])
             newbestfit <- myarima(x,order=bestfit$arma[c(1,6,2)],
                 seasonal=bestfit$arma[c(3,7,4)],constant=constant,ic,trace=FALSE,approximation=FALSE,xreg=xreg)
             if(newbestfit$ic > 1e19)
@@ -479,7 +480,7 @@ predict.Arima <- function(object, n.ahead = 1, newxreg = NULL, se.fit = TRUE, ..
     else NULL
     ncxreg <- myNCOL(xreg)
     if (myNCOL(newxreg) != ncxreg) 
-        stop("'xreg' and 'newxreg' have different numbers of columns")
+        stop("'xreg' and 'newxreg' have different numbers of columns: ", ncxreg, " != ", myNCOL(newxreg))
     class(xreg) <- NULL
     xtsp <- tsp(rsd)
     n <- length(rsd)
