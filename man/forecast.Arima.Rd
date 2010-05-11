@@ -1,26 +1,34 @@
 \name{forecast.Arima}
 \alias{forecast.Arima}
 \alias{forecast.ar}
-\title{Forecasting using ARIMA models}
+\alias{forecast.fracdiff}
+\title{Forecasting using ARIMA or ARFIMA models}
 \usage{\method{forecast}{Arima}(object, h=ifelse(object$arma[5]>1,2*object$arma[5],10),
     level=c(80,95), fan=FALSE, xreg=NULL,...)
 \method{forecast}{ar}(object, h=10, level=c(80,95), fan=FALSE, ...)
+\method{forecast}{fracdiff}(object, h=10, level=c(80,95), fan=FALSE, ...)
 }
 
 \arguments{
-\item{object}{An object of class "\code{Arima}" or "\code{ar}". Usually the result of a call to \code{\link[stats]{arima}} or \code{\link[stats]{ar}}.}
-\item{h}{Number of periods for forecasting. If \code{xreg} is used, h is ignored and the number of forecast periods is set to the number of rows of xreg.}
+\item{object}{An object of class "\code{Arima}", "\code{ar}" or "\code{fracdiff}". Usually the result of a call to 
+\code{\link[stats]{arima}}, \code{\link{auto.arima}}, \code{\link[stats]{ar}}, \code{\link{arfima}} or \code{\link[fracdiff]{fracdiff}}.}
+\item{h}{Number of periods for forecasting. If \code{xreg} is used, \code{h} is ignored and the number of forecast periods is 
+set to the number of rows of \code{xreg}.}
 \item{level}{Confidence level for prediction intervals.}
-\item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
+\item{fan}{If \code{TRUE}, level is set to \code{seq(50,99,by=1)}. This is suitable for fan plots.}
 \item{xreg}{Future values of an regression variables (for class \code{Arima} objects only).}
 \item{...}{Other arguments.}
 }
 
 \description{Returns forecasts and other information for univariate ARIMA models.}
 
-\details{This function calls \code{predict.arima} or \code{predict.ar} and constructs an object of class "\code{forecast}" from the results.
+\details{For \code{Arima} or \code{ar} objects, the function calls \code{\link[stats]{predict.Arima}} or \code{\link[stats]{predict.ar}} and 
+constructs an object of class "\code{forecast}" from the results. For \code{fracdiff} objects, the calculations are all done
+within \code{\link{forecast.fracdiff}} using the equations given by Peiris and Perera (1988).
 }
 
+\references{Peiris, M. & Perera, B. (1988), On prediction with fractionally differenced ARIMA models, \emph{Journal of Time Series Analysis},
+\bold{9}(3), 215-220.}
 
 \value{An object of class "\code{forecast}".
 
@@ -42,11 +50,16 @@ An object of class "\code{forecast}" is a list containing at least the following
 \item{fitted}{Fitted values (one-step forecasts)}
 }
 
-\seealso{\code{\link[stats]{predict.arima}}, \code{\link[stats]{ar}}, \code{\link[stats]{arima}}, \code{\link{rwf}}.}
+\seealso{\code{\link[stats]{predict.Arima}}, \code{\link[stats]{predict.ar}}, \code{\link{auto.arima}}, \code{\link{Arima}}, 
+\code{\link[stats]{arima}}, \code{\link[stats]{ar}}, \code{\link{arfima}}.}
 
 \author{Rob J Hyndman}
 
 \examples{fit <- Arima(WWWusage,c(3,1,0))
 plot(forecast(fit))
+
+x <- fracdiff.sim( 100, ma = -.4, d = .3)$series
+fit <- arfima(x)
+plot(forecast(fit,h=30))
 }
 \keyword{ts}

@@ -1,8 +1,8 @@
 importFrom("stats", "simulate")
 importFrom("stats", "tsdiag")
 
-export(Arima, arima.errors, auto.arima, BoxCox, croston,
-fitted.Arima, forecast, forecast.ar, forecast.Arima,
+export(arfima, Arima, arima.errors, auto.arima, BoxCox, croston,
+fitted.Arima, forecast, forecast.ar, forecast.Arima, forecast.fracdiff,
 forecast.StructTS, accuracy, holt, hw, InvBoxCox,
 meanf, forecast.HoltWinters, logLik.ets,
 monthdays, na.interp, ets, plot.ets, plot.forecast,
@@ -14,6 +14,7 @@ S3method(fitted,Arima)
 S3method(forecast,default)
 S3method(forecast,ar)
 S3method(forecast,Arima)
+S3method(forecast,fracdiff)
 S3method(forecast,ets)
 S3method(forecast,HoltWinters)
 S3method(forecast,StructTS)
@@ -34,3 +35,5 @@ S3method(predict,default)
 S3method(logLik,ets)
 S3method(tsdiag,ets)
 S3method(as.data.frame,forecast)
+S3method(fitted,fracdiff)
+S3method(residuals,fracdiff)

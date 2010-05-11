@@ -1,3 +1,7 @@
+Version 2.05 (11 May 2010)
+    * Added arfima() and a forecast method to handle ARFIMA models from arfima() and fracdiff().
+	* Added residuals and fitted methods for fracdiff objects.
+	
 Version 2.04 (16 April 2010)
     * Fixed bug in auto.arima() that occurred rarely.
 
