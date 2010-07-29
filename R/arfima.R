@@ -1,7 +1,9 @@
 ## Automatic ARFIMA modelling
 ## Will return Arima object if d < 0.01 to prevent estimation problems
-arfima <- function(x, drange = c(0, 0.5), ...)
+arfima <- function(x, drange = c(0, 0.5), estim = c("ls","mle"),...)
 {
+    estim <- match.arg(estim)
+    
     require(fracdiff)
     
     # Remove mean
@@ -22,6 +24,20 @@ arfima <- function(x, drange = c(0, 0.5), ...)
     warn <- options(warn=-1)$warn
     fit <- fracdiff(x, nar=fit$arma[1], nma=fit$arma[2])
     options(warn=warn)
+    
+    # Refine parameters with MLE
+    if(estim=="mle")
+    {
+        y <- diffseries(x, d=fit$d)
+        p <- length(fit$ar)
+        q <- length(fit$ma)
+        fit2 <- Arima(y,order=c(p,0,q),include.mean=FALSE)
+        if(p>0)
+            fit$ar <- fit2$coef[1:p]
+        if(q>0)
+            fit$ma <- fit2$coef[p+(1:q)]
+        fit$residuals <- fit2$residuals
+    }
     
     # Add things to model that will be needed by forecast.fracdiff
     fit$x <- x + meanx

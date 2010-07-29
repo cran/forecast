@@ -1,17 +1,24 @@
 \name{simulate.ets}
 \alias{simulate.ets}
-\title{Simulation from an ETS model}
+\alias{simulate.ar}
+\alias{simulate.Arima}
+\alias{simulate.fracdiff}
+\title{Simulation from a time series model}
 \usage{
-\method{simulate}{ets}(object, nsim=length(object$x), seed=NULL, initstate=object$state[1,], bootstrap=TRUE, ...)
+\method{simulate}{ets}(object, nsim=length(object$x), seed=NULL, future=TRUE, bootstrap=FALSE, ...)
+\method{simulate}{ar}(object, nsim=object$n.used, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
+\method{simulate}{Arima}(object, nsim=length(object$x), seed=NULL, xreg=NULL, future=TRUE, bootstrap=FALSE, ...)
+\method{simulate}{fracdiff}(object, nsim=object$n, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
 }
 
 \arguments{
-\item{object}{An object of class "\code{ets}". Usually the result of a call to \code{\link{ets}}.}
+\item{object}{An object of class "\code{ets}", "\code{Arima}" or "\code{ar}".}
 \item{nsim}{Number of periods for the simulated series}
 \item{seed}{Either NULL or an integer that will be used in a call to \code{\link{set.seed}} before simulating the time seriers.
     The default, NULL will not change the random generator state.}
-\item{initstate}{State at time 0.}
+\item{future}{Produce sample paths that are future to and conditional on the data in \code{object}.}
 \item{bootstrap}{If TRUE, simulation uses resampled errors rather than normally distributed errors.}
+\item{xreg}{New values of xreg to be used for forecasting. Must have nsim rows.}
 \item{...}{Other arguments.}
 }
 
@@ -19,11 +26,12 @@
 
 \value{An object of class "\code{ts}".}
 
-\seealso{\code{\link{ets}}}
+\seealso{\code{\link{ets}}, \code{\link{Arima}}, \code{\link{auto.arima}}, \code{\link{ar}}, \code{\link{arfima}}.}
 
 \author{Rob J Hyndman}
 
 \examples{fit <- ets(USAccDeaths)
-plot(simulate(fit, 100))
+plot(USAccDeaths,xlim=c(1973,1982))
+lines(simulate(fit, 36),col="red")
 }
 \keyword{ts}

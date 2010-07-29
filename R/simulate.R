@@ -1,4 +1,4 @@
-simulate.ets <- function(object, nsim=length(object$x), seed=NULL, initstate=object$state[1,], bootstrap=TRUE,...)
+simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, bootstrap=FALSE,...)
 {
     if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) 
         runif(1)
@@ -10,7 +10,14 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, initstate=obj
         RNGstate <- structure(seed, kind = as.list(RNGkind()))
         on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
-
+	if(is.null(tsp(object$x)))
+		object$x <- ts(object$x,f=1,s=1)
+	
+	if(future) 
+		initstate <- object$state[1,]
+	else # choose a random starting point
+		initstate <- object$state[sample(1:length(object$x),1),]
+	
     if(bootstrap)
         e <- sample(object$residuals,nsim,replace=TRUE)
     else
@@ -30,29 +37,216 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, initstate=obj
             as.integer(nsim),
             as.double(numeric(nsim)),
             as.double(e),
-        PACKAGE="forecast")[[11]],f=object$m,s=1)
+        PACKAGE="forecast")[[11]],f=object$m,s=tsp(object$x)[2]+1/tsp(object$x)[3])
     if(is.na(tmp[1]))
         stop("Problem with multiplicative damped trend")
     tmp
 }
 
-#
-#simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, ...)
-#{
-#    if (!exists(".Random.seed", envir = .GlobalEnv))
-#        runif(1)
-#    if (is.null(seed))
-#        RNGstate <- .Random.seed
-#    else
-#    {
-#        R.seed <- .Random.seed
-#        set.seed(seed)
-#        RNGstate <- structure(seed, kind = as.list(RNGkind()))
-#        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
-#    }
-#    model <- list(ar=object$model$phi,ma=object$model$theta,sd=sqrt(object$sigma2))
-#    tmp <- arima.sim(model,nsim,...)
-#
-##    attr(tmp, "seed") <- RNGstate
-#    tmp
-#}
+
+# Simulate ARIMA model starting with observed data x
+
+myarima.sim <- function (model, n, x, e, ...) 
+{
+    data <- x
+	if(is.null(tsp(data)))
+		data <- ts(data,f=1,s=1)
+    if (!is.list(model)) 
+        stop("'model' must be list")
+    p <- length(model$ar)
+    if (p) 
+    {
+        minroots <- min(Mod(polyroot(c(1, -model$ar))))
+        if (minroots <= 1) 
+            stop("'ar' part of model is not stationary")
+    }
+    q <- length(model$ma)
+    n.start <- length(x)
+    d <- 0
+    if (!is.null(ord <- model$order)) 
+    {
+        if (length(ord) != 3) 
+            stop("'model$order' must be of length 3")
+        if (p != ord[1]) 
+            stop("inconsistent specification of 'ar' order")
+        if (q != ord[3]) 
+            stop("inconsistent specification of 'ma' order")
+        d <- ord[2]
+        if (d != round(d) || d < 0) 
+            stop("number of differences must be a positive integer")
+    }
+    start.innov <- residuals(model)
+    innov <- e
+    x <- ts(c(start.innov, innov), start = 1 - n.start)
+    if (length(model$ma)) 
+        x <- filter(x, c(1, model$ma), sides = 1)
+    if (length(model$ar)) 
+        x <- filter(x, model$ar, method = "recursive")
+    if (n.start > 0) 
+        x <- x[-(1:n.start)]
+    if (d > 0)
+	{
+        x <- diffinv(x, differences = d)
+		nx <- length(data)
+		if(d==1)
+			x <- x[-1] + data[nx]
+		else if(d==2)
+			x <- x[-(1:2)] + 2*data[nx]-data[nx-1]
+		else
+			stop("Simulation for d>2 not implemented")
+	}
+    x <- ts(x,f=frequency(data),s=tsp(data)[2]+1/tsp(data)[3])
+    return(x)    
+}
+
+
+
+# Trial version of simulate.Arima
+# Doesn't work with seasonal ARIMA.
+simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, future=TRUE, bootstrap=FALSE, ...)
+{
+	if(sum(object$arma[c(3,4,7)])>0)
+		stop("Seasonal ARIMA simulation is not yet implemented")
+	if (!exists(".Random.seed", envir = .GlobalEnv))
+        runif(1)
+    if (is.null(seed))
+        RNGstate <- .Random.seed
+    else
+    {
+        R.seed <- .Random.seed
+        set.seed(seed)
+        RNGstate <- structure(seed, kind = as.list(RNGkind()))
+        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
+    }
+    order <- object$arma[c(1, 6, 2)]
+    if(order[1]>0)
+        ar <- object$model$phi[1:order[1]]
+    else
+        ar <- NULL
+    if(order[3]>0)
+        ma <- object$model$theta[1:order[3]]
+    else
+        ma <- NULL
+    if(object$arma[2] != length(ma))
+        stop("MA length wrong")
+	else if(object$arma[1] != length(ar))
+		stop("AR length wrong")
+    model <- list(order=object$arma[c(1, 6, 2)],ar=ar,ma=ma,sd=sqrt(object$sigma2),residuals=residuals(object))
+    if (is.element("x", names(object))) 
+        x <- object$x
+    else 
+        x <- object$x <- eval.parent(parse(text = object$series))
+	if(is.null(tsp(x)))
+		x <- ts(x,f=1,s=1)
+
+    n <- length(x)
+	if(bootstrap)
+		e <- sample(model$residuals,nsim,replace=TRUE)
+	else
+		e <- rnorm(nsim, 0, model$sd)
+		
+	use.drift <- is.element("drift", names(object$coef))
+    usexreg <- (!is.null(xreg) | use.drift)
+    if (!is.null(xreg)) 
+	{
+        xreg <- as.matrix(xreg)
+        if(nrow(xreg) < nsim)
+			stop("Not enough rows in xreg")
+		else
+			xreg <- xreg[1:nsim,]
+    }
+    if (use.drift) 
+	{
+		dft <- as.matrix(1:nsim)
+		if(model$order[2]==0)
+			dft <- dft+n
+        xreg <- cbind(xreg, dft)
+    }
+	narma <- sum(object$arma[1L:4L])
+	if(length(object$coef) > narma)
+	{
+		if (names(object$coef)[narma + 1L] == "intercept") 
+			xreg <- cbind(intercept = rep(1, nsim), xreg)
+		if(!is.null(xreg))
+		{
+			xm <- if (narma == 0) 
+					drop(as.matrix(xreg) %*% object$coef)
+				else 
+					drop(as.matrix(xreg) %*% object$coef[-(1L:narma)])
+		}
+	}
+	else 
+		xm <- 0
+		
+	if(future)
+		sim <- myarima.sim(model,nsim,x,e) + xm
+	else
+		sim <- arima.sim(model,nsim,innov=e) + xm
+	return(sim)
+}
+
+# Trial version of simulate.ar
+simulate.ar <- function(object, nsim=object$n.used, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
+{
+    if (!exists(".Random.seed", envir = .GlobalEnv))
+        runif(1)
+    if (is.null(seed))
+        RNGstate <- .Random.seed
+    else
+    {
+        R.seed <- .Random.seed
+        set.seed(seed)
+        RNGstate <- structure(seed, kind = as.list(RNGkind()))
+        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
+    }
+    model <- list(ar=object$ar,sd=sqrt(object$var.pred),residuals=object$resid)
+    x.mean <- object$x.mean
+    if (!is.element("x", names(object))) 
+        object$x <- eval.parent(parse(text = object$series))
+	if(is.null(tsp(object$x)))
+		object$x <- ts(object$x,f=1,s=1)
+    object$x <- eval.parent(parse(text = object$series)) - x.mean
+	if(bootstrap)
+		e <- sample(model$residuals,nsim,replace=TRUE)
+	else
+		e <- rnorm(nsim, 0, model$sd)
+	if(future)
+		return(myarima.sim(model,nsim,x=object$x,e=e) + x.mean)
+	else
+		return(arima.sim(model,nsim,innov=e) + x.mean)
+}
+
+simulate.fracdiff <- function(object, nsim=object$n, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
+{
+	if (is.element("x", names(object))) 
+        x <- object$x
+    else 
+		x <- object$x <- eval.parent(parse(text = as.character(object$call)[2]))
+	if(is.null(tsp(x)))
+		x <- ts(x,f=1,s=1)
+    n <- length(x)
+    meanx <- mean(x)
+    x <- x - meanx
+    y <- diffseries(x, d = object$d)
+    fit <- arima(y, order = c(length(object$ar), 0, length(object$ma)), 
+        include.mean = FALSE, fixed = c(object$ar, -object$ma))
+	# Simulate ARMA
+	ysim <- simulate(fit,nsim,seed,future=future,bootstrap=bootstrap)
+	# Undo differencing
+	bin.c <- (-1)^(0:(n + nsim)) * choose(object$d, (0:(n + nsim)))
+    b <- numeric(n)
+    xsim <- LHS <- numeric(nsim)
+    RHS <- cumsum(ysim)
+    bs <- cumsum(bin.c[1:nsim])
+    b <- bin.c[(1:n) + 1]
+    xsim[1] <- RHS[1] <- ysim[1] - sum(b * rev(x))
+    for (k in 2:nsim) 
+	{
+        b <- b + bin.c[(1:n) + k]
+        RHS[k] <- RHS[k] - sum(b * rev(x))
+        LHS[k] <- sum(rev(xsim[1:(k - 1)]) * bs[2:k])
+        xsim[k] <- RHS[k] - LHS[k]
+    }
+	tspx <- tsp(x)
+	return(ts(xsim,f=tspx[3],s=tspx[2]+1/tspx[3]))
+}

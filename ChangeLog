@@ -1,3 +1,7 @@
+Version 2.06 (29 July 2010)
+    * Added MLE option for arfima().
+	* Added simulate.Arima(), simulate.ar() and simulate.fracdiff()
+
 Version 2.05 (11 May 2010)
     * Added arfima() and a forecast method to handle ARFIMA models from arfima() and fracdiff().
 	* Added residuals and fitted methods for fracdiff objects.
