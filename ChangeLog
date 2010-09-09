@@ -1,28 +1,40 @@
+Version 2.07 (9 September 2010)
+    * Fixed bug in simulate.Arima(). Previous sample paths when d=2 and future=TRUE were incorrect.
+	* Changed way color is implemented in plot.forecast() to avoid colour changes when the graphics window is refreshed.
+
 Version 2.06 (29 July 2010)
+
     * Added MLE option for arfima().
 	* Added simulate.Arima(), simulate.ar() and simulate.fracdiff()
 
 Version 2.05 (11 May 2010)
+
     * Added arfima() and a forecast method to handle ARFIMA models from arfima() and fracdiff().
 	* Added residuals and fitted methods for fracdiff objects.
 	
 Version 2.04 (16 April 2010)
+
     * Fixed bug in auto.arima() that occurred rarely.
 
 Version 2.03 (23 December 2009)
+
     * Added an option to auto.arima() to allow drift terms to be excluded from the models considered.
 
 Version 2.02 (23 December 2009)
+
     * Fixed bug in auto.arima() that occurred when there was an xreg but no drift, approximation=TRUE and stepwise=FALSE.
 
 Version 2.01 (14 September 2009)
+
     * Fixed bug in time index of croston() output.
 	* Added further explanation about models to croston() help file.
 
 Version 2.00 (7 September 2009)
+
     * Package removed from forecasting bundle
 
 Version 1.26 (29 August 2009)
+
     * Added as.data.frame.forecast(). This allows write.table() to work for forecast objects.
 
 Version 1.25 (22 July 2009)

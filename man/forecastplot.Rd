@@ -4,9 +4,7 @@
 \title{Forecast plot}
 
 \usage{
-\method{plot}{forecast}(x, include, plot.conf = TRUE, shaded = TRUE, shadecols
-                 = switch(1 + (length(x$level) > 1), 7, length(x$level):1),
-                shadepalette=heat.colors(length(x$level)+2)[-1], lambda = NULL,
+\method{plot}{forecast}(x, include, plot.conf = TRUE, shaded = TRUE, shadecols=NULL, lambda = NULL,
                  col = 1, fcol = 4, pi.col=1, pi.lty=2, ylim = NULL, main = NULL, 
                  ylab = "", xlab = "", ...)
 \method{plot}{splineforecast}(x,fitcol=2,...)
@@ -17,9 +15,7 @@
 \item{plot.conf}{Logical flag indicating whether to plot prediction intervals.}
 \item{shaded}{Logical flag indicating whether prediction intervals should be shaded (TRUE) or lines (FALSE)}
 \item{shadecols}{Colors for shaded prediction intervals}
-\item{shadepalette}{Palette for shaded prediction intervals}
-\item{lambda}{Box-Cox parameter. If present, function
-backtransforms data and forecasts using \code{\link{InvBoxCox}}.}
+\item{lambda}{Box-Cox parameter. If present, function backtransforms data and forecasts using \code{\link{InvBoxCox}}.}
 \item{col}{the colour for the data line.}
 \item{fcol}{the colour for the forecast line.}
 \item{pi.col}{If \code{shade=FALSE} and \code{plot.conf=TRUE}, the prediction intervals are plotted in this colour.}

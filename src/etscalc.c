@@ -5,7 +5,7 @@
 #define MULT 2
 #define DAMPED 1
 #define TOL 1.0e-10
-#define HUGE 1.0e10
+#define HUGEN 1.0e9
 #define NA  -99999.0
 
 // Functions called by R
@@ -174,6 +174,7 @@ void etsforecast(double *x, int *m, int *trend, int *season, double *phi, int *h
 
     // Copy initial state components
     l = x[0];
+	b = 0.0;
     if(*trend > NONE)
         b = x[1];
     if(*season > NONE)
@@ -233,7 +234,10 @@ void update(double *oldl, double *l, double *oldb, double *b, double *olds, doub
 
     // NEW LEVEL
     if(trend==NONE)
+	{
         q = *oldl;                 // l(t-1)
+		phib = 0;
+	}
     else if(trend==ADD)
     {
         phib = phi*(*oldb);
@@ -256,7 +260,7 @@ void update(double *oldl, double *l, double *oldb, double *b, double *olds, doub
     else
     {
         if(fabs(olds[m-1]) < TOL)
-            p = HUGE;
+            p = HUGEN;
         else
             p = y / olds[m-1];     // y[t]/s[t-m]
     }
@@ -270,7 +274,7 @@ void update(double *oldl, double *l, double *oldb, double *b, double *olds, doub
         else //if(trend==MULT)
         {
             if(fabs(*oldl) < TOL)
-                r = HUGE;
+                r = HUGEN;
             else
                 r = (*l)/(*oldl);    // l[t]/l[t-1]
         }
@@ -286,7 +290,7 @@ void update(double *oldl, double *l, double *oldb, double *b, double *olds, doub
         else //if(season==MULT)
         {
             if(fabs(q) < TOL)
-                t = HUGE;
+                t = HUGEN;
             else
                 t = y / q;
         }

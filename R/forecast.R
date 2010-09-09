@@ -124,9 +124,7 @@ summary.forecast <- function(object,...)
 }
 
 plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE,
-        shadecols=switch(1+(length(x$level)>1),7,length(x$level):1),
-        shadepalette=heat.colors(length(x$level)+2)[-1],
-        lambda=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
+        shadecols=NULL,lambda=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
 {
     if(is.element("x",names(x))) # Assume stored as x
         data=as.ts(x$x)
@@ -188,25 +186,20 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE,
     {
         idx <- rev(order(x$level))
         nint <- length(x$level)
-        if(shaded)
-        {
-            ns <- length(shadepalette)
-            if(nint>1)
-                palette(shadepalette)
-        }
         for(i in 1:nint)
         {
             if(shaded)
-                polygon(c(xxx, rev(xxx)), c(lower[,idx[i]], rev(upper[,idx[i]])),
-                            col = shadecols[i], border=FALSE)
+			{
+				if(is.null(shadecols))
+					shadecols <- heat.colors(length(x$level)+2)[switch(1+(length(x$level)>1),2,length(x$level):1)+1]
+                polygon(c(xxx, rev(xxx)), c(lower[,idx[i]], rev(upper[,idx[i]])), col = shadecols[i], border=FALSE)
+			}
             else
             {
                 lines(xxx,lower[,idx[i]],col=pi.col,lty=pi.lty)
                 lines(xxx,upper[,idx[i]],col=pi.col,lty=pi.lty)
             }
         }
-        if(shaded)
-            palette("default")
     }
     lines(ts(pred.mean, start = tsp(xx)[2]+1/freq, f = freq), lty = 1,col=fcol)
     if(plot.conf)

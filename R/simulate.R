@@ -49,6 +49,7 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
 myarima.sim <- function (model, n, x, e, ...) 
 {
     data <- x
+	model$x <- x
 	if(is.null(tsp(data)))
 		data <- ts(data,f=1,s=1)
     if (!is.list(model)) 
@@ -85,24 +86,11 @@ myarima.sim <- function (model, n, x, e, ...)
     if (n.start > 0) 
         x <- x[-(1:n.start)]
     if (d > 0)
-	{
-        x <- diffinv(x, differences = d)
-		nx <- length(data)
-		if(d==1)
-			x <- x[-1] + data[nx]
-		else if(d==2)
-			x <- x[-(1:2)] + 2*data[nx]-data[nx-1]
-		else
-			stop("Simulation for d>2 not implemented")
-	}
-    x <- ts(x,f=frequency(data),s=tsp(data)[2]+1/tsp(data)[3])
+        x <- diffinv(x, differences = d,xi=data[length(data)-(d:1)+1])[-(1:2)]
+    x <- ts(x[1:n],f=frequency(data),s=tsp(data)[2]+1/tsp(data)[3])
     return(x)    
 }
 
-
-
-# Trial version of simulate.Arima
-# Doesn't work with seasonal ARIMA.
 simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, future=TRUE, bootstrap=FALSE, ...)
 {
 	if(sum(object$arma[c(3,4,7)])>0)
@@ -140,10 +128,11 @@ simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, 
 		x <- ts(x,f=1,s=1)
 
     n <- length(x)
+	d <- order[2]
 	if(bootstrap)
-		e <- sample(model$residuals,nsim,replace=TRUE)
+		e <- sample(model$residuals,nsim+d,replace=TRUE)
 	else
-		e <- rnorm(nsim, 0, model$sd)
+		e <- rnorm(nsim+d, 0, model$sd)
 		
 	use.drift <- is.element("drift", names(object$coef))
     usexreg <- (!is.null(xreg) | use.drift)
@@ -157,35 +146,39 @@ simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, 
     }
     if (use.drift) 
 	{
-		dft <- as.matrix(1:nsim)
-		if(model$order[2]==0)
-			dft <- dft+n
+		dft <- as.matrix(1:nsim) + n
         xreg <- cbind(xreg, dft)
     }
 	narma <- sum(object$arma[1L:4L])
 	if(length(object$coef) > narma)
 	{
 		if (names(object$coef)[narma + 1L] == "intercept") 
+		{
 			xreg <- cbind(intercept = rep(1, nsim), xreg)
+			object$xreg <- cbind(intercept = rep(1, n), object$xreg)
+		}
 		if(!is.null(xreg))
 		{
 			xm <- if (narma == 0) 
 					drop(as.matrix(xreg) %*% object$coef)
 				else 
 					drop(as.matrix(xreg) %*% object$coef[-(1L:narma)])
+			oldxm <- if(narma == 0)
+						drop(as.matrix(object$xreg) %*% object$coef)
+					else 
+						drop(as.matrix(object$xreg) %*% object$coef[-(1L:narma)])
 		}
 	}
 	else 
-		xm <- 0
+		xm <- oldxm <- 0
 		
 	if(future)
-		sim <- myarima.sim(model,nsim,x,e) + xm
+		sim <- myarima.sim(model,nsim,x-oldxm,e=e) + xm
 	else
 		sim <- arima.sim(model,nsim,innov=e) + xm
 	return(sim)
 }
 
-# Trial version of simulate.ar
 simulate.ar <- function(object, nsim=object$n.used, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
 {
     if (!exists(".Random.seed", envir = .GlobalEnv))
