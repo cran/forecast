@@ -9,7 +9,7 @@ auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
            stationary = FALSE, ic = c("aic","aicc", "bic"), 
            stepwise=TRUE, trace=FALSE, 
            approximation=length(x)>100 | frequency(x)>12, xreg=NULL,
-           test=c("kpss","adf"), allowdrift=TRUE)
+           test=c("kpss","adf","pp"), allowdrift=TRUE)
 }
 
 \arguments{

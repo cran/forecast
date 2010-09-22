@@ -74,7 +74,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     return(bestfit)
 }
 
-ndiffs <- function(x,alpha=0.05,test=c("kpss","adf"))
+ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
 {
     test <- match.arg(test)
     require(tseries)
@@ -83,8 +83,12 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf"))
     oldwarn <- options(warn=-1)
     if(test=="kpss")
         dodiff <- kpss.test(x)$p.value < alpha
-    else
+    else if(test=="adf")
         dodiff <- adf.test(x)$p.value > alpha
+    else if(test=="pp")
+        dodiff <- pp.test(x)$p.value > alpha
+	else
+		stop("This shouldn't happen")
     if(is.na(dodiff))
     {
         options(warn=oldwarn$warn)
@@ -96,8 +100,12 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf"))
         d <- d+1
         if(test=="kpss")
             dodiff <- kpss.test(x)$p.value < alpha
-        else
-            dodiff <- adf.test(x)$p.value > alpha
+		else if(test=="adf")
+			dodiff <- adf.test(x)$p.value > alpha
+		else if(test=="pp")
+			dodiff <- pp.test(x)$p.value > alpha
+		else
+			stop("This shouldn't happen")
         if(is.na(dodiff))
             return(d-1)
     }

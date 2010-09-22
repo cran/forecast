@@ -14,7 +14,8 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
 		object$x <- ts(object$x,f=1,s=1)
 	
 	if(future) 
-		initstate <- object$state[1,]
+		initstate <- object$state[length(object$x)+1,] 
+		#initstate <- object$state[1,] ??
 	else # choose a random starting point
 		initstate <- object$state[sample(1:length(object$x),1),]
 	

@@ -61,7 +61,7 @@ pegelsfcast.C <- function(h,obj,npaths,level,bootstrap)
 {
     y.paths <- matrix(NA,nrow=npaths,ncol=h)
     for(i in 1:npaths)
-        y.paths[i,] <- simulate.ets(obj, h, initstate=obj$state[length(obj$x)+1,], bootstrap=bootstrap)
+        y.paths[i,] <- simulate.ets(obj, h, future=TRUE, bootstrap=bootstrap)
     y.f <- .C("etsforecast",
             as.double(obj$state[length(obj$x)+1,]),
             as.integer(obj$m),
