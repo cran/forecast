@@ -123,7 +123,7 @@ summary.forecast <- function(object,...)
     }
 }
 
-plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE,
+plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(length(x$mean)<5),
         shadecols=NULL,lambda=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
 {
     if(is.element("x",names(x))) # Assume stored as x
@@ -139,6 +139,9 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE,
 
     if(is.null(x$lower) | is.null(x$upper) | is.null(x$level))
         plot.conf=FALSE
+        
+    if(!shaded)
+        shadebars <- FALSE
 
     # Extract components of predict if it exists
     # This occurs for the pegels functions.
@@ -181,19 +184,34 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE,
     npred <- length(pred.mean)
     plot(ts(c(xx[(n-include+1):n], rep(NA, npred)), end=tsp(xx)[2]+npred/freq, f = freq),
         xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,...)
-    xxx <- tsp(xx)[2] + (1:npred)/freq
+
     if(plot.conf)
     {
+        xxx <- tsp(xx)[2] + (1:npred)/freq            
         idx <- rev(order(x$level))
         nint <- length(x$level)
         for(i in 1:nint)
         {
-            if(shaded)
+			if(is.null(shadecols))
+				shadecols <- heat.colors(length(x$level)+2)[switch(1+(length(x$level)>1),2,length(x$level):1)+1]
+            if(shadebars)
 			{
-				if(is.null(shadecols))
-					shadecols <- heat.colors(length(x$level)+2)[switch(1+(length(x$level)>1),2,length(x$level):1)+1]
-                polygon(c(xxx, rev(xxx)), c(lower[,idx[i]], rev(upper[,idx[i]])), col = shadecols[i], border=FALSE)
+                for(j in 1:npred)
+                {
+                    polygon(xxx[j] + c(-0.5,0.5,0.5,-0.5)/freq, c(rep(lower[j,idx[i]],2),rep(upper[j,idx[i]],2)),
+                        col = shadecols[i], border=FALSE)
+                }
 			}
+            else if(shaded)
+            {
+                polygon(c(xxx,rev(xxx)), c(lower[,idx[i]],rev(upper[,idx[i]])),
+                        col = shadecols[i], border=FALSE)
+            }
+            else if(npred == 1)
+            {
+                lines(xxx+c(-0.5,0.5)/freq,rep(lower[,idx[i]],2),col=pi.col,lty=pi.lty)
+                lines(xxx+c(-0.5,0.5)/freq,rep(upper[,idx[i]],2),col=pi.col,lty=pi.lty)
+            }
             else
             {
                 lines(xxx,lower[,idx[i]],col=pi.col,lty=pi.lty)
@@ -201,7 +219,10 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE,
             }
         }
     }
-    lines(ts(pred.mean, start = tsp(xx)[2]+1/freq, f = freq), lty = 1,col=fcol)
+    if(npred > 1 & !shadebars)
+        lines(ts(pred.mean, start = tsp(xx)[2]+1/freq, f = freq), lty = 1,col=fcol)
+    else
+        points(ts(pred.mean, start = tsp(xx)[2]+1/freq, f = freq), col=fcol, pch=19)
     if(plot.conf)
         invisible(list(mean=pred.mean,lower=lower,upper=upper))
     else

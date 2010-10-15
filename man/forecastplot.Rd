@@ -4,9 +4,10 @@
 \title{Forecast plot}
 
 \usage{
-\method{plot}{forecast}(x, include, plot.conf = TRUE, shaded = TRUE, shadecols=NULL, lambda = NULL,
-                 col = 1, fcol = 4, pi.col=1, pi.lty=2, ylim = NULL, main = NULL, 
-                 ylab = "", xlab = "", ...)
+\method{plot}{forecast}(x, include, plot.conf = TRUE, shaded = TRUE, shadebars=(length(x$mean)<5),
+                 shadecols=NULL, lambda = NULL, col = 1, fcol = 4, pi.col=1, pi.lty=2, 
+                 ylim = NULL, main = NULL, ylab = "", xlab = "", ...)
+               
 \method{plot}{splineforecast}(x,fitcol=2,...)
 }
 \arguments{
@@ -14,6 +15,8 @@
 \item{include}{number of values from time series to include in plot}
 \item{plot.conf}{Logical flag indicating whether to plot prediction intervals.}
 \item{shaded}{Logical flag indicating whether prediction intervals should be shaded (TRUE) or lines (FALSE)}
+\item{shadebars}{Logical flag indicating if prediction intervals should be plotted as shaded bars (if TRUE) or a shaded polygon (if FALSE).
+    Ignored if \code{shaded=FALSE}. Bars are plotted by default if there are fewer than five forecast horizons.}
 \item{shadecols}{Colors for shaded prediction intervals}
 \item{lambda}{Box-Cox parameter. If present, function backtransforms data and forecasts using \code{\link{InvBoxCox}}.}
 \item{col}{the colour for the data line.}

@@ -75,12 +75,15 @@ forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
     bs <- cumsum(bin.c[1:h])
     b <- bin.c[(1:n)+1]
     fcast.x[1] <- RHS[1] <- fcast.y$mean[1] - sum(b*rev(x))
-    for (k in 2:h)
+    if(h>1)
     {
-        b <- b + bin.c[(1:n)+k]
-        RHS[k] <- RHS[k] - sum(b*rev(x))
-        LHS[k] <- sum(rev(fcast.x[1:(k-1)]) * bs[2:k])
-        fcast.x[k] <- RHS[k] - LHS[k]
+        for (k in 2:h)
+        {
+            b <- b + bin.c[(1:n)+k]
+            RHS[k] <- RHS[k] - sum(b*rev(x))
+            LHS[k] <- sum(rev(fcast.x[1:(k-1)]) * bs[2:k])
+            fcast.x[k] <- RHS[k] - LHS[k]
+        }
     }
     
     # Extract stuff from ARMA model
@@ -95,12 +98,15 @@ forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
     # Calculate psi weights
     new.phi <- psi <- numeric(h)
     psi[1] <- new.phi[1] <- 1
-    new.phi[2:h] <- -bin.c[2:h]
-    for (i in 2:h) 
+    if(h>1)
     {
-        if(p>0)
-            new.phi[i] <- sum(phi[1:(i-1)] * bin.c[(i-1):1]) - bin.c[i]
-        psi[i] <- sum(new.phi[2:i] * rev(psi[1:(i-1)])) + theta[i-1]
+        new.phi[2:h] <- -bin.c[2:h]
+        for (i in 2:h) 
+        {
+            if(p>0)
+                new.phi[i] <- sum(phi[1:(i-1)] * bin.c[(i-1):1]) - bin.c[i]
+            psi[i] <- sum(new.phi[2:i] * rev(psi[1:(i-1)])) + theta[i-1]
+        }
     }
     
     # Compute forecast variances

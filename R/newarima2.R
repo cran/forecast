@@ -122,21 +122,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
             q <- (max.q>0)
         }
     }
-#    # If all else fails start with nothing
-#    if(fit$ic > 1e19 & constant)
-#    {
-#        fit <- myarima(x,order=c(0,d,0),seasonal=c(0,D,0),constant=FALSE,ic,trace,approximation,offset=offset,xreg=xreg)
-#        results[5,] <- c(0,d,0,0,D,0,FALSE,fit$ic)
-#        if(fit$ic < bestfit$ic)
-#        {
-#            bestfit <- fit
-#            p <- P <- 0
-#            q <- Q <- 0
-#        }
-#        k <- 5
-#    }
-#    else
-        k <- 4
+     k <- 4
 
     startk <- 0
     while(startk < k & k < 94)

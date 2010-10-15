@@ -1,6 +1,11 @@
-Version 2.08
+Version 2.09 (15 October 2010)
+    * Fixed bug in forecast.fracdiff() which caused an error when h=1.
+    * Added shadebars to plot.forecast().
+    * Fixed bug in plot.forecast() to allow plotting when h=1.
+
+Version 2.08 (22 September 2010)
     * Added pp test option for auto.arima() and ndiffs().
-	* Fixed a bug in simulate.ets() which was causing problems when forecasting from some ETS models including ETS(M,M,N).
+	* Fixed bug in simulate.ets() which was causing problems when forecasting from some ETS models including ETS(M,M,N).
 
 Version 2.07 (9 September 2010)
     * Fixed bug in simulate.Arima(). Previous sample paths when d=2 and future=TRUE were incorrect.
