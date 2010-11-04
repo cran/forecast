@@ -218,29 +218,36 @@ simulate.fracdiff <- function(object, nsim=object$n, seed=NULL, future=TRUE, boo
 		x <- object$x <- eval.parent(parse(text = as.character(object$call)[2]))
 	if(is.null(tsp(x)))
 		x <- ts(x,f=1,s=1)
-    n <- length(x)
-    meanx <- mean(x)
-    x <- x - meanx
-    y <- diffseries(x, d = object$d)
+    
+    # Strip initial and final missing values
+    xx <- na.ends(x)
+    n <- length(xx)
+    
+    # Remove mean
+    meanx <- mean(xx)
+    xx <- xx - meanx
+
+    y <- undo.na.ends(x,diffseries(xx, d = object$d))
     fit <- arima(y, order = c(length(object$ar), 0, length(object$ma)), 
         include.mean = FALSE, fixed = c(object$ar, -object$ma))
 	# Simulate ARMA
 	ysim <- simulate(fit,nsim,seed,future=future,bootstrap=bootstrap)
 	# Undo differencing
-	bin.c <- (-1)^(0:(n + nsim)) * choose(object$d, (0:(n + nsim)))
-    b <- numeric(n)
-    xsim <- LHS <- numeric(nsim)
-    RHS <- cumsum(ysim)
-    bs <- cumsum(bin.c[1:nsim])
-    b <- bin.c[(1:n) + 1]
-    xsim[1] <- RHS[1] <- ysim[1] - sum(b * rev(x))
-    for (k in 2:nsim) 
-	{
-        b <- b + bin.c[(1:n) + k]
-        RHS[k] <- RHS[k] - sum(b * rev(x))
-        LHS[k] <- sum(rev(xsim[1:(k - 1)]) * bs[2:k])
-        xsim[k] <- RHS[k] - LHS[k]
-    }
-	tspx <- tsp(x)
-	return(ts(xsim,f=tspx[3],s=tspx[2]+1/tspx[3]))
+    return(unfracdiff(xx,ysim,n,nsim,object$d))
+	# bin.c <- (-1)^(0:(n + nsim)) * choose(object$d, (0:(n + nsim)))
+    # b <- numeric(n)
+    # xsim <- LHS <- numeric(nsim)
+    # RHS <- cumsum(ysim)
+    # bs <- cumsum(bin.c[1:nsim])
+    # b <- bin.c[(1:n) + 1]
+    # xsim[1] <- RHS[1] <- ysim[1] - sum(b * rev(xx))
+    # for (k in 2:nsim) 
+	# {
+        # b <- b + bin.c[(1:n) + k]
+        # RHS[k] <- RHS[k] - sum(b * rev(xx))
+        # LHS[k] <- sum(rev(xsim[1:(k - 1)]) * bs[2:k])
+        # xsim[k] <- RHS[k] - LHS[k]
+    # }
+	# tspx <- tsp(x)
+	# return(ts(xsim,f=tspx[3],s=tspx[2]+1/tspx[3]))
 }

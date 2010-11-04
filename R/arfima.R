@@ -1,47 +1,117 @@
+# Remove missing values from end points
+na.ends <- function(x)
+{
+    tspx <- tsp(x)
+    # Strip initial and final missing values
+    nonmiss <- (1:length(x))[!is.na(x)]
+    if(length(nonmiss)==0)
+        stop("No non-missing data")
+    j <- nonmiss[1]
+    k <- nonmiss[length(nonmiss)]
+    x <- x[j:k]
+    if(!is.null(tspx))
+        x <- ts(x,start=tspx[1]+(j-1)/tspx[3],f=tspx[3])
+    return(x)
+}
+
+# Add back missing values at ends
+# x is original series. y is the series with NAs removed at ends.
+# returns y with the nas put back at beginning but not end.
+undo.na.ends <- function(x,y)
+{
+    n <- length(x)
+    nonmiss <- (1:length(x))[!is.na(x)]
+    j <- nonmiss[1]
+    k <- nonmiss[length(nonmiss)]
+    if(j>1)
+        y <- c(rep(NA,j-1),y)
+    if(k<n)
+        y <- c(y,rep(NA,n-k))
+    tspx <- tsp(x)
+    if(!is.null(tspx))
+        tsp(y) <- tsp(x)
+    return(y)
+}
+
+## Undifference
+unfracdiff <- function(x,y,n,h,d)
+{
+    bin.c <- (-1)^(0:(n+h)) * choose(d, (0:(n+h)))
+    b <- numeric(n)
+    xnew <- LHS <- numeric(h)
+    RHS <- cumsum(y)
+    bs <- cumsum(bin.c[1:h])
+    b <- bin.c[(1:n) + 1]
+    xnew[1] <- RHS[1] <- y[1] - sum(b * rev(x))
+    if(h>1)
+    {
+        for (k in 2:h) 
+        {
+            b <- b + bin.c[(1:n) + k]
+            RHS[k] <- RHS[k] - sum(b * rev(x))
+            LHS[k] <- sum(rev(xnew[1:(k-1)]) * bs[2:k])
+            xnew[k] <- RHS[k] - LHS[k]
+        }
+    }
+	tspx <- tsp(x)
+    if(is.null(tspx))
+        tspx <- c(1,length(x),1)
+	return(ts(xnew,f=tspx[3],s=tspx[2]+1/tspx[3]))    
+}
+
 ## Automatic ARFIMA modelling
 ## Will return Arima object if d < 0.01 to prevent estimation problems
-arfima <- function(x, drange = c(0, 0.5), estim = c("ls","mle"),...)
+arfima <- function(x, drange = c(0, 0.5), estim = c("mle","ls"),...)
 {
     estim <- match.arg(estim)
     
     require(fracdiff)
     
+    # Strip initial and final missing values
+    xx <- na.ends(x)
+    
     # Remove mean
-    meanx <- mean(x)
-    x <- x - meanx
+    meanx <- mean(xx)
+    xx <- xx - meanx
     
     # Choose differencing parameter with AR(2) proxy to handle correlations
     warn <- options(warn=-1)$warn
-    fit <- fracdiff(x,nar=2)
+    fit <- fracdiff(xx,nar=2)
     options(warn=warn)
    
     # Choose p and q
     d <- fit$d
-    y <- diffseries(x, d=d)
+    y <- diffseries(xx, d=d)
     fit <- auto.arima(y, max.P=0, max.Q=0, stationary=TRUE, ...)
     
     # Refit model using fracdiff
     warn <- options(warn=-1)$warn
-    fit <- fracdiff(x, nar=fit$arma[1], nma=fit$arma[2])
+    fit <- fracdiff(xx, nar=fit$arma[1], nma=fit$arma[2])
     options(warn=warn)
     
     # Refine parameters with MLE
     if(estim=="mle")
     {
-        y <- diffseries(x, d=fit$d)
+        y <- diffseries(xx, d=fit$d)
         p <- length(fit$ar)
         q <- length(fit$ma)
-        fit2 <- Arima(y,order=c(p,0,q),include.mean=FALSE)
-        if(p>0)
-            fit$ar <- fit2$coef[1:p]
-        if(q>0)
-            fit$ma <- fit2$coef[p+(1:q)]
-        fit$residuals <- fit2$residuals
+        fit2 <- try(Arima(y,order=c(p,0,q),include.mean=FALSE))
+        if(class(fit2) != "try-error")
+        {
+            if(p>0)
+                fit$ar <- fit2$coef[1:p]
+            if(q>0)
+                fit$ma <- -fit2$coef[p+(1:q)]
+            fit$residuals <- fit2$residuals
+        }
+        else
+            warning("MLE estimation failed. Returning LS estimates")
     }
     
     # Add things to model that will be needed by forecast.fracdiff
-    fit$x <- x + meanx
-    fit$residuals <- residuals(fit)
+    fit$x <- xx + meanx
+    fit$residuals <- undo.na.ends(x,residuals(fit))
+    fit$x <- x
     fit$fitted <- fit$x - fit$residuals
     
     return(fit)
@@ -56,35 +126,41 @@ forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
         x <- object$x
     else 
         x <- object$x <- eval.parent(parse(text=as.character(object$call)[2]))
-    n <- length(x)
-    meanx <- mean(x)
-    x <- x - meanx
+    
+    xx <- na.ends(x)
+    n <- length(xx)
+    
+    meanx <- mean(xx)
+    xx <- xx - meanx
     
     # Construct ARMA part of model and forecast with it
-    y <- diffseries(x, d=object$d)
+    y <- diffseries(xx, d=object$d)
     fit <- arima(y, order=c(length(object$ar),0,length(object$ma)), include.mean=FALSE, fixed=c(object$ar,-object$ma))
     fcast.y <- forecast(fit, h=h, level=level)
 
+    # Undifference
+    fcast.x <- unfracdiff(xx,fcast.y$mean,n,h,object$d)
+    
     # Binomial coefficient for expansion of d
     bin.c <- (-1)^(0:(n+h)) * choose(object$d,(0:(n+h)))
 
-    # Cumulative forecasts of y and forecast of y
-    b <- numeric(n)
-    fcast.x <- LHS <- numeric(h)
-    RHS <- cumsum(fcast.y$mean)
-    bs <- cumsum(bin.c[1:h])
-    b <- bin.c[(1:n)+1]
-    fcast.x[1] <- RHS[1] <- fcast.y$mean[1] - sum(b*rev(x))
-    if(h>1)
-    {
-        for (k in 2:h)
-        {
-            b <- b + bin.c[(1:n)+k]
-            RHS[k] <- RHS[k] - sum(b*rev(x))
-            LHS[k] <- sum(rev(fcast.x[1:(k-1)]) * bs[2:k])
-            fcast.x[k] <- RHS[k] - LHS[k]
-        }
-    }
+    #Cumulative forecasts of y and forecast of y
+    # b <- numeric(n)
+    # fcast.x <- LHS <- numeric(h)
+    # RHS <- cumsum(fcast.y$mean)
+    # bs <- cumsum(bin.c[1:h])
+    # b <- bin.c[(1:n)+1]
+    # fcast.x[1] <- RHS[1] <- fcast.y$mean[1] - sum(b*rev(xx))
+    # if(h>1)
+    # {
+        # for (k in 2:h)
+        # {
+            # b <- b + bin.c[(1:n)+k]
+            # RHS[k] <- RHS[k] - sum(b*rev(xx))
+            # LHS[k] <- sum(rev(fcast.x[1:(k-1)]) * bs[2:k])
+            # fcast.x[k] <- RHS[k] - LHS[k]
+        # }
+    # }
     
     # Extract stuff from ARMA model
     p <- fit$arma[1]
@@ -132,15 +208,15 @@ forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
     }
     colnames(lower) = colnames(upper) = paste(level, "%", sep = "")
 
-    res <- residuals(fit)
+    res <- undo.na.ends(x,residuals(fit))
     data.tsp <- tsp(x)
     if(is.null(data.tsp))
-        data.tsp <- c(1,n,1)
+        data.tsp <- c(1,length(x),1)
     mean.fcast <- ts(fcast.x+meanx, f=data.tsp[3], s=data.tsp[2] + 1/data.tsp[3])
     lower <- ts(lower+meanx, f=data.tsp[3], s=data.tsp[2] + 1/data.tsp[3])
     upper <- ts(upper+meanx, f=data.tsp[3], s=data.tsp[2] + 1/data.tsp[3])
     method <- paste("ARFIMA(",p,",",round(object$d,2),",",q,")")
-    return(structure(list(x=x+meanx, mean=mean.fcast, upper=upper, lower=lower, 
+    return(structure(list(x=x, mean=mean.fcast, upper=upper, lower=lower, 
         level=level, method=method, xname=deparse(substitute(x)), model=object, 
         residuals=res, fitted=x-res), class="forecast"))
 }

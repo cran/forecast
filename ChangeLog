@@ -1,3 +1,10 @@
+Version 2.11 (5 November 2010)
+    * If MLE in arfima() fails (usually because the series is non-stationary), the LS estimate is now returned.
+    
+Version 2.10 (4 November 2010)
+    * Fixed bug in arfima() where the MA parameters were of the wrong sign if estim="mle" chosen.
+    * arfima() now allowed to have a sequence of missing values at the start of the series and end of the series (but not within the series)
+
 Version 2.09 (15 October 2010)
     * Fixed bug in forecast.fracdiff() which caused an error when h=1.
     * Added shadebars to plot.forecast().

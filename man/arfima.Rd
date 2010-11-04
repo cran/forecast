@@ -5,13 +5,13 @@
 Hyndman-Khandakar (2008) algorithm to select p and q and the Haslett and Raftery (1989) algorithm 
 to estimate the parameters including d.
 }
-\usage{arfima(x, drange = c(0, 0.5), estim = c("ls","mle"), ...)
+\usage{arfima(x, drange = c(0, 0.5), estim = c("mle","ls"), ...)
 }
 \arguments{
   \item{x}{a univariate time series (numeric vector).}
   \item{drange}{Allowable values of d to be considered. Default of \code{c(0,0.5)} ensures a stationary 
                 model is returned.}
-  \item{estim}{If \code{estim=="ls"} (the default), then the ARMA parameters are calculated using the Haslett-Raftery algorithm. 
+  \item{estim}{If \code{estim=="ls"}, then the ARMA parameters are calculated using the Haslett-Raftery algorithm. 
   If \code{estim=="mle"}, then the ARMA parameters are calculated using full MLE via the \code{\link[stats]{arima}} 
   function.}
   \item{\dots}{Other arguments passed to \code{\link{auto.arima}} when selecting p and q.}

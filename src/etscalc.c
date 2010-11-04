@@ -5,7 +5,7 @@
 #define MULT 2
 #define DAMPED 1
 #define TOL 1.0e-10
-#define HUGEN 1.0e9
+#define HUGEN 1.0e10
 #define NA  -99999.0
 
 // Functions called by R
