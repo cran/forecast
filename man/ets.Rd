@@ -44,7 +44,7 @@ admissible space; \code{"both"} (default) takes the intersection of these region
     be allowed.}
 }
 
-\description{Returns ets model applied to x.
+\description{Returns ets model applied to \code{y}.
 }
 \details{Based on the classification of methods as described in Hyndman et al (2008).
 

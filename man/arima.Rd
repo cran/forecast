@@ -45,8 +45,17 @@ take an ARIMA model from a previous call to \code{Arima} and re-apply it to the 
 \examples{fit <- Arima(WWWusage,order=c(3,1,0))
 plot(forecast(fit,h=20))
 
-air.model <- Arima(AirPassengers[1:100],c(0,1,1))
-air.model2 <- Arima(AirPassengers,model=air.model)
-outofsample <- ts(fitted(air.model2)[-c(1:100)],s=1957+4/12,f=12)
+air.model <- Arima(window(AirPassengers,end=1956+11/12),order=c(0,1,1),seasonal=list(order=c(0,1,1),period=12))
+plot(forecast(air.model,h=48))
+lines(AirPassengers)
+
+air.model2 <- Arima(window(AirPassengers,start=1957),model=air.model)
+outofsample <- fitted(air.model2)
+# in-sample one-step forecasts
+accuracy(air.model)
+# out-of-sample one-step foercasts
+accuracy(air.model2)
+# out-of-sample multi-step forecasts
+accuracy(forecast(air.model,h=48),outofsample)
 }
 \keyword{ts}

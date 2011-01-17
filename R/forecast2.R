@@ -264,3 +264,14 @@ croston2 <- function(x,h=10,alpha=0.1,nofits=FALSE)
         return(list(mean = ratio, fitted = junk, model=list(demand=y.f,period=p.f)))
     }
 }
+
+
+snaive <- function(x,h=2*frequency(x),level=c(80,95),fan=FALSE)
+{
+    forecast(Arima(x,seasonal=list(order=c(0,1,0),period=frequency(x))),h=h,level=level,fan=fan)
+}
+
+naive <- function(x,h=10,level=c(80,95),fan=FALSE)
+{
+    forecast(Arima(x,order=c(0,1,0)),h,level=level,fan=fan)
+}

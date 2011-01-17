@@ -20,6 +20,11 @@ ets <- function(y, model="ZZZ", damped=NULL,
     m <- frequency(y)
     if(m>24)
         stop("Frequency too high")
+    else if(m<1)
+    {
+        warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
+        m <- 1
+    }
 
     if(sum((upper-lower)>0)<4)
         stop("Lower limits must be less than upper limits")

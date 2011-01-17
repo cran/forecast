@@ -1,3 +1,8 @@
+Version 2.12 (xx)
+    * Added naive() and snaive() functions.
+    * Improved handling of seasonal data with frequency < 1.
+    * Added lambda argument to accuracy().
+    
 Version 2.11 (5 November 2010)
     * If MLE in arfima() fails (usually because the series is non-stationary), the LS estimate is now returned.
     

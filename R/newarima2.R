@@ -9,6 +9,12 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     test <- match.arg(test)
     m <- frequency(x)
 
+    if(m < 1)
+    {
+        warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
+        m <- 1
+    }
+    
     # Choose order of differencing
     if(!is.null(xreg))
     {

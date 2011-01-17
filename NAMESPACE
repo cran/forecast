@@ -6,7 +6,7 @@ fitted.Arima, forecast, forecast.ar, forecast.Arima, forecast.fracdiff,
 forecast.StructTS, accuracy, holt, hw, InvBoxCox,
 meanf, forecast.HoltWinters, logLik.ets,
 monthdays, na.interp, ets, plot.ets, plot.forecast,
-plot.splineforecast, rwf, seasadj, seasonaldummy,
+plot.splineforecast, rwf, seasadj, seasonaldummy,naive,snaive,
 seasonaldummyf, seasonplot, ses, sindexf, splinef,
 thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, dm.test)
 

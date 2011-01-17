@@ -182,8 +182,14 @@ SD.test <- function (wts, s=frequency(wts))
 # Number of seasonal differences
 nsdiffs <- function(x, m=frequency(x))
 {
-    if(m<=1)
+    if(m==1)
         stop("Non seasonal data")
+    else if(m < 1)
+    {
+        warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
+        return(D=0)
+    }
+
     chstat <- SD.test(x, m)
     crit.values <- c(0.4617146,0.7479655,1.0007818,1.2375350,1.4625240,1.6920200,1.9043096,2.1169602,
         2.3268562,2.5406922,2.7391007)

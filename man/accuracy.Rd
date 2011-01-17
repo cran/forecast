@@ -1,13 +1,14 @@
 \name{accuracy}
 \alias{accuracy}
 \title{Accuracy measures for forecast model}
-\usage{accuracy(f, x, test=1:length(x))
+\usage{accuracy(f, x, test=1:length(x),lambda=NULL)
 }
 
 \arguments{
 \item{f}{An object of class \code{"forecast"}, or a numerical vector containing forecasts.}
 \item{x}{An optional numerical vector containing actual values of the same length as object.}
 \item{test}{Indicator of which elements of x and f to test.}
+\item{lambda}{Box-Cox parameter. If present, function backtransforms data and forecasts using \code{\link{InvBoxCox}}.}
 }
 
 \description{Returns range of summary measures of the forecast accuracy. If \code{x} is provided, the function measures out-of-sample forecast accuracy
