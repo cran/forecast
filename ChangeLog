@@ -1,4 +1,11 @@
-Version 2.12 (xx)
+Version 2.13 (16 February 2011)
+    * Fixed bug in accuracy() when only 1 forecast is specified.
+    * Added forecast.stl() and stlf() functions
+    * Modified forecast.ts() to use stlf() if frequency > 12.
+    * Made BoxCox() and InvBoxCox() robust to negative values
+    * Fixed bug in simulate.Arima() when future=TRUE. There was a bias in the sample paths.
+    
+Version 2.12 (19 January 2011)
     * Added naive() and snaive() functions.
     * Improved handling of seasonal data with frequency < 1.
     * Added lambda argument to accuracy().

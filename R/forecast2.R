@@ -135,17 +135,20 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE)
 BoxCox <- function(x,lambda)
 {
     if(lambda==0)
-        log(x)
+        return(log(x))
     else
-        (x^lambda - 1)/lambda
+        return((sign(x)*abs(x)^lambda - 1)/lambda)
 }
 
 InvBoxCox <- function(x,lambda)
 {
     if(lambda==0)
-        exp(x)
+        return(exp(x))
     else
-        (x*lambda + 1)^(1/lambda)
+    {
+        xx <- x*lambda + 1
+        return(sign(xx)*abs(xx)^(1/lambda))
+    }
 }
 
 forecast.StructTS <- function(object,h=ifelse(object$call$type=="BSM", 2*object$xtsp[3], 10),level=c(80,95),fan=FALSE,...)

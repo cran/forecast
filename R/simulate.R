@@ -84,6 +84,20 @@ myarima.sim <- function (model, n, x, e, ...)
         x <- filter(x, c(1, model$ma), sides = 1)
     if (length(model$ar)) 
         x <- filter(x, model$ar, method = "recursive")
+    if(d == 0) # Adjust to ensure end matches approximately
+    {
+        # Last 20 diffs
+        if(n.start >= 20)
+            xdiff <- (model$x - x[1:n.start])[n.start-(19:0)]
+        else
+            xdiff <- model$x - x[1:n.start]
+        # If all same sign, choose last
+        if(all(sign(xdiff)==1) | all(sign(xdiff)==-1))
+            xdiff <- xdiff[length(xdiff)]
+        else # choose mean.
+            xdiff <- mean(xdiff)
+        x <- x + xdiff
+    }
     if (n.start > 0) 
         x <- x[-(1:n.start)]
     if (d > 0)

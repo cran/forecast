@@ -9,7 +9,12 @@ forecast.ts <- function(object, h=ifelse(frequency(object)>1, 2*frequency(object
 {
     n <- length(object)
     if(n > 3)
-        forecast(ets(object,...),h=h,level=level,fan=fan)
+    {
+        if(frequency(object) < 13)
+            forecast(ets(object,...),h=h,level=level,fan=fan)
+        else
+            stlf(object,h=h,level=level,fan=fan,...)
+    }
     else 
         meanf(object,h=h,level=level,fan=fan,...)
 }
