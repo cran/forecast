@@ -22,72 +22,87 @@ forecast.ts <- function(object, h=ifelse(frequency(object)>1, 2*frequency(object
 as.data.frame.forecast <- function(x,...)
 {
     nconf <- length(x$level)
-    out <- ts(matrix(x$mean, ncol = 1))
-    attributes(out)$tsp <- attributes(x$mean)$tsp
+    out <- matrix(x$mean, ncol=1)
+    ists <- is.ts(x$mean)
+    if(ists)
+    {
+        out <- ts(out)
+        attributes(out)$tsp <- attributes(x$mean)$tsp
+    }
     names <- c("Point Forecast")
-    if (!is.null(x$lower) & !is.null(x$upper) & !is.null(x$level)) {
+    if (!is.null(x$lower) & !is.null(x$upper) & !is.null(x$level)) 
+    {
         x$upper <- as.matrix(x$upper)
         x$lower <- as.matrix(x$lower)
-        for (i in 1:nconf) {
+        for (i in 1:nconf) 
+        {
             out <- cbind(out, x$lower[, i], x$upper[, i])
-            names <- c(names, paste("Lo", x$level[i]), paste("Hi", 
-                x$level[i]))
+            names <- c(names, paste("Lo", x$level[i]), paste("Hi", x$level[i]))
         }
     }
     colnames(out) <- names
     rownames(out) <- time(x$mean)
     # Rest of function borrowed from print.ts(), but with header() omitted
+    if(!ists)
+        return(as.data.frame(out))
+
     x <- as.ts(out)
     fr.x <- frequency(x)
     calendar <- any(fr.x == c(4, 12)) && length(start(x)) ==  2L
     Tsp <- tsp(x)
-    if (is.null(Tsp)) {
+    if (is.null(Tsp)) 
+    {
         warning("series is corrupt, with no 'tsp' attribute")
         print(unclass(x))
         return(invisible(x))
     }
     nn <- 1 + round((Tsp[2L] - Tsp[1L]) * Tsp[3L])
-    if (NROW(x) != nn) {
-        warning(gettextf("series is corrupt: length %d with 'tsp' implying %d", 
-            NROW(x), nn), domain = NA, call. = FALSE)
+    if (NROW(x) != nn) 
+    {
+        warning(gettextf("series is corrupt: length %d with 'tsp' implying %d", NROW(x), nn), domain = NA, call. = FALSE)
         calendar <- FALSE
     }
-    if (NCOL(x) == 1) {
-        if (calendar) {
-            if (fr.x > 1) {
+    if (NCOL(x) == 1) 
+    {
+        if (calendar) 
+        {
+            if (fr.x > 1) 
+            {
                 dn2 <- if (fr.x == 12) 
                   month.abb
-                else if (fr.x == 4) {
+                else if (fr.x == 4) 
                   c("Qtr1", "Qtr2", "Qtr3", "Qtr4")
-                }
                 else paste("p", 1L:fr.x, sep = "")
-                if (NROW(x) <= fr.x && start(x)[1L] == end(x)[1L]) {
+                if (NROW(x) <= fr.x && start(x)[1L] == end(x)[1L]) 
+                {
                   dn1 <- start(x)[1L]
                   dn2 <- dn2[1 + (start(x)[2L] - 2 + seq_along(x))%%fr.x]
                   x <- matrix(format(x, ...), nrow = 1L, byrow = TRUE, 
                     dimnames = list(dn1, dn2))
                 }
-                else {
+                else 
+                {
                   start.pad <- start(x)[2L] - 1
                   end.pad <- fr.x - end(x)[2L]
                   dn1 <- start(x)[1L]:end(x)[1L]
-                  x <- matrix(c(rep.int("", start.pad), format(x, 
-                    ...), rep.int("", end.pad)), ncol = fr.x, 
+                  x <- matrix(c(rep.int("", start.pad), format(x, ...), rep.int("", end.pad)), ncol = fr.x, 
                     byrow = TRUE, dimnames = list(dn1, dn2))
                 }
             }
-            else {
+            else 
+            {
                 tx <- time(x)
                 attributes(x) <- NULL
                 names(x) <- tx
             }
         }
-        else {
+        else
             attr(x, "class") <- attr(x, "tsp") <- attr(x, "na.action") <- NULL
-        }
     }
-    else {
-        if (calendar && fr.x > 1) {
+    else 
+    {
+        if (calendar && fr.x > 1) 
+        {
             tm <- time(x)
             t2 <- 1 + round(fr.x * ((tm + 0.001)%%1))
             p1 <- format(floor(zapsmall(tm)))
@@ -97,9 +112,8 @@ as.data.frame.forecast <- function(x,...)
                 c("Q1", "Q2", "Q3", "Q4")[t2]
             else format(t2), sep = " ")
         }
-        else {
+        else
             rownames(x) <- format(time(x))
-        }
         attr(x, "class") <- attr(x, "tsp") <- attr(x, "na.action") <- NULL
     }
     return(as.data.frame(x))

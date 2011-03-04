@@ -40,7 +40,7 @@ tsdisplay <- function(x,plot.type="partial",points=TRUE,ci.type="white",
     if(plot.type == "scatter")
     {
         n <- length(x)
-        plot(x[1:(n-1)],x[2:n],xlab=expression(Y[t-1]),ylab=expression(Y[t]), xlim=c(1,lag.max), ...)
+        plot(x[1:(n-1)],x[2:n],xlab=expression(Y[t-1]),ylab=expression(Y[t]), ...)
     }
     else if(plot.type == "spectrum")
         spec.ar(xx,main="")

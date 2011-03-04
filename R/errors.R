@@ -36,22 +36,25 @@ forecasterrors <- function(f,x,test=1:length(x),lambda=NULL)
     mpe <-  mean(100*error/xx[test])
     junk <- c(me,sqrt(mse),mae,mpe,mape)
     names(junk) <- c("ME","RMSE","MAE","MPE","MAPE")
-    if(!is.null(dx))
+    if(!is.null(tsp(data.x)))
     {
-        scale <- mean(abs(diff(dx)),na.rm=TRUE)
-        mase <- mean(abs(error/scale))
-        junk <- c(junk,mase)
-        names(junk)[6] <- "MASE"
-    }
-    if(n>1)
-    {
-        fpe <- (c(ff[2:n])/c(xx[1:(n-1)]) - 1)[test-1]
-        ape <- (c(xx[2:n])/c(xx[1:(n-1)]) - 1)[test-1]
-        theil <- sqrt(sum((fpe - ape)^2)/sum(ape^2))
-        r1 <- acf(error,plot=FALSE,lag.max=2)$acf[2,1,1]
-        nj <- length(junk)
-        junk <- c(junk,r1,theil)
-        names(junk)[nj+(1:2)] <- c("ACF1","Theil's U")
+        if(!is.null(dx))
+        {
+            scale <- mean(abs(diff(dx)),na.rm=TRUE)
+            mase <- mean(abs(error/scale))
+            junk <- c(junk,mase)
+            names(junk)[6] <- "MASE"
+        }
+        if(n>1)
+        {
+            fpe <- (c(ff[2:n])/c(xx[1:(n-1)]) - 1)[test-1]
+            ape <- (c(xx[2:n])/c(xx[1:(n-1)]) - 1)[test-1]
+            theil <- sqrt(sum((fpe - ape)^2)/sum(ape^2))
+            r1 <- acf(error,plot=FALSE,lag.max=2)$acf[2,1,1]
+            nj <- length(junk)
+            junk <- c(junk,r1,theil)
+            names(junk)[nj+(1:2)] <- c("ACF1","Theil's U")
+        }
     }
     return(junk)
 }
@@ -76,9 +79,13 @@ accuracy <- function(f,x,test=1:length(x),lambda=NULL)
     res <- ff-fits
 
     pe <- res/ff * 100 # Percentage error
-    scale <- mean(abs(diff(ff)),na.rm=TRUE)
-    out <- c(mean(res,na.rm=TRUE), sqrt(mean(res^2,na.rm=TRUE)), mean(abs(res),na.rm=TRUE), mean(pe,na.rm=TRUE), mean(abs(pe),na.rm=TRUE),
-        mean(abs(res/scale),na.rm=TRUE))
-    names(out) <- c("ME","RMSE","MAE","MPE","MAPE","MASE")
+    out <- c(mean(res,na.rm=TRUE), sqrt(mean(res^2,na.rm=TRUE)), mean(abs(res),na.rm=TRUE), mean(pe,na.rm=TRUE), mean(abs(pe),na.rm=TRUE))
+    names(out) <- c("ME","RMSE","MAE","MPE","MAPE")
+    if(!is.null(tsp(f$x)))
+    {
+        scale <- mean(abs(diff(ff)),na.rm=TRUE)
+        out <- c(out, mean(abs(res/scale),na.rm=TRUE))
+        names(out)[6] <- "MASE"
+    }
     return(out)
 }
