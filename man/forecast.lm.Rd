@@ -1,20 +1,22 @@
 \name{forecast.lm}
 \alias{forecast.lm}
-\title{Forecasting using lm objects}
-\usage{\method{forecast}{lm}(object, newdata, level=c(80,95), fan=FALSE, ...)
+\title{Forecast a linear model with possible time series components}
+\usage{\method{forecast}{lm}(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
 }
 
 \arguments{
-\item{object}{An object of class "\code{lm}". Usually the result of a call to \code{\link[stats]{lm}}.}
-\item{newdata}{An optional data frame or matrix in which to look for variables with which to predict.}
+\item{object}{Object of class "lm", usually the result of a call to \code{\link[stats]{lm}} or \code{\link{tslm}}.}
+\item{newdata}{An optional data frame in which to look for variables with which to predict. If omitted, it is assumed that the only variables are trend and season, and \code{h} forecasts are produced.}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
+\item{h}{Number of periods for forecasting. Ignored if \code{newdata} present.}
 \item{...}{Other arguments passed to \code{\link[stats]{predict.lm}()}.}
 }
 
-\description{Returns forecasts obtained from linear models with explanatory variables specified by \code{newdata}.}
+\description{\code{forecast.lm} is used to predict linear models, especially those involving trend and seasonality components.}
 
-\details{\code{forecast.lm} produces predicted values, obtained by evaluating the regression function in \code{newdata}. It is largely a wrapper to \code{\link[stats]{predict.lm}} and returns the output in the form of a \code{forecast} object. If the original data are time series, the function will make the forecasts time series with the appropriate parameters.}
+\details{\code{forecast.lm} is largely a wrapper for \code{\link[stats]{predict.lm}()} except that it allows variables "trend" and "season" which are created on the fly from the time series characteristics of the data. Also, the output is reformatted into a \code{forecast} object.}
+
 
 \value{An object of class "\code{forecast}".
 
@@ -31,16 +33,18 @@ An object of class \code{"forecast"} is a list containing at least the following
 \item{lower}{Lower limits for prediction intervals}
 \item{upper}{Upper limits for prediction intervals}
 \item{level}{The confidence values associated with the prediction intervals}
-\item{x}{The original time series (either \code{object} itself or the time series used to create the model stored as \code{object}).}
+\item{x}{The historical data for the response variable.}
 \item{residuals}{Residuals from the fitted model. That is x minus fitted values.}
-\item{fitted}{Fitted values (one-step forecasts)}
+\item{fitted}{Fitted values}
 }
 
-\seealso{\code{\link[stats]{predict.lm}}, \code{\link[stats]{lm}}.}
+\seealso{\code{\link{tslm}}, \code{\link[stats]{lm}}.}
 
 \author{Rob J Hyndman}
 
 \examples{
-#To be completed.
+y <- ts(rnorm(120,0,3) + 1:120 + 20*sin(2*pi*(1:120)/12), frequency=12)
+fit <- tslm(y ~ trend + season)
+plot(forecast(fit, h=20))
 }
 \keyword{stats}

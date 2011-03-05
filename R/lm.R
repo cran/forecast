@@ -1,4 +1,40 @@
-forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, ...)
+tslm <- function(formula,data,...)
+{
+    if(missing(data)) # Grab first variable
+    {
+        x <- get(as.character(formula)[2])
+        data <- NULL
+    }
+    else
+        x <- data[,1]
+    
+    if(!is.ts(x))
+        stop("Not time series data")
+    tspx <- tsp(x)
+    # Add trend and seasonal to data frame
+    trend <- time(x)
+    season <- as.factor(cycle(x))
+    if(is.null(data))
+        data <- data.frame(trend,season)
+    else
+        data <- data.frame(data,trend,season)
+    fit <- lm(formula,data=data,...)
+    if(!is.null(fit$call$subset))
+    {
+        j <- eval(fit$call$subset)
+        data <- data[j,]
+        # Try to figure out times for subset. Assume they are contiguous.
+        timesx <- timesx[j]
+        tspx <- c(min(timesx),max(timesx),tspx[3])
+    }
+    fit$data <- ts(data)
+    fit$residuals <- ts(fit$residuals)
+    fit$fitted.values <- ts(fit$fitted.values)
+    tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tspx
+    return(fit)
+}
+
+forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
 {
   if (fan) 
     level <- seq(51, 99, by = 3)
@@ -9,7 +45,10 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, ...)
     else if (min(level) < 0 | max(level) > 99.99) 
       stop("Confidence limit out of range")
   }
-  origdata <- eval(object$call$data)
+  if(!is.null(object$data))
+    origdata <- object$data
+  else
+    origdata <- eval(object$call$data)
   if(is.element("ts",class(origdata)))
   {
     tspx <- tsp(origdata)
@@ -28,8 +67,19 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, ...)
         tspx <- tsp(origdata) <- c(min(timesx),max(timesx),tspx[3])
     }
   }
-    
-  newdata <- as.data.frame(newdata)
+  # Add trend and seasonal to data frame
+  if(!missing(newdata))
+    h <- nrow(newdata)
+  if(!is.null(tspx))
+  {
+    x <- ts(1:h, start=tspx[2]+1/tspx[3], frequency=tspx[3])
+    trend <- time(x)
+    season <- as.factor(cycle(x))
+    if(!missing(newdata))
+        newdata <- data.frame(as.data.frame(newdata),trend,season)
+    else
+        newdata <- data.frame(trend,season)
+  }  
   out <- list()
   nl <- length(level)
   for(i in 1:nl)

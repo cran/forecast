@@ -1,3 +1,7 @@
+Version 2.15 (5 March 2011)
+    * Added fourier(), fourierf(), tslm()
+    * Improved forecast.lm() to allow trend and seasonal terms.
+
 Version 2.14 (4 March 2011)
     * Added forecast.lm()
     * Modified accuracy() and print.forecast() to allow non time series forecasts.

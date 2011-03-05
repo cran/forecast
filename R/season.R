@@ -122,3 +122,32 @@ stlf <- function(x,h=frequency(x)*2,s.window=7,method=c("ets","arima"),level = c
     fit <- stl(x,s.window=s.window)
     return(forecast(fit,h=h,method=method,level=level,fan=fan,...))
 }
+
+fourier <- function(x, K)
+{
+    n <- length(x)
+    period <- frequency(x)
+    X <- matrix(,nrow=n,ncol=2*K)
+    for(i in 1:K)
+    {
+        X[,2*i-1] <- sin(2*pi*i*(1:n)/period)
+        X[,2*i] <- cos(2*pi*i*(1:n)/period)
+    }
+    colnames(X) <- paste(c("S","C"),rep(1:K,rep(2,K)),sep="")
+    return(X)
+}
+
+fourierf <- function(x, K, h)
+{
+    n <- length(x)
+    period <- frequency(x)
+    X <- matrix(,nrow=h,ncol=2*K)
+    for(i in 1:K)
+    {
+        X[,2*i-1] <- sin(2*pi*i*((n+1):(n+h))/period)
+        X[,2*i] <- cos(2*pi*i*((n+1):(n+h))/period)
+    }
+    colnames(X) <- paste(c("S","C"),rep(1:K,rep(2,K)),sep="")
+    return(X)
+}
+
