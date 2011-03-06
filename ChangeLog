@@ -1,3 +1,6 @@
+Version 2.16 (6 March 2011)
+    * Changed the way missing values are handled in tslm()
+    
 Version 2.15 (5 March 2011)
     * Added fourier(), fourierf(), tslm()
     * Improved forecast.lm() to allow trend and seasonal terms.

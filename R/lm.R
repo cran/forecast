@@ -12,21 +12,21 @@ tslm <- function(formula,data,...)
         stop("Not time series data")
     tspx <- tsp(x)
     # Add trend and seasonal to data frame
-    trend <- time(x)
+    trend <- 1:length(x)
     season <- as.factor(cycle(x))
     if(is.null(data))
         data <- data.frame(trend,season)
     else
         data <- data.frame(data,trend,season)
-    fit <- lm(formula,data=data,...)
+    rownames(data) <- trend
+    fit <- lm(formula,data=data,na.action=na.exclude,...)
+    j <- is.element(data$trend,names(fit$res))
     if(!is.null(fit$call$subset))
-    {
-        j <- eval(fit$call$subset)
-        data <- data[j,]
-        # Try to figure out times for subset. Assume they are contiguous.
-        timesx <- timesx[j]
-        tspx <- c(min(timesx),max(timesx),tspx[3])
-    }
+        j <- j & eval(fit$call$subset)
+    data <- data[j,]
+    # Try to figure out times for subset. Assume they are contiguous.
+    timesx <- time(x)[j]
+    tspx <- c(min(timesx),max(timesx),tspx[3])
     fit$data <- ts(data)
     fit$residuals <- ts(fit$residuals)
     fit$fitted.values <- ts(fit$fitted.values)
@@ -70,16 +70,17 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
   # Add trend and seasonal to data frame
   if(!missing(newdata))
     h <- nrow(newdata)
-  if(!is.null(tspx))
+  if(!is.null(tspx) & is.element("trend",colnames(origdata)))
   {
     x <- ts(1:h, start=tspx[2]+1/tspx[3], frequency=tspx[3])
-    trend <- time(x)
+    trend <- max(origdata[,"trend"]) + (1:h)
     season <- as.factor(cycle(x))
     if(!missing(newdata))
         newdata <- data.frame(as.data.frame(newdata),trend,season)
     else
         newdata <- data.frame(trend,season)
-  }  
+  }
+  newdata <- as.data.frame(newdata)
   out <- list()
   nl <- length(level)
   for(i in 1:nl)
@@ -88,6 +89,11 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
   fcast$method <- "Linear regression model"
   fcast$residuals <- residuals(object)
   fcast$fitted <- fitted(object)
+  if(nrow(origdata) != length(fcast$x)) # Give up on ts attributes as some data are missing
+    tspx <- NULL
+  if(length(fcast$x) != length(fcast$residuals))
+    tspx <- NULL
+
   if(!is.null(tspx))
   {
      fcast$x <- ts(fcast$x)
