@@ -4,6 +4,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
         opt.crit=c("lik","amse","mse","sigma"), nmse=3, bounds=c("both","usual","admissible"),
         ic = c("aic","aicc","bic"),restrict=TRUE)
 {
+    #dataname <- substitute(y)
     opt.crit <- match.arg(opt.crit)
     bounds <- match.arg(bounds)
     ic <- match.arg(ic)
@@ -14,6 +15,11 @@ ets <- function(y, model="ZZZ", damped=NULL,
     if(class(y)=="data.frame" | class(y)=="list" | class(y)=="matrix" | is.element("mts",class(y)))
         stop("y should be a univariate time series")
     y <- as.ts(y)
+    # Remove outliers near ends
+    ny <- length(y)
+    y <- na.contiguous(y)
+    if(ny != length(y))
+        warning("Missing values encountered. Using longest contiguous portion of time series")
 
     if(nmse < 1 | nmse > 10)
         stop("nmse out of range")
@@ -151,6 +157,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
     model$initstate <- model$states[1,]
     model$sigma2 <- mean(model$residuals^2,na.rm=TRUE)
     model$x <- as.ts(y)
+    #model$call$data <- dataname
 
     return(structure(model,class="ets"))
 }

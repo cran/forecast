@@ -53,7 +53,12 @@ seasadj <- function(object)
     if(class(object)=="stl")
         return(object$time.series[,2]+object$time.series[,3])
     else if(class(object)=="decomposed.ts")
-            return(object$trend+object$random)
+    {
+        if(object$type=="additive")
+            return(object$x-object$seasonal)
+        else
+            return(object$x/object$seasonal)
+    }
     else
         stop("Object of unknown class")
 }
@@ -151,3 +156,44 @@ fourierf <- function(x, K, h)
     return(X)
 }
 
+
+# Replacement for decompose function in the stats package
+# Only change is the seasonal component is complete instead of truncated
+
+decompose <- function (x, type = c("additive", "multiplicative"), filter = NULL) 
+{
+    type <- match.arg(type)
+    l <- length(x)
+    f <- frequency(x)
+    if (f <= 1 || length(na.omit(x)) < 2 * f) 
+        stop("time series has no or less than 2 periods")
+    if (is.null(filter)) 
+        filter <- if (!f%%2) 
+            c(0.5, rep(1, f - 1), 0.5)/f
+        else rep(1, f)/f
+    trend <- filter(x, filter)
+    season <- if (type == "additive") 
+        x - trend
+    else x/trend
+    season <- na.omit(c(as.numeric(window(season, start(x) + 
+        c(1, 0), end(x))), as.numeric(window(season, start(x), 
+        start(x) + c(0, f)))))
+    periods <- l%/%f
+    index <- c(0, cumsum(rep(f, periods - 2)))
+    figure <- numeric(f)
+    for (i in 1L:f) figure[i] <- mean(season[index + i])
+    figure <- if (type == "additive") 
+        figure - mean(figure)
+    else figure/mean(figure)
+    # Following line is only change
+    seasonal <- ts(rep(figure, periods+1)[1:l], start = start(x), frequency = f)
+    structure(list(x=x, seasonal = seasonal, trend = trend, random = if (type == 
+        "additive") x - seasonal - trend else x/seasonal/trend, 
+        figure = figure, type = type), class = "decomposed.ts")
+}
+
+plot.decomposed.ts <- function (x, ...) 
+{
+    plot(cbind(observed = x$x, trend = x$trend, seasonal = x$seasonal, random = x$random), 
+        main = paste("Decomposition of", x$type, "time series"), ...)
+}

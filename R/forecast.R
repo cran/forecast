@@ -194,6 +194,10 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     }
     else
         xx <- data
+    # Remove final missing values
+    nx <- max(which(!is.na(xx)))
+    xxx <- xx[1:nx]
+    include <- min(include,nx)
     if(is.null(ylim))
     {
         ylim <- range(c(xx[(n-include+1):n],pred.mean),na.rm=TRUE)
@@ -201,12 +205,12 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
             ylim <- range(ylim,lower,upper,na.rm=TRUE)
     }
     npred <- length(pred.mean)
-    plot(ts(c(xx[(n-include+1):n], rep(NA, npred)), end=tsp(xx)[2]+npred/freq, f = freq),
+    plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, f = freq),
         xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,...)
 
     if(plot.conf)
     {
-        xxx <- tsp(xx)[2] + (1:npred)/freq            
+        xxx <- tsp(pred.mean)[1] - 1/freq + (1:npred)/freq            
         idx <- rev(order(x$level))
         nint <- length(x$level)
         for(i in 1:nint)
@@ -239,9 +243,9 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
         }
     }
     if(npred > 1 & !shadebars)
-        lines(ts(pred.mean, start = tsp(xx)[2]+1/freq, f = freq), lty = 1,col=fcol)
+        lines(pred.mean, lty = 1,col=fcol)
     else
-        points(ts(pred.mean, start = tsp(xx)[2]+1/freq, f = freq), col=fcol, pch=19)
+        points(pred.mean, col=fcol, pch=19)
     if(plot.conf)
         invisible(list(mean=pred.mean,lower=lower,upper=upper))
     else

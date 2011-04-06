@@ -3,10 +3,13 @@ tslm <- function(formula,data,...)
     if(missing(data)) # Grab first variable
     {
         x <- get(as.character(formula)[2])
-        data <- NULL
+        data <- dataname <- NULL
     }
     else
+    {
+        dataname <- substitute(data)
         x <- data[,1]
+    }
     
     if(!is.ts(x))
         stop("Not time series data")
@@ -31,6 +34,8 @@ tslm <- function(formula,data,...)
     fit$residuals <- ts(fit$residuals)
     fit$fitted.values <- ts(fit$fitted.values)
     tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tspx
+    if(!is.null(dataname))
+        fit$call$data <- dataname
     return(fit)
 }
 

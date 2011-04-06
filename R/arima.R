@@ -2,6 +2,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     max.P=2, max.Q=2, max.order=5, stationary=FALSE, ic=c("aic","aicc","bic"),
     trace=FALSE,approximation=FALSE,xreg=NULL,offset=offset,allowdrift=TRUE)
 {
+    #dataname <- substitute(x)
     ic <- match.arg(ic)
     m <- frequency(x)
          
@@ -66,6 +67,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     bestfit$series <- deparse(substitute(x))
     bestfit$ic <- NULL
     bestfit$call <- match.call()
+    #bestfit$call$data <- dataname
 #    bestfit$xreg <- xreg
 
     if(trace)
@@ -250,6 +252,17 @@ forecast.Arima <- function (object, h = ifelse(object$arma[5] > 1, 2 * object$ar
     else
         pred <- predict(object, n.ahead = h)
 
+    # Fix time series characteristics if there are missing values at end of series.
+    tspx <- tsp(x)
+    nx <- max(which(!is.na(x)))
+    if(nx != length(x))
+    {
+        tspx[2] <- time(x)[nx]
+        start.f <- tspx[2]+1/tspx[3]
+        pred$pred <- ts(pred$pred,f=tspx[3],s=start.f)
+        pred$se <- ts(pred$se,f=tspx[3],s=start.f)
+    }
+        
     if(fan)
         level <- seq(51,99,by=3)
     else
@@ -360,18 +373,29 @@ Arima <- function(x, order = c(0, 0, 0),
       fixed = NULL, init = NULL, method = c("CSS-ML", "ML", "CSS"),
       n.cond, optim.control = list(), kappa = 1e6, model=NULL)
 {
+    # Remove outliers near ends
+    #j <- time(x)
+    #x <- na.contiguous(x)
+    #if(length(j) != length(x))
+    #    warning("Missing values encountered. Using longest contiguous portion of time series")
+
+    if (!is.null(xreg))
+    {
+        nmxreg <- deparse(substitute(xreg))
+        xreg <- as.matrix(xreg)
+        if (is.null(colnames(xreg))) 
+            colnames(xreg) <- if (ncol(xreg) == 1) nmxreg
+                              else paste(nmxreg, 1:ncol(xreg), sep = "")
+        #k <- is.element(j,time(x)) # In case missing ends omitted
+        #xreg <- xreg[k,]
+    }
+    
     if(!is.null(model))
+    {
         tmp <- arima2(x,model,xreg)
+    }
     else
     {
-        if (!is.null(xreg))
-        {
-            nmxreg <- deparse(substitute(xreg))
-            xreg <- as.matrix(xreg)
-            if (is.null(colnames(xreg))) 
-                colnames(xreg) <- if (ncol(xreg) == 1) nmxreg
-                                  else paste(nmxreg, 1:ncol(xreg), sep = "")
-        }
         if(include.drift)
         {
             drift <- 1:length(x)
@@ -388,6 +412,7 @@ Arima <- function(x, order = c(0, 0, 0),
     tmp$series <- deparse(substitute(x))
     tmp$xreg <- xreg
     tmp$call <- match.call()
+    #tmp$call$data <- dataname
     return(tmp)
 }
 

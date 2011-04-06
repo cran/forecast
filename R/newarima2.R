@@ -14,6 +14,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
         m <- 1
     }
+
     
     # Choose order of differencing
     if(!is.null(xreg))
@@ -25,8 +26,9 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         if (is.null(colnames(xreg))) 
             colnames(xreg) <- if (ncol(xreg) == 1) nmxreg
                               else paste(nmxreg, 1:ncol(xreg), sep = "")
-        xx <- ts(residuals(lm(x ~ xreg)))
-        tsp(xx) <- tsp(x)
+        j <- !is.na(x) & !is.na(rowSums(xreg))
+        xx <- x
+        xx[j] <- residuals(lm(x ~ xreg))
     }
     else
         xx <- x
@@ -73,6 +75,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     {
         bestfit <- search.arima(x,d,D,max.p,max.q,max.P,max.Q,max.order,stationary,ic,trace,approximation,xreg=xreg,offset=offset,allowdrift=allowdrift)
         bestfit$call <- match.call()
+        bestfit$call$x <- data.frame(x=x)
         return(bestfit)
     }
 
@@ -313,6 +316,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     bestfit$series <- deparse(substitute(x))
     bestfit$ic <- NULL
     bestfit$call <- match.call()
+    bestfit$call$x <- data.frame(x=x)
 
     if(trace)
         cat("\n\n Best model:",arima.string(bestfit),"\n\n")

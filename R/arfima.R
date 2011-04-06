@@ -113,7 +113,7 @@ arfima <- function(x, drange = c(0, 0.5), estim = c("mle","ls"),...)
     fit$residuals <- undo.na.ends(x,residuals(fit))
     fit$x <- x
     fit$fitted <- fit$x - fit$residuals
-    
+    fit$call$data <- data.frame(x=x)
     return(fit)
 }
 

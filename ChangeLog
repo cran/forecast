@@ -1,3 +1,10 @@
+Version 2.17 (6 April 2011)
+    * Modified simulate.Arima() to handle seasonal ARIMA models.
+    * Modified ets() to handle missing values. The largest continuous section of data is now modelled.
+    * Improved plot.forecast() to handle missing values at the end of the observed series.
+    * Added replacement decompose() to avoid truncation of seasonal term and seasonally adjusted series.
+    * Fixed bug in seasadj() to handle multiplicative decomposition, and to avoid missing values at ends.
+    
 Version 2.16 (6 March 2011)
     * Changed the way missing values are handled in tslm()
     
