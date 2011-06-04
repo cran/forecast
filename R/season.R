@@ -185,13 +185,14 @@ decompose <- function (x, type = c("additive", "multiplicative"), filter = NULL)
     figure <- if (type == "additive") 
         figure - mean(figure)
     else figure/mean(figure)
-    # Following line is only change
+    # Following lines are only changes
     seasonal <- ts(rep(figure, periods+1)[1:l], start = start(x), frequency = f)
     structure(list(x=x, seasonal = seasonal, trend = trend, random = if (type == 
         "additive") x - seasonal - trend else x/seasonal/trend, 
         figure = figure, type = type), class = "decomposed.ts")
 }
 
+# Changed definition of observed to use passed data rather than construct on fly
 plot.decomposed.ts <- function (x, ...) 
 {
     plot(cbind(observed = x$x, trend = x$trend, seasonal = x$seasonal, random = x$random), 

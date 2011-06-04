@@ -53,7 +53,7 @@ air.model2 <- Arima(window(AirPassengers,start=1957),model=air.model)
 outofsample <- fitted(air.model2)
 # in-sample one-step forecasts
 accuracy(air.model)
-# out-of-sample one-step foercasts
+# out-of-sample one-step forecasts
 accuracy(air.model2)
 # out-of-sample multi-step forecasts
 accuracy(forecast(air.model,h=48),outofsample)

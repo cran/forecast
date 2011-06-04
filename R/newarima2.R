@@ -340,7 +340,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
         method <- "CSS-ML"
     if(diffs==1 & constant)
     {
-        xreg <- cbind(1:length(x),xreg)
+        xreg <- cbind(drift=1:length(x),xreg)
         if(use.season)
             fit <- try(stats:::arima(x=x,order=order,seasonal=list(order=seasonal,period=m),xreg=xreg,method=method),silent=TRUE)
         else
@@ -406,6 +406,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
             fit$ic <- 1e20 # Don't like this model
         if(trace)
             cat("\n",arima.string(fit),":",fit$ic)
+        fit$xreg <- xreg
         return(fit)
     }
     else

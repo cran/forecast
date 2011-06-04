@@ -10,7 +10,8 @@ forecast.HoltWinters, forecast.lm, forecast.stl, forecast.StructTS, accuracy, ho
 meanf, logLik.ets, monthdays, na.interp, ets, plot.ets, plot.forecast,plot.decomposed.ts,
 plot.splineforecast, rwf, seasadj, seasonaldummy,naive,snaive,stlf,
 seasonaldummyf, seasonplot, ses, sindexf, splinef,tslm,fourier,fourierf,forecast.lm,
-thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, dm.test)
+thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, dm.test,
+Acf,Pacf,ma,CV)
 
 S3method(as.data.frame,forecast)
 S3method(coef,ets)

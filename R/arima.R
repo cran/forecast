@@ -426,7 +426,8 @@ arima2 <- function (x, model, xreg)
     {
         time.offset <- (tsp(x)[1] - tsp(model$x)[1])*tsp(x)[3]
         xreg <- cbind(xreg, time.offset+(1:length(x)))
-        names(xreg)[ncol(xreg)] <- "drift"    
+        colnames(xreg)[ncol(xreg)] <- "drift"    
+		use.xreg <- TRUE
     }
 
     if(model$arma[5]>1 & sum(abs(model$arma[c(3,4,7)]))>0) # Seasonal model
@@ -462,7 +463,7 @@ print.Arima <- function (x, digits = max(3, getOption("digits") - 3), se = TRUE,
 
     cat("Series:",x$series,"\n")
     cat(arima.string(x),"\n")
-    cat("\nCall:", deparse(x$call, width.cutoff = 75), "\n", sep = " ")
+    #cat("\nCall:", deparse(x$call, width.cutoff = 75), "\n", sep = " ")
 #    if(!is.null(x$xreg))
 #    {
 #        cat("\nRegression variables fitted:\n")

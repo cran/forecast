@@ -117,9 +117,9 @@ seasonplot <- function(x,s,season.labels=NULL,year.labels=FALSE,year.labels.left
         idx <- idx[idx<length(tsx)]
         year <- time(tsx)[idx]
         if(year.labels)
-            text(x=rep(s+.1,length(year)),y=x[idx+s-1],labels=paste(c(round(year))),adj=0,...)
+            text(x=rep(s+.1,length(year)),y=x[idx+s-1],labels=paste(c(trunc(year+0.5))),adj=0,...)
         if(year.labels.left)
-            text(x=rep(.9,length(year)),y=x[idx],labels=paste(c(round(year))),adj=1,...)
+            text(x=rep(.9,length(year)),y=x[idx],labels=paste(c(trunc(year+0.5))),adj=1,...)
     }
     if(is.null(labs))
         axis(1,...)
