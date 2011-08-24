@@ -1,7 +1,7 @@
 \name{rwf}
 \alias{rwf}
 \title{Random Walk Forecast}
-\usage{rwf(x, h=10, drift=FALSE, level=c(80,95), fan=FALSE)}
+\usage{rwf(x, h=10, drift=FALSE, level=c(80,95), fan=FALSE, lambda=NULL)}
 
 \arguments{
 \item{x}{a numeric vector or time series}
@@ -9,6 +9,7 @@
 \item{drift}{Logical flag. If TRUE, fits a random walk with drift model.}
 \item{level}{Confidence levels for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}
 }
 \description{Returns forecasts and prediction intervals for a random walk with drift model applied to x.
 }

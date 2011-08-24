@@ -4,8 +4,8 @@
 \title{Exponential smoothing state space model}
 \usage{
 ets(y, model="ZZZ", damped=NULL, alpha=NULL, beta=NULL, gamma=NULL, phi=NULL,
-    additive.only=FALSE, lower=c(rep(0.0001,3), 0.8), upper=c(rep(0.9999,3),0.98),
-    opt.crit=c("lik","amse","mse","sigma"), nmse=3,
+    additive.only=FALSE, lambda=NULL, lower=c(rep(0.0001,3), 0.8), upper=c(rep(0.9999,3),0.98),
+    opt.crit=c("lik","amse","mse","sigma", "mae"), nmse=3,
     bounds=c("both","usual","admissible"),  ic=c("aic","aicc","bic"),
     restrict=TRUE)
 }
@@ -29,11 +29,12 @@ parameters.}
 \item{gamma}{Value of gamma. If NULL, it is estimated.}
 \item{phi}{Value of phi. If NULL, it is estimated.}
 \item{additive.only}{If TRUE, will only consider additive models. Default is FALSE.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated. When \code{lambda=TRUE}, \code{additive.only} is set to FALSE.}
 \item{lower}{Lower bounds for the parameters (alpha, beta, gamma, phi)}
 \item{upper}{Upper bounds for the parameters (alpha, beta, gamma, phi)}
 \item{opt.crit}{Optimization criterion. One of "mse" (Mean Square Error),
     "amse" (Average MSE over first \code{nmse} forecast horizons), "sigma"
-    (Standard deviation of residuals), or "lik" (Log-likelihood, the default).}
+    (Standard deviation of residuals), "mae" (Mean of absolute residuals), or "lik" (Log-likelihood, the default).}
 \item{nmse}{Number of steps for average multistep MSE (1<=\code{nmse}<=10).}
 \item{bounds}{Type of parameter space to impose: \code{"usual" }
 indicates all parameters must lie between specified lower and
@@ -73,7 +74,7 @@ admissible parameter space for exponential smoothing models".
 
 Hyndman, R.J., Koehler, A.B., Ord, J.K., and Snyder, R.D. (2008)
 \emph{Forecasting with exponential smoothing: the state space approach},
-Springer-Verlag. \url{http://robjhyndman.com/expsmooth}.
+Springer-Verlag. \url{http://www.exponentialsmoothing.net}.
 }
 
 

@@ -35,7 +35,7 @@ decompose(x, type = c("additive", "multiplicative"), filter = NULL)
   time series.
 }
 \note{
-This function is identical to the \code{\link[stats]{decompose}} function in the \code{stats} package except that the seasonal component is not incorrectly truncated.
+This function is a modification of the \code{\link[stats]{decompose}} function in the \code{stats} package.  In this version, the seasonal component is not incorrectly truncated, the trend is correctly calculated for odd frequencies, and the data is returned as part of the object. It is hoped that this function will replace the version in \code{stats} package, and then it will be removed from the \code{forecast} package.
 }
 \value{
   An object of class \code{"decomposed.ts"} with following components:

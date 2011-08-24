@@ -5,7 +5,7 @@
 \title{Forecasting using stl objects}
 \usage{\method{forecast}{stl}(object, method=c("ets","arima"),
     h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, ...)
-stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"), level = c(80, 95), fan = FALSE, ...)
+stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"), lambda=NULL, level = c(80, 95), fan = FALSE, ...)
 }
 
 \arguments{
@@ -13,6 +13,7 @@ stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"), level = c(80, 95)
 \item{x}{A univariate numeric time series of class "\code{ts}"}
 \item{s.window}{Either the character string "periodic" (default) or the span (in lags) of the loess window for seasonal extraction.}
 \item{method}{Method to use for forecasting the seasonally adjusted series.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated.}
 \item{h}{Number of periods for forecasting.}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
@@ -43,8 +44,8 @@ An object of class \code{"forecast"} is a list containing at least the following
 \item{upper}{Upper limits for prediction intervals}
 \item{level}{The confidence values associated with the prediction intervals}
 \item{x}{The original time series (either \code{object} itself or the time series used to create the model stored as \code{object}).}
-\item{residuals}{Residuals from the fitted model. That is x minus fitted values.}
-\item{fitted}{Fitted values (one-step forecasts)}
+\item{residuals}{Residuals from the fitted model. That is (possibly tranformed) x minus fitted values.}
+\item{fitted}{Fitted values (one-step forecasts) on transformed scale if lambda is not NULL.}
 }
 
 \seealso{\code{\link{forecast.ets}}, \code{\link{forecast.Arima}}.}
@@ -54,6 +55,7 @@ An object of class \code{"forecast"} is a list containing at least the following
 \examples{fit <- stl(USAccDeaths,s.window="periodic")
 plot(forecast(fit))
 
-plot(snaive(wineind))
+plot(stlf(AirPassengers, lambda=BoxCox.lambda(AirPassengers)))
+
 }
 \keyword{ts}

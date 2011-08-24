@@ -61,8 +61,8 @@ na.interp <- function(x)
     return(xx)
 }
 
-seasonplot <- function(x,s,season.labels=NULL,year.labels=FALSE,year.labels.left=FALSE,
-    type="o",main,ylab="",xlab=NULL,col=1,...)
+seasonplot <- function(x, s, season.labels=NULL, year.labels=FALSE, year.labels.left=FALSE,
+    type="o", main, ylab="", xlab=NULL, col=1, labelgap=0.1, ...)
 {
     if(missing(main))
         main = paste("Seasonal plot:", deparse(substitute(x)))
@@ -105,21 +105,29 @@ seasonplot <- function(x,s,season.labels=NULL,year.labels=FALSE,year.labels.left
     if(is.null(season.labels))
         season.labels <- labs
     if(year.labels)
-        xlim <- c(1,s+.5)
+        xlim <- c(1-labelgap,s+0.4+labelgap)
     else
-        xlim<-c(1,s)
+        xlim<-c(1-labelgap,s)
     if(year.labels.left)
-        xlim[1] <- 0.5
-    plot(Season,xnew,xaxt="n",xlab=xlab,type=type,ylab=ylab,main=main,xlim=xlim,col=col,...)
-    if(year.labels | year.labels.left)
+        xlim[1] <- 0.4-labelgap
+    plot(Season,xnew,xaxt="n",xlab=xlab,type=type,ylab=ylab,main=main,xlim=xlim,col=0,...)
+	nn=length(Season)/s	    
+	col = rep(col,nn)[1:nn]
+	for(i in 0:(nn-1))
+    	lines(Season[(i*(s+1)+1) : ((s+1)*(i+1))], xnew[(i*(s+1)+1) : ((s+1)*(i+1))], type = type, col = col[i+1], ...)
+    if(year.labels)
     {
-        idx <- s*as.integer(0:(length(x)/s))+1
-        idx <- idx[idx<length(tsx)]
+        idx <- which(Season[!is.na(xnew)]==s)
         year <- time(tsx)[idx]
-        if(year.labels)
-            text(x=rep(s+.1,length(year)),y=x[idx+s-1],labels=paste(c(trunc(year+0.5))),adj=0,...)
-        if(year.labels.left)
-            text(x=rep(.9,length(year)),y=x[idx],labels=paste(c(trunc(year+0.5))),adj=1,...)
+        text(x=rep(s+labelgap,length(year)),y=tsx[idx],labels=paste(c(trunc(year))),adj=0,...,col=col[1:length(idx)])
+    }
+    if(year.labels.left)
+    {
+      idx <- which(Season[!is.na(xnew)]==1)
+      year <- time(tsx)[idx]
+	  if(min(idx)>1) # First year starts after season 1n
+		col <- col[-1]
+      text(x=rep(1-labelgap,length(year)),y=tsx[idx],labels=paste(c(trunc(year))),adj=1,...,col=col[1:length(idx)])
     }
     if(is.null(labs))
         axis(1,...)

@@ -9,7 +9,8 @@ auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
            stationary = FALSE, ic = c("aic","aicc", "bic"), 
            stepwise=TRUE, trace=FALSE, 
            approximation=length(x)>100 | frequency(x)>12, xreg=NULL,
-           test=c("kpss","adf","pp"), allowdrift=TRUE)
+           test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"),
+					 allowdrift=TRUE, lambda=NULL)
 }
 
 \arguments{
@@ -38,7 +39,10 @@ auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
     times.}
 \item{xreg}{Optionally, a vector or matrix of external regressors, which must have the same number of rows as x.}
 \item{test}{Type of unit root test to use. See \code{\link{ndiffs}} for details.}
+\item{seasonal.test}{This determines which seasonal unit root test is used. If \code{seasonal.test="ch"}, the
+Canova-Hansen test is used. If \code{seasonal.test="ocsb"} (the default), the OCSB test is used.}
 \item{allowdrift}{If \code{TRUE}, models with drift terms are considered.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated.}
 }
 \description{Returns best ARIMA model according to either AIC, AICc or BIC value.
 The function conducts a search over
@@ -49,9 +53,12 @@ Seasonal differences chosen using a variation on the Canova-Hansen test. Stepwis
 }
 \value{Same as for \code{\link{arima}}}
 
-\references{Hyndman, R.J. and Khandakar, Y. (2008) "Automatic time series forecasting: The forecast
-package for R", \emph{Journal of Statistical Software}, \bold{26}(3).}
-
+\references{
+Canova, B.E. and Hansen, F. (1995) "Are seasonal patterns constant over time? A test for seasonal stability", \emph{Journal of Business & Economic Statistics}, \bold{13}(3), 237-252.
+Hyndman, R.J. and Khandakar, Y. (2008) "Automatic time series forecasting: The forecast package for R", \emph{Journal of Statistical Software}, \bold{26}(3).
+Osborn, D.R., Chui, A.P.L., Smith, J.P., Birchenhall, C.R. (1988) "Seasonality and the order of integration in consumption", \emph{Oxford Bulletin of Economics and Statistics}, \bold{50}(4).
+Osborn, D.R. (1990) "Seasonality and the order of integration in consumption", \emph{International Journal of Forecasting}, \bold{6}(1990), Pages 327-336.
+}
 
 \seealso{\code{\link{Arima}}}
 

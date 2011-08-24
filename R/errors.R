@@ -2,7 +2,7 @@
 ## Forecasts in f. This may be a numerical vector or the output from arima or ets or derivatives.
 ## Actual values in x
 ## test enables a subset of x and f to be tested.
-forecasterrors <- function(f,x,test=1:length(x),lambda=NULL)
+forecasterrors <- function(f,x,test=1:length(x))
 {
     data.x <- dx <- NULL
     if(is.list(f))
@@ -15,19 +15,10 @@ forecasterrors <- function(f,x,test=1:length(x),lambda=NULL)
             stop("Unknown list structure")
     }
     n <- length(x)
-    if(is.null(lambda))
-    {
-        ff <- f
-        xx <- x
-        dx <- data.x
-    }
-    else
-    {
-        ff <- InvBoxCox(f,lambda)
-        xx <- InvBoxCox(x,lambda)
-        if(!is.null(data.x))
-            dx <- InvBoxCox(data.x,lambda)
-    }
+    ff <- f
+    xx <- x
+    dx <- data.x
+
     error <- (xx-ff[1:n])[test]
     me <- mean(error)
     mse <- mean(error^2)
@@ -60,22 +51,14 @@ forecasterrors <- function(f,x,test=1:length(x),lambda=NULL)
 }
 
 
-accuracy <- function(f,x,test=1:length(x),lambda=NULL)
+accuracy <- function(f,x,test=1:length(x))
 {
     if(!missing(x))
-        return(forecasterrors(f,x,test,lambda))
+        return(forecasterrors(f,x,test))
     if(class(f)=="Arima" & !is.element("x", names(f)))
         f$x <- eval(parse(text = f$series))
-    if(!is.null(lambda))  # undo Box-Cox transformation
-    {
-        ff <- InvBoxCox(f$x,lambda)
-        fits <- InvBoxCox(fitted(f),lambda)
-    }
-    else
-    {
-        ff <- f$x
-        fits <- fitted(f)    # Don't use f$resid as this may contain multiplicative errors.
-    }
+    ff <- f$x
+    fits <- fitted(f)    # Don't use f$resid as this may contain multiplicative errors.
     res <- ff-fits
 
     pe <- res/ff * 100 # Percentage error

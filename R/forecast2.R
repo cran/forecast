@@ -1,46 +1,60 @@
 # Mean forecast
-meanf <- function(x,h=10,level=c(80,95),fan=FALSE)
+meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
 {
-    xname <- deparse(substitute(x))
-    n <- length(x)
-    if(!is.ts(x))
-        x <- ts(x)
-    start.x <- tsp(x)[1]
-    f=ts(rep(mean(x),h),start=start.x,f=frequency(x))
-    if(fan)
-        level <- seq(51,99,by=3)
-    else
-    {
-        if(min(level) > 0 & max(level) < 1)
-            level <- 100*level
-        else if(min(level) < 0 | max(level) > 99.99)
-            stop("Confidence limit out of range")
-    }
-    nconf <- length(level)
-    lower <- upper <- matrix(NA,nrow=h,ncol=nconf)
-    s <- sd(x)
-    for(i in 1:nconf)
-    {
-        tfrac <- qt( 0.5 - level[i]/200, n-1)
-        w <- -tfrac * s*sqrt(1+1/n)
-        lower[,i] = f-w
-        upper[,i] = f+w
-    }
-    freq=frequency(x)
-    lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
-    upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
-    colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
-    fits <- rep(NA,n-1)
-    for(i in 1:(n-1))
-        fits[i] <- mean(x[1:i])
-    res <- x[2:n] - fits
+  xname <- deparse(substitute(x))
+  n <- length(x)
+  if(!is.ts(x))
+    x <- ts(x)
+  start.x <- tsp(x)[1]
+	if(!is.null(lambda))
+	{
+		origx <- x
+		x <- BoxCox(x,lambda)
+	}
+  f <- ts(rep(mean(x,na.rm=TRUE),h),start=start.x,f=frequency(x))
+  if(fan)
+    level <- seq(51,99,by=3)
+  else
+  {
+    if(min(level) > 0 & max(level) < 1)
+      level <- 100*level
+    else if(min(level) < 0 | max(level) > 99.99)
+      stop("Confidence limit out of range")
+  }
+  nconf <- length(level)
+  lower <- upper <- matrix(NA,nrow=h,ncol=nconf)
+  s <- sd(x,na.rm=TRUE)
+  for(i in 1:nconf)
+  {
+    tfrac <- qt( 0.5 - level[i]/200, n-1)
+    w <- -tfrac * s*sqrt(1+1/n)
+    lower[,i] <- f-w
+    upper[,i] <- f+w
+  }
+  freq=frequency(x)
+  lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
+  upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
+  colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
+  fits <- rep(NA,n-1)
+  for(i in 1:(n-1))
+      fits[i] <- mean(x[1:i],na.rm=TRUE)
+  res <- x[2:n] - fits	
+	
+	if(!is.null(lambda))
+	{
+		fits <- InvBoxCox(fits,lambda)
+		x <- origx
+		f <- InvBoxCox(f,lambda)
+		lower <- InvBoxCox(lower,lambda)
+		upper <- InvBoxCox(upper,lambda)
+	}	
 
-    junk <- list(method="Mean",level=level,x=x,xname=xname,mean=ts(f,start=tsp(x)[2]+1/freq,f=freq),lower=lower,upper=upper,
-        model=list(mu=f[1],mu.se=s/sqrt(length(x)),sd=s,residuals=ts(c(x-f[1]),start=start.x,f=freq)),
+  junk <- list(method="Mean",level=level,x=x,xname=xname,mean=ts(f,start=tsp(x)[2]+1/freq,f=freq),lower=lower,upper=upper,
+        model=list(mu=f[1],mu.se=s/sqrt(length(x)),sd=s), lambda=lambda,
         fitted =ts(fits,start=start.x+1/freq,f=freq), residuals=ts(res,start=start.x+1/freq,f=freq))
-    junk$model$call <- match.call()
+  junk$model$call <- match.call()
 
-    return(structure(junk,class="forecast"))
+  return(structure(junk,class="forecast"))
 }
 
 thetaf <- function(x,h=10,level=c(80,95),fan=FALSE)
@@ -76,13 +90,18 @@ thetaf <- function(x,h=10,level=c(80,95),fan=FALSE)
 }
 
 # Random walk
-rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE)
+rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE,lambda=NULL)
 {
     xname <- deparse(substitute(x))
     n <- length(x)
     nn <- 1:h
     if(!is.ts(x))
         x <- ts(x)
+		if(!is.null(lambda))
+		{
+			origx <- x
+			x <- BoxCox(x,lambda)
+		}
     if(drift)
     {
         fit <- summary(lm(diff(x) ~ 1))
@@ -95,7 +114,7 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE)
     else
     {
         b <- b.se <- 0
-        s <- sd(diff(x))
+        s <- sd(diff(x),na.rm=TRUE)
         res <- diff(x)
         method <- "Random walk"
     }
@@ -123,10 +142,20 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE)
     lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
     upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
     colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
-    junk <- list(method=method,level=level,x=x,xname=xname,mean=ts(f,start=tsp(x)[2]+1/freq,f=freq),lower=lower,upper=upper,
-        model=list(drift=b,drift.se=b.se,sd=s,residuals=ts(c(x-f[1]),start=tsp(x)[1],f=freq)),
-        fitted = ts(x[-n],start=tsp(x)[1]+1/freq,f=freq),
-        residuals = diff(x))
+		fits <- ts(x[-n],start=tsp(x)[1]+1/freq,f=freq)
+		fcast <- ts(f,start=tsp(x)[2]+1/freq,f=freq)
+	res <- diff(x)
+		if(!is.null(lambda))
+		{
+			x <- origx
+			fcast <- InvBoxCox(fcast,lambda)
+			fits <- InvBoxCox(fits,lambda)
+			upper <- InvBoxCox(upper,lambda)
+			lower <- InvBoxCox(lower,lambda)
+		}
+
+    junk <- list(method=method,level=level,x=x,xname=xname,mean=fcast,lower=lower,upper=upper,
+        model=list(drift=b,drift.se=b.se,sd=s), fitted = fits, residuals = res, lambda=lambda)
     junk$model$call <- match.call()
 
     return(structure(junk,class="forecast"))
@@ -134,24 +163,34 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE)
 
 BoxCox <- function(x,lambda)
 {
-    if(lambda==0)
-        return(log(x))
-    else
-        return((sign(x)*abs(x)^lambda - 1)/lambda)
+  if(lambda < 0)
+	x[x < 0] <- NA
+  if(lambda==0)
+    out <- log(x)
+  else
+    out <- (sign(x)*abs(x)^lambda - 1)/lambda
+  if(!is.null(colnames(x)))
+	colnames(out) <- colnames(x)
+  return(out)	
 }
 
 InvBoxCox <- function(x,lambda)
 {
+	if(lambda < 0)
+		x[x > -1/lambda] <- NA
     if(lambda==0)
-        return(exp(x))
+        out <- exp(x)
     else
     {
         xx <- x*lambda + 1
-        return(sign(xx)*abs(xx)^(1/lambda))
+        out <- sign(xx)*abs(xx)^(1/lambda)
     }
+    if(!is.null(colnames(x)))
+	  colnames(out) <- colnames(x)
+    return(out)	
 }
 
-forecast.StructTS <- function(object,h=ifelse(object$call$type=="BSM", 2*object$xtsp[3], 10),level=c(80,95),fan=FALSE,...)
+forecast.StructTS <- function(object,h=ifelse(object$call$type=="BSM", 2*object$xtsp[3], 10),level=c(80,95),fan=FALSE,lambda=NULL,...)
 {
     xname <- deparse(substitute(x))
     x <- object$data
@@ -181,12 +220,24 @@ forecast.StructTS <- function(object,h=ifelse(object$call$type=="BSM", 2*object$
         method <- "Local level structural model"
     else if(object$call$type=="trend")
         method <- "Local linear structural model"
+	
+	fits <- x - residuals(object)
+	if(!is.null(lambda))
+	{
+		fits <- InvBoxCox(fits,lambda)
+		x <- InvBoxCox(x,lambda)
+		pred$pred <- InvBoxCox(pred$pred,lambda)
+		lower <- InvBoxCox(lower,lambda)
+		upper <- InvBoxCox(upper,lambda)
+	}
+		
+	
     return(structure(list(method=method,model=object,level=level,mean=pred$pred,lower=lower,upper=upper,
-        x=x,xname=xname,fitted=x-residuals(object),residuals=residuals(object)),
+        x=x,xname=xname,fitted=fits,residuals=residuals(object)),
         class="forecast"))
 }
 
-forecast.HoltWinters <- function(object,h=ifelse(frequency(object$x)>1,2*frequency(object$x),10),level=c(80,95),fan=FALSE,...)
+forecast.HoltWinters <- function(object,h=ifelse(frequency(object$x)>1,2*frequency(object$x),10),level=c(80,95),fan=FALSE,lambda=NULL,...)
 {
     xname <- deparse(substitute(x))
     x <- object$x
@@ -211,12 +262,23 @@ forecast.HoltWinters <- function(object,h=ifelse(frequency(object$x)>1,2*frequen
         upper[,i] <- pmean + qq*se
     }
     colnames(lower) = colnames(upper) = paste(level,"%",sep="")
-    method <- "HoltWinters"
-    return(structure(list(method=method, model=object, level=level,
+	
+	
+	if(!is.null(lambda))
+	{
+		object$fitted[,1] <- InvBoxCox(object$fitted[,1],lambda)
+		x <- InvBoxCox(x,lambda)
+		pmean <- InvBoxCox(pmean,lambda)
+		lower <- InvBoxCox(lower,lambda)
+		upper <- InvBoxCox(upper,lambda)
+	}	
+	
+    return(structure(list(method="HoltWinters", model=object, level=level,
         mean=pmean, lower=lower, upper=upper,
-        x=x, xname=xname, fitted=object$fitted, residuals=residuals(object)),
+        x=x, xname=xname, fitted=object$fitted[,1], residuals=residuals(object)),
         class="forecast"))
 }
+
 
 ## CROSTON
 

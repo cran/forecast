@@ -2,7 +2,7 @@
 \alias{BoxCox}
 \alias{InvBoxCox}
 \title{Box Cox Transformation}
-\usage{BoxCox(x,lambda)
+\usage{BoxCox(x, lambda)
 InvBoxCox(x,lambda)
 }
 \arguments{
@@ -21,9 +21,11 @@ if \eqn{\lambda\ne0}{lambda is not equal to 0}. For \eqn{\lambda=0}{lambda=0},
 }
 \references{Box, G. E. P. and Cox, D. R. (1964) An analysis of transformations. \emph{JRSS B} \bold{26} 211--246.
 }
+\seealso{\code{\link{BoxCox.lambda}}}
 \author{Rob J Hyndman}
-\examples{lynx.sqrt <- BoxCox(lynx,0.5)
-lynx.fit <- ar(lynx.sqrt)
-plot(forecast(lynx.fit,h=20),lambda=0.5)
+\examples{
+lambda <- BoxCox.lambda(lynx)
+lynx.fit <- ar(BoxCox(lynx,lambda))
+plot(forecast(lynx.fit,h=20,lambda=lambda))
 }
 \keyword{ts}

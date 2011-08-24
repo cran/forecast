@@ -122,10 +122,28 @@ forecast.stl <- function(object, method=c("ets","arima"),
     return(fcast)
 }
 
-stlf <- function(x,h=frequency(x)*2,s.window=7,method=c("ets","arima"),level = c(80, 95), fan = FALSE, ...)
+stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), lambda=NULL, level = c(80, 95), fan = FALSE, ...)
 {
-    fit <- stl(x,s.window=s.window)
-    return(forecast(fit,h=h,method=method,level=level,fan=fan,...))
+	if (!is.null(lambda)) 
+	{
+		origx <- x
+		x <- BoxCox(x, lambda)
+	}
+
+	fit <- stl(x,s.window=s.window)
+	fcast <- forecast(fit,h=h,method=method,level=level,fan=fan,...)
+
+	if (!is.null(lambda)) 
+	{
+		fcast$x <- origx
+		fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
+		fcast$mean <- InvBoxCox(fcast$mean, lambda)
+		fcast$lower <- InvBoxCox(fcast$lower, lambda)
+		fcast$upper <- InvBoxCox(fcast$upper, lambda)
+		fcast$lambda <- lambda
+	}
+
+	return(fcast)
 }
 
 fourier <- function(x, K)
@@ -156,43 +174,7 @@ fourierf <- function(x, K, h)
     return(X)
 }
 
-
-# Replacement for decompose function in the stats package
-# Only change is the seasonal component is complete instead of truncated
-
-decompose <- function (x, type = c("additive", "multiplicative"), filter = NULL) 
-{
-    type <- match.arg(type)
-    l <- length(x)
-    f <- frequency(x)
-    if (f <= 1 || length(na.omit(x)) < 2 * f) 
-        stop("time series has no or less than 2 periods")
-    if (is.null(filter)) 
-        filter <- if (!f%%2) 
-            c(0.5, rep(1, f - 1), 0.5)/f
-        else rep(1, f)/f
-    trend <- filter(x, filter)
-    season <- if (type == "additive") 
-        x - trend
-    else x/trend
-    season <- na.omit(c(as.numeric(window(season, start(x) + 
-        c(1, 0), end(x))), as.numeric(window(season, start(x), 
-        start(x) + c(0, f)))))
-    periods <- l%/%f
-    index <- c(0, cumsum(rep(f, periods - 2)))
-    figure <- numeric(f)
-    for (i in 1L:f) figure[i] <- mean(season[index + i])
-    figure <- if (type == "additive") 
-        figure - mean(figure)
-    else figure/mean(figure)
-    # Following lines are only changes
-    seasonal <- ts(rep(figure, periods+1)[1:l], start = start(x), frequency = f)
-    structure(list(x=x, seasonal = seasonal, trend = trend, random = if (type == 
-        "additive") x - seasonal - trend else x/seasonal/trend, 
-        figure = figure, type = type), class = "decomposed.ts")
-}
-
-# Changed definition of observed to use passed data rather than construct on fly
+#Changed definition of observed to use passed data rather than construct on fly
 plot.decomposed.ts <- function (x, ...) 
 {
     plot(cbind(observed = x$x, trend = x$trend, seasonal = x$seasonal, random = x$random), 

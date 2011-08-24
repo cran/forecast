@@ -1,12 +1,13 @@
 \name{tslm}
 \alias{tslm}
 \title{Fit a linear model with time series components}
-\usage{tslm(formula,data,...)
+\usage{tslm(formula, data, lambda=NULL, ...)
 }
 
 \arguments{
 \item{formula}{an object of class "formula" (or one that can be coerced to that class): a symbolic description of the model to be fitted.}
 \item{data}{an optional data frame, list or environment (or object coercible by as.data.frame to a data frame) containing the variables in the model. If not found in data, the variables are taken from environment(formula), typically the environment from which lm is called.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data are transformed via a Box-Cox transformation.}
 \item{...}{Other arguments passed to \code{\link[stats]{lm}()}.}
 }
 

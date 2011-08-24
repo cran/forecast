@@ -1,7 +1,9 @@
 ###############################################
 ##### Forecasting Using Smoothing Splines #####
-#####   Last updated by RJH. 29/5/02      #####
 ###############################################
+
+# Optimal smoothing paramter denoted by beta
+# beta is Box-Cox parameter.
 
 ################# FUNCTIONS ##################
 
@@ -16,12 +18,12 @@ make.Sigma <- function(n,n0=0)
 }
 
 ## Compute spline matrices
-spline.matrices <- function(n,lambda,cc=1e2,n0=0)
+spline.matrices <- function(n,beta,cc=1e2,n0=0)
 {
     nn <- n+n0
     Sigma <- make.Sigma(n,n0)
     s <- cbind(rep(1,nn),(1:nn)/n)
-    Omega <- cc * s %*% t(s) + Sigma/lambda + diag(nn)
+    Omega <- cc * s %*% t(s) + Sigma/beta + diag(nn)
     max.Omega <- max(Omega)
     inv.Omega <- solve(Omega/max.Omega,tol=1e-10)/max.Omega
     P <- chol(inv.Omega)
@@ -30,17 +32,17 @@ spline.matrices <- function(n,lambda,cc=1e2,n0=0)
 
 ## Compute smoothing splines
 ## Return -loglikelihood
-# Lambda multiplied by 1e4 to avoid numerical difficulties in optimization
-spline.loglik <- function(lambda,y,cc=1e2)
+# beta multiplied by 1e4 to avoid numerical difficulties in optimization
+spline.loglik <- function(beta,y,cc=1e2)
 {
     n <- length(y)
-    mat <- spline.matrices(n,lambda/1e6,cc=cc)
+    mat <- spline.matrices(n,beta/1e6,cc=cc)
     y.star <- mat$P %*% matrix(y)
     return(-log(det(mat$P)) + 0.5*n*log(sum(y.star^2)))
 }
 
 # Spline forecasts
-splinef <- function(x, h=10, level=c(80,95), fan=FALSE)
+splinef <- function(x, h=10, level=c(80,95), fan=FALSE, lambda=NULL)
 {
     if(!is.ts(x))
         x <- ts(x)
@@ -48,28 +50,29 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE)
     freq <- frequency(x)
     xname <- deparse(substitute(x))
 
-    # Scale x to avoid numerical problems.
-    mean.x <- mean(x)
-    stdev.x <- sqrt(var(x))
-    newx <- (x-mean.x)/stdev.x
-
-    # Find optimal lambda
-    if(n > 100) # Use only last 100 observations to get lambda
-        xx <- newx[(n-99):n]
+		if(!is.null(lambda))
+		{	
+			origx <- x
+			x <- BoxCox(x,lambda)
+		}
+			
+    # Find optimal beta
+    if(n > 100) # Use only last 100 observations to get beta
+        xx <- x[(n-99):n]
     else
-        xx <- newx
-    lambda.est <- optimize(spline.loglik, interval=c(1e-6,1e7),y = xx)$minimum/1e6
+        xx <- x
+    beta.est <- optimize(spline.loglik, interval=c(1e-6,1e7),y = xx)$minimum/1e6
 
     # Compute fitted values
-    r <- 256 * smooth.spline(1:n,newx,spar=0)$lambda
-    lss <- lambda.est*n^3 /(n-1)^3
+    r <- 256 * smooth.spline(1:n,x,spar=0)$beta
+    lss <- beta.est*n^3 /(n-1)^3
     spar <- (log(lss/r) / log(256) + 1) /3
-    splinefit <- smooth.spline(1:n,newx,spar=spar)
-    sfits <- splinefit$y*stdev.x+mean.x
+    splinefit <- smooth.spline(1:n,x,spar=spar)
+    sfits <- splinefit$y
 
-    # Compute matrices for optimal lambda
-    mat <- spline.matrices(n,lambda.est)
-    newmat <- spline.matrices(n,lambda.est,n0=h)
+    # Compute matrices for optimal beta
+    mat <- spline.matrices(n,beta.est)
+    newmat <- spline.matrices(n,beta.est,n0=h)
 
     # Get one-step predictors
     yfit <- e <- rep(NA,n)
@@ -81,9 +84,9 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE)
         {
             U <- mat$Omega[1:i,i+1]
             Oinv <- solve(mat$Omega[1:i,1:i]/1e6)/1e6
-            yfit[i+1] <- t(U) %*% Oinv %*% newx[1:i]
+            yfit[i+1] <- t(U) %*% Oinv %*% x[1:i]
             sd <- sqrt(mat$Omega[i+1,i+1] - t(U) %*% Oinv %*% U)
-            e[i+1] <- (newx[i+1]-yfit[i+1])/sd
+            e[i+1] <- (x[i+1]-yfit[i+1])/sd
         }
     }
     # Compute sigma^2
@@ -92,7 +95,7 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE)
     # Compute mean and var of forecasts
     U <- newmat$Omega[1:n,n+(1:h)]
     Omega0 <- newmat$Omega[n+(1:h),n+(1:h)]
-    Yhat <- t(U) %*% mat$inv.Omega %*% newx
+    Yhat <- t(U) %*% mat$inv.Omega %*% x
     sd <- sqrt(sigma2*diag(Omega0 - t(U) %*% mat$inv.Omega %*% U))
 
     # Compute prediction intervals.
@@ -115,13 +118,27 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE)
     }
     lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
     upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
+		
+	res <- ts(x - yfit,start=start(x),f=freq)
+	
+		if(!is.null(lambda))
+		{
+			Yhat <- InvBoxCox(Yhat,lambda)
+			upper <- InvBoxCox(upper,lambda)
+			lower <- InvBoxCox(lower,lambda)
+			yfit <- InvBoxCox(yfit,lambda)
+			sfits <- InvBoxCox(sfits,lambda)
+			x <- origx
+		}
 
-    return(structure(list(method="Cubic Smoothing Spline",level=level,x=x,mean=ts(stdev.x*Yhat+mean.x,f=freq,start=tsp(x)[2]+1/freq),
-            upper=ts(upper*stdev.x + mean.x,start=tsp(x)[2]+1/freq,f=freq),
-            lower=ts(lower*stdev.x + mean.x,start=tsp(x)[2]+1/freq,f=freq),
-            model=list(lambda=lambda.est*n^3,call=match.call()),
-            fitted =ts(sfits,start=start(x),f=freq), residuals=ts(e,start=start(x),f=freq),
-            onestepf = ts(yfit*stdev.x+mean.x,start=start(x),f=freq)),
+    return(structure(list(method="Cubic Smoothing Spline",level=level,x=x,mean=ts(Yhat,f=freq,start=tsp(x)[2]+1/freq),
+            upper=ts(upper,start=tsp(x)[2]+1/freq,f=freq),
+            lower=ts(lower,start=tsp(x)[2]+1/freq,f=freq),
+            model=list(beta=beta.est*n^3,call=match.call()),
+            fitted =ts(sfits,start=start(x),f=freq), residuals = res,
+			standardizedresiduals=ts(e,start=start(x),f=freq),
+            onestepf = ts(yfit,start=start(x),f=freq)),
+			lambda=lambda, 
             class=c("splineforecast","forecast")))
 }
 

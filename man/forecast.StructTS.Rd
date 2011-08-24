@@ -2,7 +2,7 @@
 \alias{forecast.StructTS}
 \title{Forecasting using Structural Time Series models}
 \usage{\method{forecast}{StructTS}(object, h=ifelse(object$call$type=="BSM",2*object$xtsp[3],10),
-    level=c(80,95), fan=FALSE, ...)
+    level=c(80,95), fan=FALSE, lambda=NULL, ...)
 }
 
 \arguments{
@@ -10,6 +10,7 @@
 \item{h}{Number of periods for forecasting}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}
 \item{...}{Other arguments.}
 }
 

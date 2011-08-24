@@ -1,9 +1,15 @@
 forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
-    level=c(80,95), fan=FALSE, simulate=FALSE, bootstrap=FALSE, npaths=5000,...)
+    level=c(80,95), fan=FALSE, simulate=FALSE, bootstrap=FALSE, npaths=5000, PI=TRUE, lambda=object$lambda, ...)
 {
     # Check inputs
     if(h>2000 | h<=0)
         stop("Forecast horizon out of bounds")
+    if(!PI)
+    {
+      simulate <- bootstrap <- fan <- FALSE
+      npaths <- 2 # Just to avoid errors
+      level <- 90
+    }
     if(fan)
         level <- seq(51,99,by=3)
     else
@@ -27,6 +33,8 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
         f <- class3(h,object$states[n+1,],object$components[2],object$components[3],damped,object$m,object$sigma2,object$par)
     else
         f <- pegelsfcast.C(h,object,level=level,bootstrap=bootstrap,npaths=npaths)
+    if(!PI)
+      f$var <- f$lower <- f$upper <- NULL
 
     tsp.x <- tsp(object$x)
     if(!is.null(tsp.x))
@@ -49,11 +57,22 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
         out$lower <- ts(f$lower,f=object$m,s=start.f)
         out$upper <- ts(f$upper,f=object$m,s=start.f)
     }
-    else
+    else if(PI)
         warning("No prediction intervals for this model")
-    out$method <- object$method
-    out$residuals <- residuals(object)
-    out$fitted <- fitted(object)
+		
+  out$fitted <- fitted(object)
+  out$method <- object$method
+  out$residuals <- residuals(object)
+
+  if(!is.null(lambda))
+  {
+	#out$x <- InvBoxCox(object$x,lambda)
+	#out$fitted <- InvBoxCox(out$fitted,lambda)
+    out$mean <- InvBoxCox(out$mean,lambda)
+    out$lower <- InvBoxCox(out$lower,lambda)
+    out$upper <- InvBoxCox(out$upper,lambda)
+  }
+	
     return(structure(out,class="forecast"))
 }
 

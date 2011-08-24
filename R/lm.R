@@ -1,26 +1,35 @@
-tslm <- function(formula,data,...)
+tslm <- function(formula,data,lambda=NULL,...)
 {
     if(missing(data)) # Grab first variable
     {
-        x <- get(as.character(formula)[2])
-        data <- dataname <- NULL
+		dataname <- as.character(formula)[2]
+        x <- get(dataname)
+        data <- data.frame(x)
+		colnames(data) <- dataname
     }
     else
     {
         dataname <- substitute(data)
         x <- data[,1]
     }
-    
     if(!is.ts(x))
         stop("Not time series data")
     tspx <- tsp(x)
+    
+    if(tspx[3]==1) # Nonseasonal data
+    {
+      f <- as.character(formula)
+      if(is.element("season",f))
+        stop("Non-seasonal data cannot be modelled using a seasonal factor")
+    }
+	orig.x <- x
+    if(!is.null(lambda))
+			x <- data[,1] <- BoxCox(data[,1],lambda)
+    
     # Add trend and seasonal to data frame
     trend <- 1:length(x)
     season <- as.factor(cycle(x))
-    if(is.null(data))
-        data <- data.frame(trend,season)
-    else
-        data <- data.frame(data,trend,season)
+    data <- data.frame(data,trend,season)
     rownames(data) <- trend
     fit <- lm(formula,data=data,na.action=na.exclude,...)
     j <- is.element(data$trend,names(fit$res))
@@ -31,15 +40,19 @@ tslm <- function(formula,data,...)
     timesx <- time(x)[j]
     tspx <- c(min(timesx),max(timesx),tspx[3])
     fit$data <- ts(data)
+	fit$x <- ts(orig.x)
     fit$residuals <- ts(fit$residuals)
     fit$fitted.values <- ts(fit$fitted.values)
-    tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tspx
+    tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tsp(fit$x) <- tspx
     if(!is.null(dataname))
         fit$call$data <- dataname
+		fit$lambda <- lambda
+	if(!is.null(lambda))
+		fit$fitted.values <- InvBoxCox(fit$fitted.values,lambda)
     return(fit)
 }
 
-forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
+forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda=object$lambda, ...)
 {
   if (fan) 
     level <- seq(51, 99, by = 3)
@@ -54,6 +67,8 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
     origdata <- object$data
   else
     origdata <- eval(object$call$data)
+  #if(!is.null(lambda))
+  #  origdata[,"x"] <- BoxCox(origdata[,"x"],lambda)
   if(is.element("ts",class(origdata)))
   {
     tspx <- tsp(origdata)
@@ -90,7 +105,7 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
   nl <- length(level)
   for(i in 1:nl)
     out[[i]] <- predict(object, newdata=newdata, se.fit=TRUE, interval="prediction", level=level[i]/100, ...)
-  fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],level=level,x=object$model[,1])
+  fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],level=level,x=object$x)
   fcast$method <- "Linear regression model"
   fcast$residuals <- residuals(object)
   fcast$fitted <- fitted(object)
@@ -108,11 +123,11 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
   }
   if(nl > 1)
   {
-      for(i in 2:nl)
-      {
-          fcast$lower <- cbind(fcast$lower,out[[i]]$fit[,2])
-          fcast$upper <- cbind(fcast$upper,out[[i]]$fit[,3])
-      }
+		for(i in 2:nl)
+		{
+			fcast$lower <- cbind(fcast$lower,out[[i]]$fit[,2])
+			fcast$upper <- cbind(fcast$upper,out[[i]]$fit[,3])
+		}
   }
   if(!is.null(tspx))
   {
@@ -120,5 +135,14 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
     fcast$upper <- ts(fcast$upper, start=tspx[2]+1/tspx[3],frequency=tspx[3])
     fcast$lower <- ts(fcast$lower, start=tspx[2]+1/tspx[3],frequency=tspx[3])
   }
+  
+	if(!is.null(lambda))
+	{
+		#fcast$x <- InvBoxCox(fcast$x,lambda)
+		fcast$mean <- InvBoxCox(fcast$mean,lambda)
+		fcast$lower <- InvBoxCox(fcast$lower,lambda)
+		fcast$upper <- InvBoxCox(fcast$upper,lambda)
+	}
+	
   return(structure(fcast,class="forecast"))
 }

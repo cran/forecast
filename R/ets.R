@@ -1,26 +1,33 @@
 ets <- function(y, model="ZZZ", damped=NULL,
-        alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, additive.only=FALSE,
+        alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, additive.only=FALSE, lambda=NULL, 
         lower=c(rep(0.0001,3), 0.8), upper=c(rep(0.9999,3),0.98),
-        opt.crit=c("lik","amse","mse","sigma"), nmse=3, bounds=c("both","usual","admissible"),
+        opt.crit=c("lik","amse","mse","sigma","mae"), nmse=3, bounds=c("both","usual","admissible"),
         ic = c("aic","aicc","bic"),restrict=TRUE)
 {
     #dataname <- substitute(y)
     opt.crit <- match.arg(opt.crit)
     bounds <- match.arg(bounds)
     ic <- match.arg(ic)
-    
-    if(max(y,na.rm=TRUE) > 1e6)
-        warning("Very large numbers which may cause numerical problems. Try scaling the data first")
+	    
+    #if(max(y,na.rm=TRUE) > 1e6)
+    #    warning("Very large numbers which may cause numerical problems. Try scaling the data first")
 
     if(class(y)=="data.frame" | class(y)=="list" | class(y)=="matrix" | is.element("mts",class(y)))
         stop("y should be a univariate time series")
     y <- as.ts(y)
-    # Remove outliers near ends
+    # Remove missing values near ends
     ny <- length(y)
     y <- na.contiguous(y)
     if(ny != length(y))
         warning("Missing values encountered. Using longest contiguous portion of time series")
 
+	orig.y <- y
+	if(!is.null(lambda))
+	{
+		y <- BoxCox(y,lambda)
+		additive.only = TRUE
+	}
+		
     if(nmse < 1 | nmse > 10)
         stop("nmse out of range")
     m <- frequency(y)
@@ -156,7 +163,13 @@ ets <- function(y, model="ZZZ", damped=NULL,
     model$call <- match.call()
     model$initstate <- model$states[1,]
     model$sigma2 <- mean(model$residuals^2,na.rm=TRUE)
-    model$x <- as.ts(y)
+    model$x <- orig.y
+	model$lambda <- lambda
+	if(!is.null(lambda))
+	{
+		model$fitted <- InvBoxCox(model$fitted,lambda)
+	}
+	
     #model$call$data <- dataname
 
     return(structure(model,class="ets"))
@@ -473,6 +486,8 @@ lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,low
         return(mean(e$amse[1:nmse]))
     else if(opt.crit=="sigma")
         return(mean(e$e^2))
+		else if(opt.crit=="mae")
+			return(mean(abs(e$e)))
 }
 
 print.ets <- function(x,...)
@@ -480,6 +495,8 @@ print.ets <- function(x,...)
     cat(paste(x$method, "\n\n"))
     cat(paste("Call:\n", deparse(x$call), "\n\n"))
     ncoef <- length(x$initstate)
+		if(is.null(x$lambda))
+			cat("  Box-Cox transformation: lambda=",round(x$lambda,4), "\n\n")
 
     cat("  Smoothing parameters:\n")
     cat(paste("    alpha =", round(x$par["alpha"], 4), "\n"))
@@ -608,27 +625,31 @@ admissible <- function(alpha,beta,gamma,phi,m)
 ### PLOT COMPONENTS
 plot.ets <- function(x,...)
 {
-    if(x$components[3]=="N" & x$components[2]=="N")
-    {
-        plot(cbind(observed = x$x, level = x$states[,1]),
-            main=paste("Decomposition by",x$method,"method"),...)
-    }
-    else if(x$components[3]=="N")
-    {
-        plot(cbind(observed = x$x, level = x$states[,1], slope=x$states[,"b"]),
-            main=paste("Decomposition by",x$method,"method"),...)
-    }
-    else if(x$components[2]=="N")
-    {
-        plot(cbind(observed = x$x, level = x$states[,1], season=x$states[,"s1"]),
-            main=paste("Decomposition by",x$method,"method"),...)
-    }
-    else
-    {
-        plot(cbind(observed = x$x, level = x$states[,1], slope=x$states[,"b"],
-            season=x$states[,"s1"]),
-            main=paste("Decomposition by",x$method,"method"),...)
-    }
+	if(!is.null(x$lambda))
+		y <- BoxCox(x$x,x$lambda)
+	else
+		y <- x$x
+  if(x$components[3]=="N" & x$components[2]=="N")
+  {
+      plot(cbind(observed = y, level = x$states[,1]),
+          main=paste("Decomposition by",x$method,"method"),...)
+  }
+  else if(x$components[3]=="N")
+  {
+      plot(cbind(observed = y, level = x$states[,1], slope=x$states[,"b"]),
+          main=paste("Decomposition by",x$method,"method"),...)
+  }
+  else if(x$components[2]=="N")
+  {
+      plot(cbind(observed = y, level = x$states[,1], season=x$states[,"s1"]),
+          main=paste("Decomposition by",x$method,"method"),...)
+  }
+  else
+  {
+      plot(cbind(observed = y, level = x$states[,1], slope=x$states[,"b"],
+          season=x$states[,"s1"]),
+          main=paste("Decomposition by",x$method,"method"),...)
+  }
 }
 
 summary.ets <- function(object,...)

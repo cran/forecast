@@ -1,7 +1,7 @@
 \name{forecast.lm}
 \alias{forecast.lm}
 \title{Forecast a linear model with possible time series components}
-\usage{\method{forecast}{lm}(object, newdata, level=c(80,95), fan=FALSE, h=10, ...)
+\usage{\method{forecast}{lm}(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda=object$lambda, ...)
 }
 
 \arguments{
@@ -10,6 +10,7 @@
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
 \item{h}{Number of periods for forecasting. Ignored if \code{newdata} present.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}
 \item{...}{Other arguments passed to \code{\link[stats]{predict.lm}()}.}
 }
 

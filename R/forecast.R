@@ -143,7 +143,7 @@ summary.forecast <- function(object,...)
 }
 
 plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(length(x$mean)<5),
-        shadecols=NULL,lambda=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
+        shadecols=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
 {
     if(is.element("x",names(x))) # Assume stored as x
         data=as.ts(x$x)
@@ -176,23 +176,23 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
         lower <- as.matrix(x$lower)
     }
     pred.mean <- x$mean
-    if(!is.null(lambda))  # undo Box-Cox transformation
-    {
-        pred.mean <- InvBoxCox(x$mean,lambda)
-        if(plot.conf)
-        {
-            lower <- InvBoxCox(lower,lambda)
-            upper <- InvBoxCox(upper,lambda)
-        }
-        xx <- InvBoxCox(data,lambda)
-        if(lambda<0 & plot.conf)
-        {
-            junk <- upper
-            upper <- lower
-            lower <- junk
-        }
-    }
-    else
+    # if(!is.null(lambda))  # undo Box-Cox transformation
+    # {
+        # pred.mean <- InvBoxCox(x$mean,lambda)
+        # if(plot.conf)
+        # {
+            # lower <- InvBoxCox(lower,lambda)
+            # upper <- InvBoxCox(upper,lambda)
+        # }
+        # xx <- InvBoxCox(data,lambda)
+        # if(lambda<0 & plot.conf)
+        # {
+            # junk <- upper
+            # upper <- lower
+            # lower <- junk
+        # }
+    # }
+    # else
         xx <- data
     # Remove final missing values
     nx <- max(which(!is.na(xx)))

@@ -4,9 +4,9 @@
 \alias{forecast.fracdiff}
 \title{Forecasting using ARIMA or ARFIMA models}
 \usage{\method{forecast}{Arima}(object, h=ifelse(object$arma[5]>1,2*object$arma[5],10),
-    level=c(80,95), fan=FALSE, xreg=NULL,...)
-\method{forecast}{ar}(object, h=10, level=c(80,95), fan=FALSE, ...)
-\method{forecast}{fracdiff}(object, h=10, level=c(80,95), fan=FALSE, ...)
+    level=c(80,95), fan=FALSE, xreg=NULL, lambda=object$lambda, ...)
+\method{forecast}{ar}(object, h=10, level=c(80,95), fan=FALSE, lambda=NULL, ...)
+\method{forecast}{fracdiff}(object, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, ...)
 }
 
 \arguments{
@@ -17,6 +17,7 @@ set to the number of rows of \code{xreg}.}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If \code{TRUE}, level is set to \code{seq(50,99,by=1)}. This is suitable for fan plots.}
 \item{xreg}{Future values of an regression variables (for class \code{Arima} objects only).}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}
 \item{...}{Other arguments.}
 }
 

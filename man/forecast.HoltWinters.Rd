@@ -2,7 +2,7 @@
 \alias{forecast.HoltWinters}
 \title{Forecasting using Holt-Winters objects}
 \usage{\method{forecast}{HoltWinters}(object, h=ifelse(frequency(object$x)>1,2*frequency(object$x),10),
-	level=c(80,95),fan=FALSE,...)
+	level=c(80,95),fan=FALSE,lambda=NULL,...)
 }
 
 \arguments{
@@ -10,6 +10,7 @@
 \item{h}{Number of periods for forecasting}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}
 \item{...}{Other arguments.}
 }
 
