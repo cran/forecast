@@ -329,9 +329,8 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     bestfit$ic <- NULL
     bestfit$call <- match.call()
     bestfit$call$x <- data.frame(x=x)
-	bestfit$lambda <- lambda
-	if(!is.null(lambda))
-		bestfit$fitted <- InvBoxCox(bestfit$fitted,lambda)
+	  bestfit$lambda <- lambda
+	  #bestfit$fitted <- fitted(bestfit)
 
     if(trace)
         cat("\n\n Best model:",arima.string(bestfit),"\n\n")

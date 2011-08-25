@@ -495,7 +495,7 @@ print.ets <- function(x,...)
     cat(paste(x$method, "\n\n"))
     cat(paste("Call:\n", deparse(x$call), "\n\n"))
     ncoef <- length(x$initstate)
-		if(is.null(x$lambda))
+		if(!is.null(x$lambda))
 			cat("  Box-Cox transformation: lambda=",round(x$lambda,4), "\n\n")
 
     cat("  Smoothing parameters:\n")

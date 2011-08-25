@@ -1,9 +1,14 @@
+Version 3.02 (25 August 2011)
+  * Bug fixes
+
 Version 3.00 (24 August 2011)
 	* Added Box-Cox parameter as argument to Arima(), ets(), arfima(), stlf(), rwf(), meanf(), splinef()
 	* Added Box-Cox parameter as argument to forecast.Arima(), forecast.ets(), forecast.fracdiff(), forecast.ar(), forecast.StructTS, forecast.HoltWinters().
 	* Removed lambda argument from plot.forecast() and accuracy().
   * Added BoxCox.lambda() function to allow automatic choice for Box-Cox parameter using Guerrero's method or the profile log likelihood method.
 	* Modified BoxCox and InvBoxCox to return missing values when lambda < 0 and data < 0.
+  * Add nsdiffs() function for selecting the number of seasonal differences.
+  * Modified selection of seasonal differencing in auto.arima().
 	* Better error message if seasonal factor used in tslm() with non-seasonal data.
 	* Added PI argument to forecast.ets() to allow only point forecasts to be computed.
 	* Added include.constant argument to Arima(). 

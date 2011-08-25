@@ -305,6 +305,7 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL, ...)
       lower <- InvBoxCox(lower,lambda)
       upper <- InvBoxCox(upper,lambda)
 			fits <- InvBoxCox(fits,lambda)
+      x <- InvBoxCox(x,lambda)
 		}
 
     return(structure(list(method=method,model=object,level=level,mean=pred$pred,lower=lower,upper=upper,
@@ -396,7 +397,8 @@ Arima <- function(x, order = c(0, 0, 0),
 		
 	if(!is.null(model))
 	{
-		tmp <- arima2(x,model,xreg)
+    tmp <- arima2(x,model,xreg=xreg)
+    xreg <- tmp$xreg
 	}
 	else
 	{
@@ -429,12 +431,15 @@ arima2 <- function (x, model, xreg)
     use.xreg <- is.element("xreg",names(model$call))
     if(use.drift)
     {
-        time.offset <- (tsp(x)[1] - tsp(model$x)[1])*tsp(x)[3]
-        xreg <- cbind(xreg, time.offset+(1:length(x)))
-        colnames(xreg)[ncol(xreg)] <- "drift"    
-		use.xreg <- TRUE
+      driftmod <- lm(model$xreg[,"drift"] ~ I(time(model$x)))
+      newxreg <- driftmod$coeff[1] + driftmod$coeff[2]*time(x)
+      if(!is.null(xreg))
+        xreg[,"drift"] <- newxreg
+      else
+        xreg <- as.matrix(data.frame(drift=newxreg))
+  		use.xreg <- TRUE
     }
-
+   
     if(model$arma[5]>1 & sum(abs(model$arma[c(3,4,7)]))>0) # Seasonal model
     {
         if(use.xreg)
@@ -455,6 +460,8 @@ arima2 <- function (x, model, xreg)
             refit <- Arima(x,order=model$arma[c(1,6,2)],include.mean=FALSE)
 
     refit$var.coef <- matrix(0,length(refit$coef),length(refit$coef))
+    if(use.xreg) # Why is this needed?
+      refit$xreg <- xreg
     return(refit)
 }
 
