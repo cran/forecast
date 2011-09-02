@@ -89,8 +89,8 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
         dodiff <- adf.test(x)$p.value > alpha
     else if(test=="pp")
         dodiff <- pp.test(x)$p.value > alpha
-	else
-		stop("This shouldn't happen")
+  else
+    stop("This shouldn't happen")
     if(is.na(dodiff))
     {
         options(warn=oldwarn$warn)
@@ -102,12 +102,12 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
         d <- d+1
         if(test=="kpss")
             dodiff <- kpss.test(x)$p.value < alpha
-		else if(test=="adf")
-			dodiff <- adf.test(x)$p.value > alpha
-		else if(test=="pp")
-			dodiff <- pp.test(x)$p.value > alpha
-		else
-			stop("This shouldn't happen")
+    else if(test=="adf")
+      dodiff <- adf.test(x)$p.value > alpha
+    else if(test=="pp")
+      dodiff <- pp.test(x)$p.value > alpha
+    else
+      stop("This shouldn't happen")
         if(is.na(dodiff))
             return(d-1)
     }
@@ -147,8 +147,8 @@ SD.test <- function (wts, s=frequency(wts))
     frec <- rep(1, as.integer((s+1)/2))
     ltrunc <- round(s * (N/100)^0.25)
     R1 <- as.matrix(SeasDummy(wts))
-    lmch <- lm(wts ~ R1,na.action=na.exclude)   # run the regression : y(i) = mu+f(i)'gamma(i)+e(i)
-    Fhat <- Fhataux <- matrix(nrow = N, ncol = s-1)
+    lmch <- lm(wts ~ R1,na.action=na.exclude)   # run the regression : y(i)=mu+f(i)'gamma(i)+e(i)
+    Fhat <- Fhataux <- matrix(nrow=N, ncol=s-1)
     for (i in 1:(s-1))
         Fhataux[, i] <- R1[,i] * residuals(lmch)
     for (i in 1:N)
@@ -172,7 +172,7 @@ SD.test <- function (wts, s=frequency(wts))
            frecob[sq[i]] <- frecob[sq[i] + 1] <- 1
     }
     a <- length(which(frecob == 1))
-    A <- matrix(0, nrow = s - 1, ncol = a)
+    A <- matrix(0, nrow=s - 1, ncol=a)
     j <- 1
     for (i in 1:(s - 1)) if (frecob[i] == 1)
     {
@@ -184,15 +184,15 @@ SD.test <- function (wts, s=frequency(wts))
 }
 
 
-forecast.Arima <- function (object, h = ifelse(object$arma[5] > 1, 2 * object$arma[5], 10),
-    level = c(80, 95), fan=FALSE, xreg = NULL, lambda=object$lambda, ...)
+forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma[5], 10),
+    level=c(80, 95), fan=FALSE, xreg=NULL, lambda=object$lambda, ...)
 {
 #    use.constant <- is.element("constant",names(object$coef))
     use.drift <- is.element("drift", names(object$coef))
     if (is.element("x", names(object)))
         x <- object$x
     else
-        x <- object$x <- eval.parent(parse(text = object$series))
+        x <- object$x <- eval.parent(parse(text=object$series))
     usexreg <- (!is.null(xreg) | use.drift)# | use.constant)
 #    if(use.constant)
 #        xreg <- as.matrix(rep(1,h))
@@ -220,10 +220,10 @@ forecast.Arima <- function (object, h = ifelse(object$arma[5] > 1, 2 * object$ar
                                     eval.parent(xr)
                                 else NULL
         }
-        pred <- predict(object, n.ahead = h, newxreg = xreg)
+        pred <- predict(object, n.ahead=h, newxreg=xreg)
     }
     else
-        pred <- predict(object, n.ahead = h)
+        pred <- predict(object, n.ahead=h)
 
     # Fix time series characteristics if there are missing values at end of series.
     tspx <- tsp(x)
@@ -247,7 +247,7 @@ forecast.Arima <- function (object, h = ifelse(object$arma[5] > 1, 2 * object$ar
     }
 
     nint <- length(level)
-    lower <- matrix(NA, ncol = nint, nrow = length(pred$pred))
+    lower <- matrix(NA, ncol=nint, nrow=length(pred$pred))
     upper <- lower
     for (i in 1:nint)
     {
@@ -255,19 +255,19 @@ forecast.Arima <- function (object, h = ifelse(object$arma[5] > 1, 2 * object$ar
         lower[, i] <- pred$pred - qq * pred$se
         upper[, i] <- pred$pred + qq * pred$se
     }
-    colnames(lower) = colnames(upper) = paste(level, "%", sep = "")
+    colnames(lower)=colnames(upper)=paste(level, "%", sep="")
     method <- arima.string(object)
-		fits <- fitted(object)
+    fits <- fitted(object)
     if(!is.null(lambda))
     {
       pred$pred <- InvBoxCox(pred$pred,lambda)
       lower <- InvBoxCox(lower,lambda)
       upper <- InvBoxCox(upper,lambda)
-	}
-    return(structure(list(method = method, model = object, level = level,
-        mean = pred$pred, lower = lower, upper = upper, x = x,
-        xname = deparse(substitute(x)), fitted = fits, residuals = residuals(object)),
-        class = "forecast"))
+  }
+    return(structure(list(method=method, model=object, level=level,
+        mean=pred$pred, lower=lower, upper=upper, x=x,
+        xname=deparse(substitute(x)), fitted=fits, residuals=residuals(object)),
+        class="forecast"))
 }
 
 
@@ -292,54 +292,54 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL, ...)
         lower[,i] <- pred$pred - qq*pred$se
         upper[,i] <- pred$pred + qq*pred$se
     }
-    colnames(lower) = colnames(upper) = paste(level,"%",sep="")
+    colnames(lower)=colnames(upper)=paste(level,"%",sep="")
     method <- paste("AR(",object$order,")",sep="")
     x <- as.ts(eval.parent(parse(text=object$series)))
     f=frequency(x)
     res <- ts(object$resid[-(1:object$order)],start=tsp(x)[1]+object$order/f,f=f)
     fits <- x-res
-		
-		if(!is.null(lambda))
-		{
+    
+    if(!is.null(lambda))
+    {
       pred$pred <- InvBoxCox(pred$pred,lambda)
       lower <- InvBoxCox(lower,lambda)
       upper <- InvBoxCox(upper,lambda)
-			fits <- InvBoxCox(fits,lambda)
+      fits <- InvBoxCox(fits,lambda)
       x <- InvBoxCox(x,lambda)
-		}
+    }
 
     return(structure(list(method=method,model=object,level=level,mean=pred$pred,lower=lower,upper=upper,
-        x=x, xname = deparse(substitute(x)), fitted=fits,residuals=res)
+        x=x, xname=deparse(substitute(x)), fitted=fits,residuals=res)
         ,class="forecast"))
 }
 
 # Extract errors from ARIMA model (as distinct from residuals)
 arima.errors <- function(z)
 {
-	if(!is.list(z))
-		stop("z must be a list")
-	if(is.element("x",names(z)))
-		x <- z$x
-	else
-	{
-		series.name <- z$series
-		if(is.null(series.name))
-			stop("missing component series in argument z\n")
-		x <- eval.parent(parse(text = series.name))
-	}
-	if(!is.element("xreg",names(z)))
-	{
-		if(!is.element("xreg",names(z$coef)))
-			return(x)
-		else
-			xreg <- eval.parent(z$coef$xreg)
-	}
-	else
-		xreg <- z$xreg
-	norder <- sum(z$arma[1:4])
-	if(is.element("intercept",names(z$coef)))
-		xreg <- cbind(rep(1,length(x)),xreg)
-	return(ts(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)]),f=frequency(x),s=start(x)))
+  if(!is.list(z))
+    stop("z must be a list")
+  if(is.element("x",names(z)))
+    x <- z$x
+  else
+  {
+    series.name <- z$series
+    if(is.null(series.name))
+      stop("missing component series in argument z\n")
+    x <- eval.parent(parse(text=series.name))
+  }
+  if(!is.element("xreg",names(z)))
+  {
+    if(!is.element("xreg",names(z$coef)))
+      return(x)
+    else
+      xreg <- eval.parent(z$coef$xreg)
+  }
+  else
+    xreg <- z$xreg
+  norder <- sum(z$arma[1:4])
+  if(is.element("intercept",names(z$coef)))
+    xreg <- cbind(rep(1,length(x)),xreg)
+  return(ts(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)]),f=frequency(x),s=start(x)))
 }
 
 # Return one-step fits
@@ -348,9 +348,9 @@ fitted.Arima <- function(object,...)
   if(is.element("x",names(object)))
     x <- object$x
   else
-	x <- eval.parent(parse(text=object$series))
+  x <- eval.parent(parse(text=object$series))
   if(is.null(object$lambda))
-	return(x - object$residuals)
+  return(x - object$residuals)
   else
     return(InvBoxCox(BoxCox(x,object$lambda) - object$residuals, object$lambda))
 }
@@ -358,12 +358,12 @@ fitted.Arima <- function(object,...)
 # Calls arima from stats package and adds data to the returned object
 # Also allows refitting to new data
 # and drift terms to be included.
-Arima <- function(x, order = c(0, 0, 0),
-      seasonal = list(order = c(0, 0, 0), period = NA),
-      xreg = NULL, include.mean = TRUE, include.drift = FALSE, include.constant, lambda=model$lambda,
-	  transform.pars = TRUE,
-      fixed = NULL, init = NULL, method = c("CSS-ML", "ML", "CSS"),
-      n.cond, optim.control = list(), kappa = 1e6, model=NULL)
+Arima <- function(x, order=c(0, 0, 0),
+      seasonal=list(order=c(0, 0, 0), period=NA),
+      xreg=NULL, include.mean=TRUE, include.drift=FALSE, include.constant, lambda=model$lambda,
+    transform.pars=TRUE,
+      fixed=NULL, init=NULL, method=c("CSS-ML", "ML", "CSS"),
+      n.cond, optim.control=list(), kappa=1e6, model=NULL)
 {
     # Remove outliers near ends
     #j <- time(x)
@@ -371,48 +371,48 @@ Arima <- function(x, order = c(0, 0, 0),
     #if(length(j) != length(x))
     #    warning("Missing values encountered. Using longest contiguous portion of time series")
 
-	series <- deparse(substitute(x))
-	
-	origx <- x
-	if(!is.null(lambda))
-		x <- BoxCox(x,lambda)
+  series <- deparse(substitute(x))
+  
+  origx <- x
+  if(!is.null(lambda))
+    x <- BoxCox(x,lambda)
 
-	if (!is.null(xreg))
-	{
-		nmxreg <- deparse(substitute(xreg))
-		xreg <- as.matrix(xreg)
-		if (is.null(colnames(xreg))) 
-				colnames(xreg) <- if (ncol(xreg) == 1) nmxreg else paste(nmxreg, 1:ncol(xreg), sep = "")
-	}
-	
-	if(!missing(include.constant))
-	{
-		if(include.constant)
-		{
-			include.mean <- TRUE
-			if((order[2] + seasonal$order[2]) == 1)
-				include.drift <- TRUE
-		}
-	}
-		
-	if(!is.null(model))
-	{
+  if (!is.null(xreg))
+  {
+    nmxreg <- deparse(substitute(xreg))
+    xreg <- as.matrix(xreg)
+    if (is.null(colnames(xreg))) 
+        colnames(xreg) <- if (ncol(xreg) == 1) nmxreg else paste(nmxreg, 1:ncol(xreg), sep="")
+  }
+  
+  if(!missing(include.constant))
+  {
+    if(include.constant)
+    {
+      include.mean <- TRUE
+      if((order[2] + seasonal$order[2]) == 1)
+        include.drift <- TRUE
+    }
+  }
+    
+  if(!is.null(model))
+  {
     tmp <- arima2(x,model,xreg=xreg)
     xreg <- tmp$xreg
-	}
-	else
-	{
-		if(include.drift)
-		{
-			drift <- 1:length(x)
-			xreg <- cbind(xreg,drift=drift)
-		}
-		if(is.null(xreg))
-			tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,include.mean=include.mean,
-					transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
-		else
-			tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,
-						 transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
+  }
+  else
+  {
+    if(include.drift)
+    {
+      drift <- 1:length(x)
+      xreg <- cbind(xreg,drift=drift)
+    }
+    if(is.null(xreg))
+      tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,include.mean=include.mean,
+          transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
+    else
+      tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,
+             transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
   }
   tmp$series <- series
   tmp$xreg <- xreg
@@ -437,7 +437,7 @@ arima2 <- function (x, model, xreg)
         xreg[,"drift"] <- newxreg
       else
         xreg <- as.matrix(data.frame(drift=newxreg))
-  		use.xreg <- TRUE
+      use.xreg <- TRUE
     }
    
     if(model$arma[5]>1 & sum(abs(model$arma[c(3,4,7)]))>0) # Seasonal model
@@ -467,17 +467,17 @@ arima2 <- function (x, model, xreg)
 
 # Modified version of function in stats package
 
-print.Arima <- function (x, digits = max(3, getOption("digits") - 3), se = TRUE,
+print.Arima <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE,
     ...)
 {
 #    if (!is.element("x", names(x)))
-#        x$x <- eval.parent(parse(text = x$series))
+#        x$x <- eval.parent(parse(text=x$series))
 
     cat("Series:",x$series,"\n")
     cat(arima.string(x),"\n")
-	if(!is.null(x$lambda))
-		cat("Box Cox transformation: lambda=",x$lambda,"\n")
-    #cat("\nCall:", deparse(x$call, width.cutoff = 75), "\n", sep = " ")
+  if(!is.null(x$lambda))
+    cat("Box Cox transformation: lambda=",x$lambda,"\n")
+    #cat("\nCall:", deparse(x$call, width.cutoff=75), "\n", sep=" ")
 #    if(!is.null(x$xreg))
 #    {
 #        cat("\nRegression variables fitted:\n")
@@ -490,37 +490,37 @@ print.Arima <- function (x, digits = max(3, getOption("digits") - 3), se = TRUE,
 #    }
     if (length(x$coef) > 0) {
         cat("\nCoefficients:\n")
-        coef <- round(x$coef, digits = digits)
+        coef <- round(x$coef, digits=digits)
         if (se && nrow(x$var.coef)) {
             ses <- rep(0, length(coef))
-            ses[x$mask] <- round(sqrt(diag(x$var.coef)), digits = digits)
-            coef <- matrix(coef, 1, dimnames = list(NULL, names(coef)))
-            coef <- rbind(coef, s.e. = ses)
+            ses[x$mask] <- round(sqrt(diag(x$var.coef)), digits=digits)
+            coef <- matrix(coef, 1, dimnames=list(NULL, names(coef)))
+            coef <- rbind(coef, s.e.=ses)
         }
-        print.default(coef, print.gap = 2)
+        print.default(coef, print.gap=2)
     }
     cm <- x$call$method
     if (is.null(cm) || cm != "CSS")
     {
-        cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits),
-            ":  log likelihood = ", format(round(x$loglik, 2)),"\n",sep="")
+        cat("\nsigma^2 estimated as ", format(x$sigma2, digits=digits),
+            ":  log likelihood=", format(round(x$loglik, 2)),"\n",sep="")
         npar <- length(x$coef) + 1
         nstar <- length(x$residuals) - x$arma[6] - x$arma[7]*x$arma[5]
         bic <- x$aic + npar*(log(nstar) - 2)
         aicc <- x$aic + 2*npar*(nstar/(nstar-npar-1) - 1)
-        cat("AIC = ", format(round(x$aic, 2)), sep = "")
-        cat("   AICc = ", format(round(aicc, 2)), sep = "")
-        cat("   BIC = ", format(round(bic, 2)), "\n",sep = "")
+        cat("AIC=", format(round(x$aic, 2)), sep="")
+        cat("   AICc=", format(round(aicc, 2)), sep="")
+        cat("   BIC=", format(round(bic, 2)), "\n",sep="")
     }
-    else cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits),
-        ":  part log likelihood = ", format(round(x$loglik, 2)),
-        "\n", sep = "")
+    else cat("\nsigma^2 estimated as ", format(x$sigma2, digits=digits),
+        ":  part log likelihood=", format(round(x$loglik, 2)),
+        "\n", sep="")
     invisible(x)
 }
 
 # Modified version of function in stats package
 
-predict.Arima <- function(object, n.ahead = 1, newxreg = NULL, se.fit = TRUE, ...) 
+predict.Arima <- function(object, n.ahead=1, newxreg=NULL, se.fit=TRUE, ...) 
 {
     myNCOL <- function(x) if (is.null(x)) 
         0
@@ -545,8 +545,8 @@ predict.Arima <- function(object, n.ahead = 1, newxreg = NULL, se.fit = TRUE, ..
     narma <- sum(arma[1:4])
     if (length(coefs) > narma) {
         if (names(coefs)[narma + 1] == "intercept") {
-            xreg <- cbind(intercept = rep(1, n), xreg)
-            newxreg <- cbind(intercept = rep(1, n.ahead), newxreg)
+            xreg <- cbind(intercept=rep(1, n), xreg)
+            newxreg <- cbind(intercept=rep(1, n.ahead), newxreg)
             ncxreg <- ncxreg + 1
         }
         xm <- if (narma == 0) 
@@ -565,11 +565,11 @@ predict.Arima <- function(object, n.ahead = 1, newxreg = NULL, se.fit = TRUE, ..
             warning("seasonal MA part of model is not invertible")
     }
     z <- KalmanForecast(n.ahead, object$model)
-    pred <- ts(z[[1]] + xm, start = xtsp[2] + deltat(rsd), frequency = xtsp[3])
+    pred <- ts(z[[1]] + xm, start=xtsp[2] + deltat(rsd), frequency=xtsp[3])
     if (se.fit) {
-        se <- ts(sqrt(z[[2]] * object$sigma2), start = xtsp[2] + 
-            deltat(rsd), frequency = xtsp[3])
-        return(list(pred = pred, se = se))
+        se <- ts(sqrt(z[[2]] * object$sigma2), start=xtsp[2] + 
+            deltat(rsd), frequency=xtsp[3])
+        return(list(pred=pred, se=se))
     }
     else return(pred)
 }

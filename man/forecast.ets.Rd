@@ -1,8 +1,9 @@
 \name{forecast.ets}
 \alias{forecast.ets}
 \title{Forecasting using ETS models}
-\usage{\method{forecast}{ets}(object, h=ifelse(object$m>1, 2*object$m, 10), level=c(80,95),
-	fan=FALSE, simulate=FALSE, bootstrap=FALSE, npaths=5000, PI=TRUE, lambda=object$lambda, ...)
+\usage{\method{forecast}{ets}(object, h=ifelse(object$m>1, 2*object$m, 10), 
+    level=c(80,95), fan=FALSE, simulate=FALSE, bootstrap=FALSE, 
+    npaths=5000, PI=TRUE, lambda=object$lambda, ...)
 }
 
 \arguments{
@@ -11,7 +12,8 @@
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
 \item{simulate}{If TRUE, prediction intervals produced by simulation rather than using analytic formulae.}
-\item{bootstrap}{If TRUE, and if \code{simulate=TRUE}, then simulation uses resampled errors rather than normally distributed errors.}
+\item{bootstrap}{If TRUE, and if \code{simulate=TRUE}, then simulation uses resampled errors rather than normally distributed 
+errors.}
 \item{npaths}{Number of sample paths used in computing simulated prediction intervals.}
 \item{PI}{If TRUE, prediction intervals are produced, otherwise only point forecasts are calculated. If \code{PI} is FALSE, then \code{level}, \code{fan}, \code{simulate}, \code{bootstrap} and \code{npaths} are all ignored.}
 \item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}

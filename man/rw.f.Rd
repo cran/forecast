@@ -14,9 +14,9 @@
 \description{Returns forecasts and prediction intervals for a random walk with drift model applied to x.
 }
 \details{The random walk with drift model is
-\deqn{Y_t = c + Y_{t-1} + Z_t}{Y[t] = c + Y[t-1] + Z[t]}
+\deqn{Y_t=c + Y_{t-1} + Z_t}{Y[t]=c + Y[t-1] + Z[t]}
 where \eqn{Z_t}{Z[t]} is a normal iid error. Forecasts are given by
-\deqn{Y_n(h) = ch+Y_n}{Y[n+h] = ch+Y[n]}.
+\deqn{Y_n(h)=ch+Y_n}{Y[n+h]=ch+Y[n]}.
 If there is no drift, the drift parameter c=0. Forecast standard errors allow
 for uncertainty in estimating the drift parameter.
 }

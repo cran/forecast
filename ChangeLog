@@ -1,3 +1,9 @@
+Version 3.03 (2 September 2011)
+  * Bug fix in dshw() which was using slightly incorrect seasonal estimates for the forecasts
+  * Bug fix in forecast.StructTS due to change in structure of StructTS object.
+	* Better error capture in tslm when seasonal dummies are specified for non-seasonal data.
+  * Re-formatted some help files to prevent viewing problems with the pdf manual.
+
 Version 3.02 (25 August 2011)
   * Bug fixes
 

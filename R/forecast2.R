@@ -214,12 +214,12 @@ forecast.StructTS <- function(object,h=ifelse(object$call$type=="BSM", 2*object$
         upper[,i] <- pred$pred + qq*pred$se
     }
     colnames(lower) = colnames(upper) = paste(level,"%",sep="")
-    if(object$call$type=="BSM")
+    if(is.element("seas",names(object$coef)))
         method <- "Basic structural model"
-    else if(object$call$type=="level")
-        method <- "Local level structural model"
-    else if(object$call$type=="trend")
+    else if(is.element("slope",names(object$coef)))
         method <- "Local linear structural model"
+    else 
+        method <- "Local level structural model"
 	
 	fits <- x - residuals(object)
 	if(!is.null(lambda))

@@ -4,11 +4,11 @@
 \title{Forecast plot}
 
 \usage{
-\method{plot}{forecast}(x, include, plot.conf = TRUE, shaded = TRUE, shadebars=(length(x$mean)<5),
-                 shadecols=NULL, col = 1, fcol = 4, pi.col=1, pi.lty=2, 
-                 ylim = NULL, main = NULL, ylab = "", xlab = "", ...)
-               
-\method{plot}{splineforecast}(x,fitcol=2,...)
+\method{plot}{forecast}(x, include, plot.conf=TRUE, shaded=TRUE, 
+    shadebars=(length(x$mean)<5), shadecols=NULL, col=1, fcol=4, 
+    pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="", xlab="", ...)
+
+\method{plot}{splineforecast}(x, fitcol=2,...)
 }
 \arguments{
 \item{x}{Forecast object produced by \code{\link{forecast}}.}

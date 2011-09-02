@@ -1,9 +1,9 @@
 \name{seasonplot}
 \alias{seasonplot}
 \title{Seasonal plot}
-\usage{seasonplot(x, s, season.labels = NULL, year.labels = FALSE,
-                 year.labels.left = FALSE, type = "o", main, ylab = "",
-                 xlab = NULL, col = 1, labelgap = 0.1, ...)
+\usage{seasonplot(x, s, season.labels=NULL, year.labels=FALSE,
+    year.labels.left=FALSE, type="o", main, ylab="",
+    xlab=NULL, col=1, labelgap=0.1, ...)
 }
 \arguments{
 \item{x}{a numeric vector or time series.}
@@ -21,7 +21,7 @@
 \description{Plots a seasonal plot as described in Makridakis, Wheelwright and Hyndman (1998, chapter 2).
 }
 
-\value{  None.
+\value{None.
 }
 \references{  Makridakis, Wheelwright and Hyndman (1998) \emph{Forecasting:
 methods and applications}, Wiley: New York. \url{http://robjhyndman.com/forecasting/}

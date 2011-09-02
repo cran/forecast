@@ -72,7 +72,7 @@ dshw <- function(y, period1, period2, h=2*max(period1,period2), alpha=NULL, beta
   }
 
 	# Forecasts
-  fcast <- (s + (1:h)*t) * rep(I[n-1+(1:period1)],h/period1 + 1)[1:h] * rep(w[n-1+(1:period2)],h/period2 + 1)[1:h]
+  fcast <- (s + (1:h)*t) * rep(I[n+(1:period1)],h/period1 + 1)[1:h] * rep(w[n+(1:period2)],h/period2 + 1)[1:h]
   
   # Calculate MSE and MAPE
   yhat <- ts(yhat)

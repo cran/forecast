@@ -5,10 +5,14 @@
 \alias{simulate.fracdiff}
 \title{Simulation from a time series model}
 \usage{
-\method{simulate}{ets}(object, nsim=length(object$x), seed=NULL, future=TRUE, bootstrap=FALSE, ...)
-\method{simulate}{ar}(object, nsim=object$n.used, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
-\method{simulate}{Arima}(object, nsim=length(object$x), seed=NULL, xreg=NULL, future=TRUE, bootstrap=FALSE, ...)
-\method{simulate}{fracdiff}(object, nsim=object$n, seed=NULL, future=TRUE, bootstrap=FALSE, ...)
+\method{simulate}{ets}(object, nsim=length(object$x), seed=NULL, future=TRUE, 
+    bootstrap=FALSE, ...)
+\method{simulate}{ar}(object, nsim=object$n.used, seed=NULL, future=TRUE, 
+    bootstrap=FALSE, ...)
+\method{simulate}{Arima}(object, nsim=length(object$x), seed=NULL, xreg=NULL, future=TRUE, 
+    bootstrap=FALSE, ...)
+\method{simulate}{fracdiff}(object, nsim=object$n, seed=NULL, future=TRUE, 
+    bootstrap=FALSE, ...)
 }
 
 \arguments{

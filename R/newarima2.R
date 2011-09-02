@@ -3,7 +3,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     start.p=2, start.q=2, start.P=1, start.Q=1,
     stationary=FALSE, ic=c("aic","aicc","bic"),
     stepwise=TRUE, trace=FALSE,
-    approximation=length(x)>100 | frequency(x)>12,xreg=NULL,
+    approximation=(length(x)>100 | frequency(x)>12), xreg=NULL,
 		test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"), 
 		allowdrift=TRUE,lambda=NULL)
 {

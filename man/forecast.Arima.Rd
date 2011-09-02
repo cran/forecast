@@ -59,7 +59,7 @@ An object of class "\code{forecast}" is a list containing at least the following
 \examples{fit <- Arima(WWWusage,c(3,1,0))
 plot(forecast(fit))
 
-x <- fracdiff.sim( 100, ma = -.4, d = .3)$series
+x <- fracdiff.sim( 100, ma=-.4, d=.3)$series
 fit <- arfima(x)
 plot(forecast(fit,h=30))
 }

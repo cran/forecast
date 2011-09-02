@@ -59,7 +59,7 @@ as.data.frame.forecast <- function(x,...)
     nn <- 1 + round((Tsp[2L] - Tsp[1L]) * Tsp[3L])
     if (NROW(x) != nn) 
     {
-        warning(gettextf("series is corrupt: length %d with 'tsp' implying %d", NROW(x), nn), domain = NA, call. = FALSE)
+        warning(gettextf("series is corrupt: length %d with 'tsp' implying %d", NROW(x), nn), domain=NA, call.=FALSE)
         calendar <- FALSE
     }
     if (NCOL(x) == 1) 
@@ -72,21 +72,21 @@ as.data.frame.forecast <- function(x,...)
                   month.abb
                 else if (fr.x == 4) 
                   c("Qtr1", "Qtr2", "Qtr3", "Qtr4")
-                else paste("p", 1L:fr.x, sep = "")
+                else paste("p", 1L:fr.x, sep="")
                 if (NROW(x) <= fr.x && start(x)[1L] == end(x)[1L]) 
                 {
                   dn1 <- start(x)[1L]
                   dn2 <- dn2[1 + (start(x)[2L] - 2 + seq_along(x))%%fr.x]
-                  x <- matrix(format(x, ...), nrow = 1L, byrow = TRUE, 
-                    dimnames = list(dn1, dn2))
+                  x <- matrix(format(x, ...), nrow=1L, byrow=TRUE, 
+                    dimnames=list(dn1, dn2))
                 }
                 else 
                 {
                   start.pad <- start(x)[2L] - 1
                   end.pad <- fr.x - end(x)[2L]
                   dn1 <- start(x)[1L]:end(x)[1L]
-                  x <- matrix(c(rep.int("", start.pad), format(x, ...), rep.int("", end.pad)), ncol = fr.x, 
-                    byrow = TRUE, dimnames = list(dn1, dn2))
+                  x <- matrix(c(rep.int("", start.pad), format(x, ...), rep.int("", end.pad)), ncol=fr.x, 
+                    byrow=TRUE, dimnames=list(dn1, dn2))
                 }
             }
             else 
@@ -107,10 +107,10 @@ as.data.frame.forecast <- function(x,...)
             t2 <- 1 + round(fr.x * ((tm + 0.001)%%1))
             p1 <- format(floor(zapsmall(tm)))
             rownames(x) <- if (fr.x == 12) 
-                paste(month.abb[t2], p1, sep = " ")
+                paste(month.abb[t2], p1, sep=" ")
             else paste(p1, if (fr.x == 4) 
                 c("Q1", "Q2", "Q3", "Q4")[t2]
-            else format(t2), sep = " ")
+            else format(t2), sep=" ")
         }
         else
             rownames(x) <- format(time(x))
@@ -205,7 +205,7 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
             ylim <- range(ylim,lower,upper,na.rm=TRUE)
     }
     npred <- length(pred.mean)
-    plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, f = freq),
+    plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, f=freq),
         xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,...)
 
     if(plot.conf)
@@ -215,20 +215,20 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
         nint <- length(x$level)
         for(i in 1:nint)
         {
-			if(is.null(shadecols))
-				shadecols <- heat.colors(length(x$level)+2)[switch(1+(length(x$level)>1),2,length(x$level):1)+1]
+      if(is.null(shadecols))
+        shadecols <- heat.colors(length(x$level)+2)[switch(1+(length(x$level)>1),2,length(x$level):1)+1]
             if(shadebars)
-			{
+      {
                 for(j in 1:npred)
                 {
                     polygon(xxx[j] + c(-0.5,0.5,0.5,-0.5)/freq, c(rep(lower[j,idx[i]],2),rep(upper[j,idx[i]],2)),
-                        col = shadecols[i], border=FALSE)
+                        col=shadecols[i], border=FALSE)
                 }
-			}
+      }
             else if(shaded)
             {
                 polygon(c(xxx,rev(xxx)), c(lower[,idx[i]],rev(upper[,idx[i]])),
-                        col = shadecols[i], border=FALSE)
+                        col=shadecols[i], border=FALSE)
             }
             else if(npred == 1)
             {
@@ -243,7 +243,7 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
         }
     }
     if(npred > 1 & !shadebars)
-        lines(pred.mean, lty = 1,col=fcol)
+        lines(pred.mean, lty=1,col=fcol)
     else
         points(pred.mean, col=fcol, pch=19)
     if(plot.conf)

@@ -9,7 +9,7 @@
   seasonal component.
 }
 \usage{
-decompose(x, type = c("additive", "multiplicative"), filter = NULL)
+decompose(x, type=c("additive", "multiplicative"), filter=NULL)
 }
 \arguments{
   \item{x}{A time series.}
@@ -21,9 +21,9 @@ decompose(x, type = c("additive", "multiplicative"), filter = NULL)
 }
 \details{
   The additive model used is:
-  \deqn{Y_t = T_t + S_t + e_t}{Y[t] = T[t] + S[t] + e[t]}
+  \deqn{Y_t=T_t + S_t + e_t}{Y[t]=T[t] + S[t] + e[t]}
   The multiplicative model used is:
-  \deqn{Y_t = T_t\,S_t\, e_t}{Y[t] = T[t] * S[t] * e[t]}
+  \deqn{Y_t=T_t\,S_t\, e_t}{Y[t]=T[t] * S[t] * e[t]}
   
   The function first determines the trend component using a moving
   average (if \code{filter} is \code{NULL}, a symmetric window with equal
@@ -51,7 +51,8 @@ This function is a modification of the \code{\link[stats]{decompose}} function i
   \emph{Griffin}, 410--414.
 }
 \author{
-  David Meyer \email{David.Meyer@wu-wien.ac.at}. Revised by Rob J Hyndman \email{Rob.Hyndman@monash.edu}.
+  David Meyer \email{David.Meyer@wu-wien.ac.at}. 
+  Revised by Rob J Hyndman \email{Rob.Hyndman@monash.edu}.
 }
 \seealso{\code{\link[stats]{decompose}}}
 

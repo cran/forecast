@@ -1,8 +1,9 @@
 \name{dshw}
 \alias{dshw}
 \title{Double-Seasonal Holt-Winters Forecasting}
-\usage{dshw(y, period1, period2, h=2*max(period1,period2), alpha=NULL, beta=NULL, gamma=NULL, omega=NULL, phi=NULL, 
-  lambda=NULL, armethod=TRUE)}
+\usage{dshw(y, period1, period2, h=2*max(period1,period2), 
+    alpha=NULL, beta=NULL, gamma=NULL, omega=NULL, phi=NULL, 
+    lambda=NULL, armethod=TRUE)}
 
 \arguments{
 \item{y}{a numeric vector or time series}

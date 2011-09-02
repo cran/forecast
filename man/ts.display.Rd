@@ -1,10 +1,9 @@
 \name{tsdisplay}
 \alias{tsdisplay}
 \title{Time series display}
-\usage{tsdisplay(x, plot.type = "partial", points = TRUE, ci.type =
-                 "white", lag.max = round(10 * log10(length(x))),
-                 na.action = na.interp, main = NULL, ylab = "", xlab =
-                 "", pch = 1, cex = 0.5, ...)
+\usage{tsdisplay(x, plot.type="partial", points=TRUE, ci.type="white", 
+    lag.max=round(10 * log10(length(x))), na.action=na.interp, 
+    main=NULL, ylab="", xlab="", pch=1, cex=0.5, ...)
 }
 
 \arguments{  \item{x}{a numeric vector or time series.}

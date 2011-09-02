@@ -6,7 +6,8 @@ compares the forecast accuracy of two forecast methods. The null hypothesis is t
 forecast accuracy.}
 
 \usage{
-dm.test(e1, e2, alternative = c("two.sided", "less", "greater"), h = 1, power = 2)
+dm.test(e1, e2, alternative=c("two.sided","less","greater"), 
+    h=1, power=2)
 }
 \arguments{
   \item{e1}{Forecast errors from method 1.}

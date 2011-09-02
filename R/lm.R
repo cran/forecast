@@ -1,55 +1,55 @@
 tslm <- function(formula,data,lambda=NULL,...)
 {
-    if(missing(data)) # Grab first variable
-    {
-		dataname <- as.character(formula)[2]
-        x <- get(dataname)
-        data <- data.frame(x)
-		colnames(data) <- dataname
-    }
-    else
-    {
-        dataname <- substitute(data)
-        x <- data[,1]
-    }
-    if(!is.ts(x))
-        stop("Not time series data")
-    tspx <- tsp(x)
-    
-    if(tspx[3]==1) # Nonseasonal data
-    {
-      f <- as.character(formula)
-      if(is.element("season",f))
-        stop("Non-seasonal data cannot be modelled using a seasonal factor")
-    }
-	orig.x <- x
-    if(!is.null(lambda))
-			x <- data[,1] <- BoxCox(data[,1],lambda)
-    
-    # Add trend and seasonal to data frame
-    trend <- 1:length(x)
-    season <- as.factor(cycle(x))
-    data <- data.frame(data,trend,season)
-    rownames(data) <- trend
-    fit <- lm(formula,data=data,na.action=na.exclude,...)
-    j <- is.element(data$trend,names(fit$res))
-    if(!is.null(fit$call$subset))
-        j <- j & eval(fit$call$subset)
-    data <- data[j,]
-    # Try to figure out times for subset. Assume they are contiguous.
-    timesx <- time(x)[j]
-    tspx <- c(min(timesx),max(timesx),tspx[3])
-    fit$data <- ts(data)
-	fit$x <- ts(orig.x)
-    fit$residuals <- ts(fit$residuals)
-    fit$fitted.values <- ts(fit$fitted.values)
-    tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tsp(fit$x) <- tspx
-    if(!is.null(dataname))
-        fit$call$data <- dataname
-		fit$lambda <- lambda
-	if(!is.null(lambda))
-		fit$fitted.values <- InvBoxCox(fit$fitted.values,lambda)
-    return(fit)
+  if(missing(data)) # Grab first variable
+  {
+    dataname <- as.character(formula)[2]
+    x <- get(dataname)
+    data <- data.frame(x)
+    colnames(data) <- dataname
+  }
+  else
+  {
+    dataname <- substitute(data)
+    x <- data[,1]
+  }
+  if(!is.ts(x))
+    stop("Not time series data")
+  tspx <- tsp(x)
+
+  if(tspx[3]==1) # Nonseasonal data
+  {
+    f <- as.character(formula)
+    if("season" %in% attr(terms(formula), "term.labels"))
+      stop("Non-seasonal data cannot be modelled using a seasonal factor")
+  }
+  orig.x <- x
+  if(!is.null(lambda))
+    x <- data[,1] <- BoxCox(data[,1],lambda)
+
+  # Add trend and seasonal to data frame
+  trend <- 1:length(x)
+  season <- as.factor(cycle(x))
+  data <- data.frame(data,trend,season)
+  rownames(data) <- trend
+  fit <- lm(formula,data=data,na.action=na.exclude,...)
+  j <- is.element(data$trend,names(fit$res))
+  if(!is.null(fit$call$subset))
+    j <- j & eval(fit$call$subset)
+  data <- data[j,]
+  # Try to figure out times for subset. Assume they are contiguous.
+  timesx <- time(x)[j]
+  tspx <- c(min(timesx),max(timesx),tspx[3])
+  fit$data <- ts(data)
+  fit$x <- ts(orig.x)
+  fit$residuals <- ts(fit$residuals)
+  fit$fitted.values <- ts(fit$fitted.values)
+  tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tsp(fit$x) <- tspx
+  if(!is.null(dataname))
+    fit$call$data <- dataname
+  fit$lambda <- lambda
+  if(!is.null(lambda))
+    fit$fitted.values <- InvBoxCox(fit$fitted.values,lambda)
+  return(fit)
 }
 
 forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda=object$lambda, ...)
@@ -82,9 +82,9 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda
     origdata <- origdata[j,]
     if(!is.null(tspx))
     {
-        # Try to figure out times for subset. Assume they are contiguous.
-        timesx <- timesx[j]
-        tspx <- tsp(origdata) <- c(min(timesx),max(timesx),tspx[3])
+      # Try to figure out times for subset. Assume they are contiguous.
+      timesx <- timesx[j]
+      tspx <- tsp(origdata) <- c(min(timesx),max(timesx),tspx[3])
     }
   }
   # Add trend and seasonal to data frame
@@ -96,9 +96,9 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda
     trend <- max(origdata[,"trend"]) + (1:h)
     season <- as.factor(cycle(x))
     if(!missing(newdata))
-        newdata <- data.frame(as.data.frame(newdata),trend,season)
+      newdata <- data.frame(as.data.frame(newdata),trend,season)
     else
-        newdata <- data.frame(trend,season)
+      newdata <- data.frame(trend,season)
   }
   newdata <- as.data.frame(newdata)
   out <- list()
@@ -116,18 +116,18 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda
 
   if(!is.null(tspx))
   {
-     fcast$x <- ts(fcast$x)
-     fcast$residuals <- ts(fcast$residuals)
-     fcast$fitted <- ts(fcast$fitted)
-     tsp(fcast$x) <- tsp(fcast$residuals) <- tsp(fcast$fitted) <- tspx
+    fcast$x <- ts(fcast$x)
+    fcast$residuals <- ts(fcast$residuals)
+    fcast$fitted <- ts(fcast$fitted)
+    tsp(fcast$x) <- tsp(fcast$residuals) <- tsp(fcast$fitted) <- tspx
   }
   if(nl > 1)
   {
-		for(i in 2:nl)
-		{
-			fcast$lower <- cbind(fcast$lower,out[[i]]$fit[,2])
-			fcast$upper <- cbind(fcast$upper,out[[i]]$fit[,3])
-		}
+    for(i in 2:nl)
+    {
+      fcast$lower <- cbind(fcast$lower,out[[i]]$fit[,2])
+      fcast$upper <- cbind(fcast$upper,out[[i]]$fit[,3])
+    }
   }
   if(!is.null(tspx))
   {
@@ -135,14 +135,14 @@ forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda
     fcast$upper <- ts(fcast$upper, start=tspx[2]+1/tspx[3],frequency=tspx[3])
     fcast$lower <- ts(fcast$lower, start=tspx[2]+1/tspx[3],frequency=tspx[3])
   }
-  
-	if(!is.null(lambda))
-	{
-		#fcast$x <- InvBoxCox(fcast$x,lambda)
-		fcast$mean <- InvBoxCox(fcast$mean,lambda)
-		fcast$lower <- InvBoxCox(fcast$lower,lambda)
-		fcast$upper <- InvBoxCox(fcast$upper,lambda)
-	}
-	
+
+  if(!is.null(lambda))
+  {
+    #fcast$x <- InvBoxCox(fcast$x,lambda)
+    fcast$mean <- InvBoxCox(fcast$mean,lambda)
+    fcast$lower <- InvBoxCox(fcast$lower,lambda)
+    fcast$upper <- InvBoxCox(fcast$upper,lambda)
+  }
+
   return(structure(fcast,class="forecast"))
 }

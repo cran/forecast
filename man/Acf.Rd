@@ -3,7 +3,8 @@
 \alias{Pacf}
 \title{(Partial) Autocorrelation Function Estimation}
 \usage{
-Acf(x, lag.max=NULL, type = c("correlation", "partial"), plot=TRUE, main=NULL, ...)
+Acf(x, lag.max=NULL, type=c("correlation", "partial"), 
+   plot=TRUE, main=NULL, ...)
 Pacf(x, main=NULL, ...) }
 
 

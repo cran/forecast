@@ -13,9 +13,9 @@ InvBoxCox(x,lambda)
 InvBoxCox() reverses the transformation.
 }
 \details{The Box-Cox transformation is given by
-\deqn{f_\lambda(x) =\frac{x^\lambda - 1}{\lambda}}{f(x;lambda) = (x^lambda - 1)/lambda}
+\deqn{f_\lambda(x) =\frac{x^\lambda - 1}{\lambda}}{f(x;lambda)=(x^lambda - 1)/lambda}
 if \eqn{\lambda\ne0}{lambda is not equal to 0}. For \eqn{\lambda=0}{lambda=0},
-\deqn{f_0(x) = \log(x)}{f(x;0) = log(x)}.
+\deqn{f_0(x)=\log(x)}{f(x;0)=log(x)}.
 }
 \value{a numeric vector of the same length as x.
 }

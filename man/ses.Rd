@@ -4,10 +4,9 @@
 \alias{hw}
 \title{Exponential smoothing forecasts}
 \usage{ses(x, h=10, level=c(80,95), fan=FALSE, ...)
-
 holt(x, h=10, damped=FALSE, level=c(80,95), fan=FALSE, ...)
-
-hw(x, h=2*frequency(x), seasonal="additive", damped=FALSE, level=c(80,95), fan=FALSE, ...)
+hw(x, h=2*frequency(x), seasonal="additive", damped=FALSE, 
+   level=c(80,95), fan=FALSE, ...)
 }
 
 \arguments{

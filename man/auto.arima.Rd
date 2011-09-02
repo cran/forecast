@@ -3,14 +3,13 @@
 \alias{auto.arima}
 \title{Fit best ARIMA model to univariate time series}
 \usage{
-auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
-           max.P = 2, max.Q = 2, max.order = 5,
-           start.p=2, start.q=2, start.P=1, start.Q=1,
-           stationary = FALSE, ic = c("aic","aicc", "bic"), 
-           stepwise=TRUE, trace=FALSE, 
-           approximation=length(x)>100 | frequency(x)>12, xreg=NULL,
-           test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"),
-					 allowdrift=TRUE, lambda=NULL)
+auto.arima(x, d=NA, D=NA, max.p=5, max.q=5,
+     max.P=2, max.Q=2, max.order=5, start.p=2, start.q=2, 
+     start.P=1, start.Q=1, stationary=FALSE, 
+     ic=c("aic","aicc", "bic"), stepwise=TRUE, trace=FALSE, 
+     approximation=(length(x)>100 | frequency(x)>12), xreg=NULL,
+     test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"),
+     allowdrift=TRUE, lambda=NULL)
 }
 
 \arguments{
@@ -28,15 +27,9 @@ auto.arima(x, d = NA, D = NA, max.p = 5, max.q = 5,
 \item{start.Q}{Starting value of Q in stepwise procedure.}
 \item{stationary}{If \code{TRUE}, restricts search to stationary models.}
 \item{ic}{Information criterion to be used in model selection.}
-\item{stepwise}{If \code{TRUE}, will do stepwise selection (faster). Otherwise, 
-                it searches over all models. Non-stepwise selection can be very slow,
-                especially for seasonal models.}
+\item{stepwise}{If \code{TRUE}, will do stepwise selection (faster). Otherwise, it searches over all models. Non-stepwise selection can be very slow, especially for seasonal models.}
 \item{trace}{If \code{TRUE}, the list of ARIMA models considered will be reported.}
-\item{approximation}{If \code{TRUE}, estimation is via conditional sums of squares and
-    the information criteria used for model selection are approximated. The final model is 
-    still computed using maximum likelihood estimation. Approximation should be used
-    for long time series or a high seasonal period to avoid excessive computation
-    times.}
+\item{approximation}{If \code{TRUE}, estimation is via conditional sums of squares andthe information criteria used for model selection are approximated. The final model is still computed using maximum likelihood estimation. Approximation should be used for long time series or a high seasonal period to avoid excessive computation times.}
 \item{xreg}{Optionally, a vector or matrix of external regressors, which must have the same number of rows as x.}
 \item{test}{Type of unit root test to use. See \code{\link{ndiffs}} for details.}
 \item{seasonal.test}{This determines which seasonal unit root test is used. See \code{\link{nsdiffs}} for details.}

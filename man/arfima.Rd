@@ -5,17 +5,14 @@
 Hyndman-Khandakar (2008) algorithm to select p and q and the Haslett and Raftery (1989) algorithm 
 to estimate the parameters including d.
 }
-\usage{arfima(x, drange = c(0, 0.5), estim = c("mle","ls"), lambda=NULL, ...)
+\usage{arfima(x, drange=c(0, 0.5), estim=c("mle","ls"), lambda=NULL, ...)
 }
 \arguments{
-  \item{x}{a univariate time series (numeric vector).}
-  \item{drange}{Allowable values of d to be considered. Default of \code{c(0,0.5)} ensures a stationary 
-                model is returned.}
-  \item{estim}{If \code{estim=="ls"}, then the ARMA parameters are calculated using the Haslett-Raftery algorithm. 
-  If \code{estim=="mle"}, then the ARMA parameters are calculated using full MLE via the \code{\link[stats]{arima}} 
-  function.}
-	\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated.}
-  \item{\dots}{Other arguments passed to \code{\link{auto.arima}} when selecting p and q.}
+\item{x}{a univariate time series (numeric vector).}
+\item{drange}{Allowable values of d to be considered. Default of \code{c(0,0.5)} ensures a stationary model is returned.}
+\item{estim}{If \code{estim=="ls"}, then the ARMA parameters are calculated using the Haslett-Raftery algorithm. If \code{estim=="mle"}, then the ARMA parameters are calculated using full MLE via the \code{\link[stats]{arima}} function.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated.}
+\item{\dots}{Other arguments passed to \code{\link{auto.arima}} when selecting p and q.}
 } 
 \details{This function combines \code{\link[fracdiff]{fracdiff}} and \code{\link{auto.arima}} to 
 automatically select and estimate an ARFIMA model.  The fractional differencing parameter is chosen 
@@ -42,7 +39,7 @@ Hyndman, R.J. and Khandakar, Y. (2008) "Automatic time series forecasting: The f
 \seealso{\code{\link[fracdiff]{fracdiff}}, \code{\link{auto.arima}}, \code{\link{forecast.fracdiff}}.}
 
 \examples{
-x <- fracdiff.sim( 100, ma = -.4, d = .3)$series
+x <- fracdiff.sim( 100, ma=-.4, d=.3)$series
 fit <- arfima(x)
 tsdisplay(residuals(fit))
 }

@@ -4,8 +4,9 @@
 \alias{stl}
 \title{Forecasting using stl objects}
 \usage{\method{forecast}{stl}(object, method=c("ets","arima"),
-    h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, ...)
-stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"), lambda=NULL, level = c(80, 95), fan = FALSE, ...)
+    h=frequency(object$time.series)*2, level=c(80,95), fan=FALSE, ...)
+stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"), 
+    lambda=NULL, level=c(80,95), fan=FALSE, ...)
 }
 
 \arguments{
