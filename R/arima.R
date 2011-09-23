@@ -193,7 +193,7 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
         x <- object$x
     else
         x <- object$x <- eval.parent(parse(text=object$series))
-    usexreg <- (!is.null(xreg) | use.drift)# | use.constant)
+    usexreg <- (!is.null(xreg) | use.drift | is.element("xreg",names(object)))# | use.constant)
 #    if(use.constant)
 #        xreg <- as.matrix(rep(1,h))
     if(!is.null(xreg))
@@ -205,12 +205,14 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
     {
         n <- length(x)
         if(!is.null(xreg))
-            xreg <- cbind(xreg,(1:h)+n)
+            xreg <- cbind((1:h)+n,xreg)
         else
             xreg <- as.matrix((1:h)+n)
     }
     if(usexreg)
     {
+        if(is.null(xreg))
+          stop("No regressors provided")
         if(!is.null(object$xreg))
             object$call$xreg <- object$xreg
         else # object from arima() rather than Arima()
@@ -220,6 +222,8 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
                                     eval.parent(xr)
                                 else NULL
         }
+        if(ncol(xreg) != ncol(object$call$xreg))
+          stop("Number of regressors does not match fitted model")
         pred <- predict(object, n.ahead=h, newxreg=xreg)
     }
     else
@@ -405,7 +409,7 @@ Arima <- function(x, order=c(0, 0, 0),
     if(include.drift)
     {
       drift <- 1:length(x)
-      xreg <- cbind(xreg,drift=drift)
+      xreg <- cbind(drift=drift,xreg)
     }
     if(is.null(xreg))
       tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,include.mean=include.mean,

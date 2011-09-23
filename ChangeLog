@@ -1,3 +1,6 @@
+Version 3.04 ( September 2011)
+  * Fixed bug when drift and xreg used together in auto.arima() or Arima().
+
 Version 3.03 (2 September 2011)
   * Bug fix in dshw() which was using slightly incorrect seasonal estimates for the forecasts
   * Bug fix in forecast.StructTS due to change in structure of StructTS object.
@@ -141,7 +144,7 @@ Version 1.19 (7 November 2008)
 Version 1.18 (6 November 2008)
   * Bug fix in ets(): models with frequency less than 1 would cause R to hang.
   * Bug fix in ets(): models with frequency greater than 12 would not fit due to parameters being out of range.
-  * Default lower and upper bounds on parameters ?, ? and ? in ets() changed to 0.0001 and 0.9999 (instead of 0.01 and 0.99).
+  * Default lower and upper bounds on parameters ,  and  in ets() changed to 0.0001 and 0.9999 (instead of 0.01 and 0.99).
 
 Version 1.17 (10 October 2008)
   * Calculation of BIC did not account for reduction in length of series due to differencing. Now fixed in auto.arima() and in print.Arima().
