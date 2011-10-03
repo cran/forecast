@@ -3,8 +3,8 @@ Title: Forecasting functions for time series
 Description: Methods and tools for displaying and analysing univariate
         time series forecasts including exponential smoothing via state
         space models and automatic ARIMA modelling.
-Version: 3.04
-Date: 2011-09-23
+Version: 3.05
+Date: 2011-10-03
 Depends: R (>= 2.0.0), graphics, stats, tseries, fracdiff, zoo
 LazyData: yes
 LazyLoad: yes
@@ -12,6 +12,6 @@ Author: Rob J Hyndman <Rob.Hyndman@monash.edu>
 Maintainer: Rob J Hyndman <Rob.Hyndman@monash.edu>
 License: GPL (>= 2)
 URL: http://robjhyndman.com/software/forecast/
-Packaged: 2011-09-23 02:37:33 UTC; hyndman
+Packaged: 2011-10-03 00:12:48 UTC; hyndman
 Repository: CRAN
-Date/Publication: 2011-09-23 11:45:32
+Date/Publication: 2011-10-03 05:39:47

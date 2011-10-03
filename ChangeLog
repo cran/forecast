@@ -1,4 +1,7 @@
-Version 3.04 ( September 2011)
+Version 3.05 (3 October 2011)
+  * Fixed bug in ets() which prevent non-seasonal models being fitted to high frequency data.
+
+Version 3.04 (23 September 2011)
   * Fixed bug when drift and xreg used together in auto.arima() or Arima().
 
 Version 3.03 (2 September 2011)
