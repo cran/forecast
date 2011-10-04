@@ -46,3 +46,5 @@ S3method(summary,ets)
 S3method(summary,forecast)
 S3method(tsdiag,ets)
 S3method(subset,ts)
+
+useDynLib(forecast)

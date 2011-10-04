@@ -1,6 +1,6 @@
-a6a4e21210a8a0740150d7d7d1ee3929 *ChangeLog
-8839e571c676065c4419dd773f6e3e96 *DESCRIPTION
-29ac74fb2307ac26624b8c775f6e4f09 *NAMESPACE
+e61aea6772b3bd5723cfc0fdb204694f *ChangeLog
+bfa2f2344e843245566e8652e727e11e *DESCRIPTION
+89e48f1cd3db4d68a78685618b063444 *NAMESPACE
 a217e5964dfd8cda945c59ccffcfe738 *R/DM.R
 2e79076ba9faa47c1f464d3bd0f07c7a *R/arfima.R
 eafa5dc3f14bb470662bc6cf38ff93de *R/arima.R
@@ -22,12 +22,11 @@ be5fa6cc06db28764dfaabe0acf47933 *R/season.R
 2505a38dc8aa56dd985445c19da3f18f *R/spline.R
 d0778d58e3058fc7fb820d0b1c2f7cfb *R/subset.R
 b66d3fe8ad5b6c11ade978494ea4c78c *R/tsdiag.R
-af527ae0b6d09d73832cf39af225c6b6 *R/zzz.R
-cca6a0459f7b1d1207abc6de86aaa32b *data/gas.rda
-5da25467216597c4ab3e70dd849456d6 *data/gold.rda
+075edfc431691c5f081040f84592b3aa *data/gas.rda
+a793b732a6e0a5a36dee488192cc0e90 *data/gold.rda
 7c498badbcbe5acabaa380b7e35f0fc1 *data/taylor.rda
-8e1984a599b83bfd00b7185fda575b63 *data/wineind.rda
-e854994f9445a3e5367b759f681cf1e9 *data/woolyrnq.rda
+e50eaed778c788bb40c7a09e719d4397 *data/wineind.rda
+fd6e516a2394f875643e8cc92214f3e4 *data/woolyrnq.rda
 c666cb75d9b30b394b6db7521de32343 *man/Acf.Rd
 3ac801acf161d40f85ff1e0a642f5209 *man/BoxCox.Rd
 60fccdf26e26fb22e909d5e47e29d141 *man/BoxCoxlambda.Rd
