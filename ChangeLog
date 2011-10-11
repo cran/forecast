@@ -1,3 +1,6 @@
+Version 3.07 (11 October 2011)
+  * Bug fix in ets() concerning non-seasonal models and high-frequency data. It sometimes returned all forecasts equal to zero.
+
 Version 3.06 (4 October 2011)
   * Switched to useDynLib in preparation for Rv2.14.0.
 

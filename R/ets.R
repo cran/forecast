@@ -83,6 +83,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
       {
         warning("I can't handle data with frequency greater than 24. Seasonality will be ignored. Try stlf() if you need seasonal forecasts.")
         substr(model,3,3) <- seasontype <- "N"
+        m <- 1
       }
     }
 
@@ -184,7 +185,10 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     tsp.y <- tsp(y)
     if(is.null(tsp.y))
         tsp.y <- c(1,length(y),1)
-    m <- tsp.y[3]
+    if(seasontype != "N")
+      m <- tsp.y[3]
+    else
+      m <- 1
 
     # Initialize smoothing parameters
     par <- initparam(alpha,beta,gamma,phi,trendtype,seasontype,damped,lower,upper,m)
@@ -249,7 +253,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
         gamma <- fit.par["gamma"]
     if(!is.na(fit.par["phi"]))
         phi <- fit.par["phi"]
-    e <- pegelsresid.C(y,frequency(y),init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi)
+    e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi)
 
     n <- length(y)
     aic <- e$lik + 2*np
@@ -259,7 +263,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     mse <- e$amse[1]
     amse <- mean(e$amse[1:nmse])
 
-    states=ts(e$states,f=m,s=tsp.y[1]-1/m)
+    states=ts(e$states,f=tsp.y[3],s=tsp.y[1]-1/tsp.y[3])
     colnames(states)[1] <- "l"
     if(trendtype!="N")
         colnames(states)[2] <- "b"
@@ -274,7 +278,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     else
         fits <- y/(1+e$e)
 
-    return(list(loglik=-0.5*e$lik,aic=aic,bic=bic,aicc=aicc,mse=mse,amse=amse,fit=fred,residuals=ts(e$e,f=m,s=tsp.y[1]),fitted=ts(fits,f=m,s=tsp.y[1]),
+    return(list(loglik=-0.5*e$lik,aic=aic,bic=bic,aicc=aicc,mse=mse,amse=amse,fit=fred,residuals=ts(e$e,f=tsp.y[3],s=tsp.y[1]),fitted=ts(fits,f=tsp.y[3],s=tsp.y[1]),
         states=states,par=fit.par))
 }
 
@@ -444,7 +448,10 @@ lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,low
             stop("gamma Problem!")
     }
     else
-        gamma <- NULL
+    {
+      m <- 1
+      gamma <- NULL
+    }
     if(damped)
     {
         phi <- c(par["phi"],par.noopt["phi"])["phi"]
@@ -471,7 +478,7 @@ lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,low
             return(1e8)
     }
 
-    e <- pegelsresid.C(y,frequency(y),init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi)
+    e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi)
 
     if(is.na(e$lik))
         return(1e8)
@@ -583,8 +590,11 @@ pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,a
         if(abs(Cout[[13]]+99999) < 1e-7)
             Cout[[13]] <- NA
     }
+    tsp.y <- tsp(y)
+    e <- ts(Cout[[12]])
+    tsp(e) <- tsp.y 
 
-    return(list(lik=Cout[[13]], amse=Cout[[14]], e=Cout[[12]], states=matrix(Cout[[3]], nrow=n+1, ncol=p, byrow=TRUE)))
+    return(list(lik=Cout[[13]], amse=Cout[[14]], e=e, states=matrix(Cout[[3]], nrow=n+1, ncol=p, byrow=TRUE)))
 }
 
 admissible <- function(alpha,beta,gamma,phi,m)
