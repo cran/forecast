@@ -1,5 +1,5 @@
-f155b9ba8f80f0fbb664e6b2a823a90d *ChangeLog
-65c4ef8ef41871b714758e70ad60e582 *DESCRIPTION
+324cc96dfd8fba1acdff5418a5810873 *ChangeLog
+3b957f85cbcd8a17571a1d50244fee18 *DESCRIPTION
 89e48f1cd3db4d68a78685618b063444 *NAMESPACE
 a217e5964dfd8cda945c59ccffcfe738 *R/DM.R
 2e79076ba9faa47c1f464d3bd0f07c7a *R/arfima.R
@@ -17,7 +17,7 @@ d11893ab9f31a1b9383bcc61c36ee9bc *R/fpp.R
 7e8bec8e1c091448dead67dbba3264c3 *R/guerrero.R
 80fdb2fee3a404e89b10a3b94d9079b8 *R/lm.R
 fb5d3fc317740fe1422cae4c640f7b63 *R/newarima2.R
-be5fa6cc06db28764dfaabe0acf47933 *R/season.R
+2f268afbda5b5fc8bfe3d3357a58043b *R/season.R
 5a75529ab727efe7f87d0a1059d43056 *R/simulate.R
 2505a38dc8aa56dd985445c19da3f18f *R/spline.R
 d0778d58e3058fc7fb820d0b1c2f7cfb *R/subset.R
@@ -48,7 +48,7 @@ e171fc7fe60aeb09106c3ced0932fa42 *man/forecast.Rd
 1e4540c38ebd3b4bcb8f27b13206e318 *man/forecast.StructTS.Rd
 d05000970470be5f6cd694c6864c469e *man/forecast.ets.Rd
 6a6e5d9a9ccbb2f2760108d946d2ad8c *man/forecast.lm.Rd
-701b27cda922dc6f8eaffde8645d75be *man/forecast.stl.Rd
+19e35c7ee991e2cedd5e91967ff145ae *man/forecast.stl.Rd
 890df435b38c691db827f3205f854dda *man/forecastplot.Rd
 dd2fcd5cac99e0df6a5afba55cfde901 *man/gas.Rd
 fe104320f8479359d5a43322987b377f *man/gold.Rd

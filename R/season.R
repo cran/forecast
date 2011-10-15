@@ -94,32 +94,42 @@ seasonaldummyf <- function(x, h)
 }
 
 forecast.stl <- function(object, method=c("ets","arima"),
-     h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, ...)
+     h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, lambda=NULL, ...)
 {
-    method <- match.arg(method)
-    m <- frequency(object$time.series)
-    n <- nrow(object$time.series)
-    lastseas <- rep(object$time.series[n-(m:1)+1,"seasonal"],h/(m-1))[1:h]
-    # De-seasonalize
-    x.sa <- seasadj(object)
-    # Forecast
-    if(method=="ets")
-        fit <- ets(x.sa,model="ZZN",...)
-    else
-        fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
-    fcast <- forecast(fit,h=h,level=level,fan=fan)
-    # Reseasonalize
-    fcast$mean <- fcast$mean + lastseas
-    fcast$upper <- fcast$upper + lastseas
-    fcast$lower <- fcast$lower + lastseas
-    fcast$x <- ts(rowSums(object$time.series))
-    tsp(fcast$x) <- tsp(object$time.series)
-    fcast$method <- paste("STL + ",fcast$method)
-    fcast$seasonal <- ts(lastseas[1:m],f=m,start=tsp(object$time.series)[2]-1+1/m)
-    fcast$fitted <- fitted(fcast)+object$time.series[,1]
-    fcast$residuals <- fcast$x - fcast$fitted
-    
-    return(fcast)
+  method <- match.arg(method)
+  m <- frequency(object$time.series)
+  n <- nrow(object$time.series)
+  lastseas <- rep(object$time.series[n-(m:1)+1,"seasonal"],max(1,h/(m-1)))[1:h]
+  # De-seasonalize
+  x.sa <- seasadj(object)
+  # Forecast
+  if(method=="ets")
+      fit <- ets(x.sa,model="ZZN",...)
+  else
+      fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
+  fcast <- forecast(fit,h=h,level=level,fan=fan)
+  # Reseasonalize
+  fcast$mean <- fcast$mean + lastseas
+  fcast$upper <- fcast$upper + lastseas
+  fcast$lower <- fcast$lower + lastseas
+  fcast$x <- ts(rowSums(object$time.series))
+  tsp(fcast$x) <- tsp(object$time.series)
+  fcast$method <- paste("STL + ",fcast$method)
+  fcast$seasonal <- ts(lastseas[1:m],f=m,start=tsp(object$time.series)[2]-1+1/m)
+  fcast$fitted <- fitted(fcast)+object$time.series[,1]
+  fcast$residuals <- fcast$x - fcast$fitted
+  
+	if (!is.null(lambda)) 
+	{
+		fcast$x <- InvBoxCox(fcast$x,lambda)
+		fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
+		fcast$mean <- InvBoxCox(fcast$mean, lambda)
+		fcast$lower <- InvBoxCox(fcast$lower, lambda)
+		fcast$upper <- InvBoxCox(fcast$upper, lambda)
+		fcast$lambda <- lambda
+	}
+  
+   return(fcast)
 }
 
 stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), lambda=NULL, level = c(80, 95), fan = FALSE, ...)

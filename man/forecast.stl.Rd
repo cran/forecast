@@ -4,7 +4,7 @@
 \alias{stl}
 \title{Forecasting using stl objects}
 \usage{\method{forecast}{stl}(object, method=c("ets","arima"),
-    h=frequency(object$time.series)*2, level=c(80,95), fan=FALSE, ...)
+    h=frequency(object$time.series)*2, level=c(80,95), fan=FALSE, lambda=NULL, ...)
 stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"), 
     lambda=NULL, level=c(80,95), fan=FALSE, ...)
 }
@@ -14,7 +14,7 @@ stlf(x, h=frequency(x)*2, s.window=7, method=c("ets","arima"),
 \item{x}{A univariate numeric time series of class "\code{ts}"}
 \item{s.window}{Either the character string "periodic" (default) or the span (in lags) of the loess window for seasonal extraction.}
 \item{method}{Method to use for forecasting the seasonally adjusted series.}
-\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated and back-transformed after forecasts are computed.}
 \item{h}{Number of periods for forecasting.}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
