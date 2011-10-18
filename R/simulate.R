@@ -55,43 +55,52 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
 
 myarima.sim <- function (model, n, x, e, ...) 
 {
-    data <- x
+  start.innov <- residuals(model)
+  innov <- e
+  data <- x
+  # Remove initial NAs
+  first.nonmiss <- which(!is.na(x))[1]
+  if(first.nonmiss > 1)
+  {
+    tsp.x <- tsp(x)
+    start.x <- tsp.x[1] + (first.nonmiss-1)/tsp.x[3]
+    x <- window(x,start=start.x)
+    start.innov <- window(start.innov, start=start.x)
+  }
 	model$x <- x
+  n.start <- length(x)
+	x <- ts(c(start.innov, innov), start = 1 - n.start, frequency=model$seasonal.period)
 	flag.noadjust <- FALSE
 	if(is.null(tsp(data)))
 		data <- ts(data,f=1,s=1)
-    if (!is.list(model)) 
-        stop("'model' must be list")
-    p <- length(model$ar)
-    if (p) 
-    {
-        minroots <- min(Mod(polyroot(c(1, -model$ar))))
-        if (minroots <= 1) 
-            stop("'ar' part of model is not stationary")
-    }
-    q <- length(model$ma)
-    n.start <- length(x)
-    d <- 0
-    if (!is.null(ord <- model$order)) 
-    {
-        if (length(ord) != 3) 
-            stop("'model$order' must be of length 3")
-        if (p != ord[1]) 
-            stop("inconsistent specification of 'ar' order")
-        if (q != ord[3]) 
-            stop("inconsistent specification of 'ma' order")
-        d <- ord[2]
-        if (d != round(d) || d < 0) 
-            stop("number of differences must be a positive integer")
-    }
-    start.innov <- residuals(model)
-    innov <- e
-	x <- ts(c(start.innov, innov), start = 1 - n.start, frequency=model$seasonal.period)
-    if (length(model$ma)) 
+  if (!is.list(model)) 
+    stop("'model' must be list")
+  p <- length(model$ar)
+  if (p) 
+  {
+    minroots <- min(Mod(polyroot(c(1, -model$ar))))
+    if (minroots <= 1) 
+      stop("'ar' part of model is not stationary")
+  }
+  q <- length(model$ma)
+  d <- 0
+  if (!is.null(ord <- model$order)) 
+  {
+    if (length(ord) != 3L) 
+      stop("'model$order' must be of length 3")
+    if (p != ord[1L]) 
+      stop("inconsistent specification of 'ar' order")
+    if (q != ord[3L]) 
+      stop("inconsistent specification of 'ma' order")
+    d <- ord[2L]
+    if (d != round(d) || d < 0) 
+      stop("number of differences must be a positive integer")
+  }
+   if (length(model$ma)) 
 	{ 
-        #MA filtering
-		x <- filter(x, c(1, model$ma), method="convolution", sides = 1)
-		x[1] <- 0
+    #MA filtering
+		x <- filter(x, c(1, model$ma), method="convolution", sides = 1L)
+		x[seq_along(model$ma)] <- 0
 	}
 	##AR "filtering"
 	len.ar <- length(model$ar)
@@ -149,25 +158,25 @@ myarima.sim <- function (model, n, x, e, ...)
 	else if (length(model$ar)) 
 	{
 		#AR filtering for all other cases where AR is used.
-        x <- filter(x, model$ar, method = "recursive")
+    x <- filter(x, model$ar, method = "recursive")
 	}
 	if((d == 0) && (model$seasonal.difference == 0) && (flag.noadjust==FALSE)) # Adjust to ensure end matches approximately
-    {
-        # Last 20 diffs
-        if(n.start >= 20)
-            xdiff <- (model$x - x[1:n.start])[n.start-(19:0)]
-        else
-            xdiff <- model$x - x[1:n.start]
-        # If all same sign, choose last
-        if(all(sign(xdiff)==1) | all(sign(xdiff)==-1))
-            xdiff <- xdiff[length(xdiff)]
-        else # choose mean.
-            xdiff <- mean(xdiff)
-        x <- x + xdiff
-    }
+  {
+    # Last 20 diffs
+    if(n.start >= 20)
+      xdiff <- (model$x - x[1:n.start])[n.start-(19:0)]
+    else
+      xdiff <- model$x - x[1:n.start]
+    # If all same sign, choose last
+    if(all(sign(xdiff)==1) | all(sign(xdiff)==-1))
+      xdiff <- xdiff[length(xdiff)]
+    else # choose mean.
+      xdiff <- mean(xdiff)
+    x <- x + xdiff
+  }
 	if ((n.start > 0) && (flag.noadjust==FALSE)) 
 	{  
-		x <- x[-(1:n.start)]#*-1
+		x <- x[-(1:n.start)]
 	}
 	##
 	#####
@@ -187,7 +196,7 @@ myarima.sim <- function (model, n, x, e, ...)
 	###End seasonal undifferencing
 	
 	##Regular undifferencing, if there is no seasonal differencing
-    if (d > 0 && (model$seasonal.difference == 0)) 
+  if (d > 0 && (model$seasonal.difference == 0)) 
 	{
     x <- diffinv(x, differences = d,xi=data.new[length(data.new)-(d:1)+1])[-(1:d)]
 	}
@@ -215,7 +224,7 @@ myarima.sim <- function (model, n, x, e, ...)
 	
 	########
 	
-    x <- ts(x[1:n],f=frequency(data),s=tsp(data)[2]+1/tsp(data)[3])
+  x <- ts(x[1:n],f=frequency(data),s=tsp(data)[2]+1/tsp(data)[3])
 	return(x)    
 }
 

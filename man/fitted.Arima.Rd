@@ -1,7 +1,7 @@
 \name{fitted.Arima}
 \alias{fitted.Arima}
 \title{One-step in-sample forecasts using ARIMA models}
-\usage{fitted.Arima(object,...)
+\usage{\method{fitted}{Arima}(object,...)
 }
 
 \arguments{
