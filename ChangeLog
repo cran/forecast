@@ -1,3 +1,9 @@
+Version 3.10 (27 October 2011)
+  * Added lambda argument to naive() and snaive().
+  * Fixed bug in ets() with high frequency data.
+  * Fixed bug in rwf() where incorrect fitted values and residuals were sometimes returned.
+  * Modified number of lags displayed by default in tsdisplay().
+
 Version 3.09 (18 October 2011)
   * Fixed bug causing occasional problems in simulate.Arima() when MA order greater than 2 and future=TRUE.
 

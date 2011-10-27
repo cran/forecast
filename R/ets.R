@@ -66,7 +66,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
     if(m < 1)
     {
       warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
-      m <- 1
+      seasontype=="N"
     }
     if(m == 1)
     {
@@ -83,7 +83,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
       {
         warning("I can't handle data with frequency greater than 24. Seasonality will be ignored. Try stlf() if you need seasonal forecasts.")
         substr(model,3,3) <- seasontype <- "N"
-        m <- 1
+        #m <- 1
       }
     }
 

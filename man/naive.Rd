@@ -2,8 +2,8 @@
 \alias{naive}
 \alias{snaive}
 \title{Naive forecasts}
-\usage{naive(x, h=10, level=c(80,95), fan=FALSE)
-snaive(x, h=2*frequency(x), level=c(80,95), fan=FALSE)
+\usage{naive(x, h=10, level=c(80,95), fan=FALSE, lambda=NULL)
+snaive(x, h=2*frequency(x), level=c(80,95), fan=FALSE, lambda=NULL)
 }
 
 \arguments{
@@ -11,6 +11,7 @@ snaive(x, h=2*frequency(x), level=c(80,95), fan=FALSE)
 \item{h}{Number of periods for forecasting}
 \item{level}{Confidence levels for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
+\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.}
 }
 \description{\code{naive()} returns forecasts and prediction intervals for an ARIMA(0,1,0) random walk model applied to x.
 \code{snaive()} returns forecasts and prediction intervals from an ARIMA(0,0,0)(0,1,0)m model where m is the seasonal period.

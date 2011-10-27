@@ -1,5 +1,5 @@
-92302b343f248b6036e9d9b9ca670f89 *ChangeLog
-a47c29e0d108071207a8dff2c9d345d9 *DESCRIPTION
+84cbee9e9c016f91f78de5aaec92db7a *ChangeLog
+72299adaabd2183219a591f831b320e0 *DESCRIPTION
 89e48f1cd3db4d68a78685618b063444 *NAMESPACE
 a217e5964dfd8cda945c59ccffcfe738 *R/DM.R
 2e79076ba9faa47c1f464d3bd0f07c7a *R/arfima.R
@@ -8,12 +8,12 @@ d27c743c686c36c32db98360ad02cbe0 *R/attach.R
 bb3c4d4743527bfae77863d1302378f8 *R/decompose.R
 bad91cc3d9024895d9b0561b616a51ff *R/dshw.r
 f74fb3e7d6046f8da14b0aebd709a066 *R/errors.R
-0d9b1af85e4acea5c505e1048dc5bc49 *R/ets.R
+9b059cfbe88a3f4e504876cfeb824980 *R/ets.R
 f38284044bd70279963224f6ead9f8bc *R/etsforecast.R
-45b62bd7e718a875da06989963640e5b *R/forecast.R
-fe09b72fc722815eb4ae479c37c51531 *R/forecast2.R
+ff594fb46536351ccc428510a1391b20 *R/forecast.R
+8bea26c488d75847591909f2b8698721 *R/forecast2.R
 d11893ab9f31a1b9383bcc61c36ee9bc *R/fpp.R
-152ee893e46a411cc5e3957749908eaf *R/graph.R
+af2d49e0d869f727939c5d3f1bc3918d *R/graph.R
 7e8bec8e1c091448dead67dbba3264c3 *R/guerrero.R
 80fdb2fee3a404e89b10a3b94d9079b8 *R/lm.R
 fb5d3fc317740fe1422cae4c640f7b63 *R/newarima2.R
@@ -23,7 +23,7 @@ fb5d3fc317740fe1422cae4c640f7b63 *R/newarima2.R
 d0778d58e3058fc7fb820d0b1c2f7cfb *R/subset.R
 b66d3fe8ad5b6c11ade978494ea4c78c *R/tsdiag.R
 d83263b393c17189250711ff49f730b6 *data/gas.rda
-61add2b0a0d412e8d3f39a0d65fa3da0 *data/gold.rda
+de9a9e1c277aa90de4c8ee718d4ef93f *data/gold.rda
 7c498badbcbe5acabaa380b7e35f0fc1 *data/taylor.rda
 38679e434ddf3856988e34aabbe662fc *data/wineind.rda
 20dae67335336c52c4228859c36a22c3 *data/woolyrnq.rda
@@ -57,7 +57,7 @@ a4eef42e47b49b7de4151c74151abc7c *man/ma.Rd
 bacb2f1487ace4cba0ebea04fa26e30b *man/meanf.Rd
 91c08193ca9f8ba23cd25da799c6701c *man/monthdays.Rd
 68394edf1f4e21b74bb4bb0dae242a21 *man/na.interp.Rd
-1a62adfd1c00896c2ee60abf9c5267fa *man/naive.Rd
+338480e67e579dd3fd897075fa5c6884 *man/naive.Rd
 92f1dd0ff9a188003c8f064886883fa2 *man/numberdiffs.Rd
 aadff6a70e71e3ced2e23b6e4e2305ec *man/plot.ets.Rd
 8d9aa88f26b9c8e56fe90b35b9e04c8b *man/rw.f.Rd
@@ -71,7 +71,7 @@ ed9359bce82d4479e2dd9553d708e902 *man/simulate.Rd
 74eed64b4200447ab68f476965da8ca9 *man/subsetts.Rd
 afdb7a1358cf9df45b2f0129053139df *man/taylor.Rd
 0bc816731ee1850d47bfbd7f0b39a19e *man/theta.Rd
-3bd125e106707a8d91f8fd3784053cbc *man/ts.display.Rd
+adaec61e4eaa463ec3fe574b52140e6e *man/ts.display.Rd
 c17c2aca9229b12ee24f335b2ff76588 *man/tslm.Rd
 0d4dd4896e948296cee21e6bbcca2afa *man/wineind.Rd
 cfcf3738a2114d82394eda1345abb297 *man/woolyrnq.Rd

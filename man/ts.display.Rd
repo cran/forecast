@@ -2,7 +2,7 @@
 \alias{tsdisplay}
 \title{Time series display}
 \usage{tsdisplay(x, plot.type="partial", points=TRUE, ci.type="white", 
-    lag.max=round(10 * log10(length(x))), na.action=na.interp, 
+    lag.max, na.action=na.interp, 
     main=NULL, ylab="", xlab="", pch=1, cex=0.5, ...)
 }
 
@@ -10,7 +10,7 @@
 \item{plot.type}{type of plot to include in lower right corner. Possible values are "partial", "scatter" or "spectrum".}
 \item{points}{logical flag indicating whether to show the individual points or not in the time plot.}
 \item{ci.type}{type of confidence limits for ACF. Possible values are as for \code{\link[stats]{acf}}.}
-\item{lag.max}{the maximum lag to plot for the acf and pacf.}
+\item{lag.max}{the maximum lag to plot for the acf and pacf. A suitable value is selected by default if the argument is missing.}
 \item{na.action}{how to handle missing values. Default is to use linear interpolation.}
 \item{main}{Main title.}
 \item{ylab}{Y-axis label}
