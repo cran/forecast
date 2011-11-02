@@ -1,3 +1,6 @@
+Version 3.11 (2 November 2011)
+  * Fixed bug in dshw() when smallest period is odd
+
 Version 3.10 (27 October 2011)
   * Added lambda argument to naive() and snaive().
   * Fixed bug in ets() with high frequency data.

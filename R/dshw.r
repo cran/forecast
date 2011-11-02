@@ -136,10 +136,13 @@ sindex <- function(y,p)
   if (identical(p%%2,0))
   {
     centered_ma <- rollmean(simple_ma[1:(n2-p+1)],2)
-    average[(p/2+1):(p+(p/2))] <- y2[(p/2+1):(p+(p/2))]/centered_ma[1:p]
+    average[p/2 + 1:p] <- y2[p/2 + 1:p]/centered_ma[1:p]
+    si <- average[c(p+(1:(p/2)),(1+p/2):p)]
   }
   else
-    average[(p/2):(p+(p/2)-1)] <- y2[(p/2):(p+(p/2)-1)]/simple_ma[1:(p)]
-  ord <- order(rep(1:p,ceiling(n/p))[(p/2+1):((p/2)+p)])
-  return(average[(p/2+1):((p/2)+p)][ord])
+  {
+    average[(p-1)/2 + 1:p] <- y2[(p-1)/2 + 1:p]/simple_ma[1:p]
+    si <- average[c(p+(1:((p-1)/2)),(1+(p-1)/2):p)]
+  } 
+  return(si)
 }
