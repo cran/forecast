@@ -1,3 +1,9 @@
+Version 3.12 (16 November 2011)
+  * Added option to control ets model in stlf() and forecast.stl()
+  * Reordered arguments for forecast.lm() and stlf() to be consistent with other forecast functions.
+  * Modified tslm() so that it is more likely to find the relevant data when it is not passed as an argument.
+  * Fixed bug in forecast.ets which returned all zero forecasts for some models when seasonal period > 24.
+
 Version 3.11 (2 November 2011)
   * Fixed bug in dshw() when smallest period is odd
 

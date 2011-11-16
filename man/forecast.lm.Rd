@@ -1,7 +1,7 @@
 \name{forecast.lm}
 \alias{forecast.lm}
 \title{Forecast a linear model with possible time series components}
-\usage{\method{forecast}{lm}(object, newdata, level=c(80,95), fan=FALSE, h=10, 
+\usage{\method{forecast}{lm}(object, newdata, h=10, level=c(80,95), fan=FALSE, 
     lambda=object$lambda, ...)
 }
 

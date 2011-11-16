@@ -3,7 +3,7 @@ tslm <- function(formula,data,lambda=NULL,...)
   if(missing(data)) # Grab first variable
   {
     dataname <- as.character(formula)[2]
-    x <- get(dataname)
+    x <- get(dataname, envir=parent.frame())
     data <- data.frame(x)
     colnames(data) <- dataname
   }
@@ -52,7 +52,7 @@ tslm <- function(formula,data,lambda=NULL,...)
   return(fit)
 }
 
-forecast.lm <- function(object, newdata, level=c(80,95), fan=FALSE, h=10, lambda=object$lambda, ...)
+forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, ...)
 {
   if (fan) 
     level <- seq(51, 99, by = 3)

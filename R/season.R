@@ -93,7 +93,7 @@ seasonaldummyf <- function(x, h)
     return(seasonaldummy(ts(rep(0,h),start=tsp(x)[2]+1/f,freq=f)))
 }
 
-forecast.stl <- function(object, method=c("ets","arima"),
+forecast.stl <- function(object, method=c("ets","arima"), etsmodel="ZZN",
      h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, lambda=NULL, ...)
 {
   method <- match.arg(method)
@@ -104,7 +104,7 @@ forecast.stl <- function(object, method=c("ets","arima"),
   x.sa <- seasadj(object)
   # Forecast
   if(method=="ets")
-      fit <- ets(x.sa,model="ZZN",...)
+      fit <- ets(x.sa,model=etsmodel,...)
   else
       fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
   fcast <- forecast(fit,h=h,level=level,fan=fan)
@@ -132,7 +132,7 @@ forecast.stl <- function(object, method=c("ets","arima"),
    return(fcast)
 }
 
-stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), lambda=NULL, level = c(80, 95), fan = FALSE, ...)
+stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), etsmodel="ZZN", level = c(80, 95), fan = FALSE, lambda=NULL, ...)
 {
 	if (!is.null(lambda)) 
 	{
@@ -141,7 +141,7 @@ stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), lambd
 	}
 
 	fit <- stl(x,s.window=s.window)
-	fcast <- forecast(fit,h=h,method=method,level=level,fan=fan,...)
+	fcast <- forecast(fit,h=h,method=method,etsmodel=etsmodel, level=level,fan=fan,...)
 
 	if (!is.null(lambda)) 
 	{
