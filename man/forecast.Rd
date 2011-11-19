@@ -26,7 +26,7 @@ The function \code{\link{forecast.ts}} makes forecasts using exponential smoothi
 \item{h}{Number of periods for forecasting}
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If TRUE, level is set to seq(50,99,by=1). This is suitable for fan plots.}
-\item{...}{Additional arguments affecting the forecasts produced. \code{forecast.ts} passes these to \code{\link{forecast.ets}}}
+\item{...}{Additional arguments affecting the forecasts produced. \code{forecast.ts} passes these to \code{\link{forecast.ets}} or \code{\link{stlf}} depending on the frequency of the time series.}
 }
 \value{An object of class "\code{forecast}".
 

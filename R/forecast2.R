@@ -191,7 +191,7 @@ InvBoxCox <- function(x,lambda)
     return(out)	
 }
 
-forecast.StructTS <- function(object,h=ifelse(object$call$type=="BSM", 2*object$xtsp[3], 10),level=c(80,95),fan=FALSE,lambda=NULL,...)
+forecast.StructTS <- function(object,h=ifelse(object$coef["epsilon"]>1e-10, 2*object$xtsp[3], 10),level=c(80,95),fan=FALSE,lambda=NULL,...)
 {
     xname <- deparse(substitute(x))
     x <- object$data

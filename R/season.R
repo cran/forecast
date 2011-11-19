@@ -99,14 +99,22 @@ forecast.stl <- function(object, method=c("ets","arima"), etsmodel="ZZN",
   method <- match.arg(method)
   m <- frequency(object$time.series)
   n <- nrow(object$time.series)
-  lastseas <- rep(object$time.series[n-(m:1)+1,"seasonal"],max(1,h/(m-1)))[1:h]
+  lastseas <- rep(object$time.series[n-(m:1)+1,"seasonal"],trunc(1+(h-1)/m))[1:h]
   # De-seasonalize
   x.sa <- seasadj(object)
   # Forecast
   if(method=="ets")
-      fit <- ets(x.sa,model=etsmodel,...)
+  {
+    # Ensure non-seasonal model
+    if(substr(etsmodel,3,3) != "N")
+    {
+      warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
+      substr(etsmodel,3,3) <- "N"
+    }
+    fit <- ets(x.sa,model=etsmodel,...)
+  }
   else
-      fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
+    fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
   fcast <- forecast(fit,h=h,level=level,fan=fan)
   # Reseasonalize
   fcast$mean <- fcast$mean + lastseas

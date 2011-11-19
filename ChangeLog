@@ -1,3 +1,8 @@
+Version 3.13 (19 November 2011)
+  * Bug fix for forecast.StructTS() due to changes in the StructTS object. The default h was being set to 0.
+  * Bug fix for forecast.stl() where h longer than one seasonal period sometimes returned missing forecasts.
+  * forecast.stl() no longer allows a seasonal ETS model to be specified.
+
 Version 3.12 (16 November 2011)
   * Added option to control ets model in stlf() and forecast.stl()
   * Reordered arguments for forecast.lm() and stlf() to be consistent with other forecast functions.

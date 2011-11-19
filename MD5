@@ -1,5 +1,5 @@
-e8f8ae8d09df9d1d7520075bc25af420 *ChangeLog
-eb5979b1226e2021c84f4a5b1db7f3a0 *DESCRIPTION
+7b590e53adc6730a826636b5c87c0b72 *ChangeLog
+521b674ecfe447f2ee02393d0755f0ec *DESCRIPTION
 89e48f1cd3db4d68a78685618b063444 *NAMESPACE
 a217e5964dfd8cda945c59ccffcfe738 *R/DM.R
 2e79076ba9faa47c1f464d3bd0f07c7a *R/arfima.R
@@ -11,13 +11,13 @@ f74fb3e7d6046f8da14b0aebd709a066 *R/errors.R
 9b059cfbe88a3f4e504876cfeb824980 *R/ets.R
 f38284044bd70279963224f6ead9f8bc *R/etsforecast.R
 ff594fb46536351ccc428510a1391b20 *R/forecast.R
-8bea26c488d75847591909f2b8698721 *R/forecast2.R
+71c76dbecfdb61e737be3522768f92e3 *R/forecast2.R
 d11893ab9f31a1b9383bcc61c36ee9bc *R/fpp.R
 af2d49e0d869f727939c5d3f1bc3918d *R/graph.R
 7e8bec8e1c091448dead67dbba3264c3 *R/guerrero.R
 d0799ad18d703d503d303a940297bdfa *R/lm.R
 fb5d3fc317740fe1422cae4c640f7b63 *R/newarima2.R
-0d31e7ea34d6fe5ea92953f75adc1314 *R/season.R
+6c8ab54356ba31d34fc9a87b804ade85 *R/season.R
 13aa778c2c8a451ecbfde7445077fc5b *R/simulate.R
 2505a38dc8aa56dd985445c19da3f18f *R/spline.R
 d0778d58e3058fc7fb820d0b1c2f7cfb *R/subset.R
@@ -44,8 +44,8 @@ cb1f4a114d85c3c0a8637b50c45cfc7b *man/diebold.mariano.test.Rd
 dd8274eb98cf67d49f8be01b3ad7ac17 *man/fitted.Arima.Rd
 4d019567d58fdad09404211a78e592a7 *man/forecast.Arima.Rd
 0f1172502f6adc571168bee4e058ffb5 *man/forecast.HoltWinters.Rd
-e171fc7fe60aeb09106c3ced0932fa42 *man/forecast.Rd
-1e4540c38ebd3b4bcb8f27b13206e318 *man/forecast.StructTS.Rd
+1a832bfb248a301c0c3165aaebe7860e *man/forecast.Rd
+100db5fde0eb1f1f1172efc49bc0c993 *man/forecast.StructTS.Rd
 d05000970470be5f6cd694c6864c469e *man/forecast.ets.Rd
 9548334ce3fb03f5d0bce52ccebb378e *man/forecast.lm.Rd
 444ecb7bd05e9e1c00b138fce6d7c199 *man/forecast.stl.Rd
