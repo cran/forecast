@@ -1,10 +1,24 @@
+Version 3.14 (9 December 2011)
+  * Improved documentation for forecast.ts()
+  * Corrected bug in dshw() when applied to a non-ts object.
+  * Added error message when dshw() applied to data containing zeros or negative values
+  * Added checks when dshw() applied to time series with non-nested periods.
+  * Added msts object class for multiple seasonal time series
+  * Made taylor data set an msts object.
+  * Added bats() function for multiple seasonal time series modelling
+  * Added forecast.bats() function for forecasting BATS models
+  * Byte compiling turned on
+  * Depending on Rcpp and RcppArmadillo to speed some code up.
+
 Version 3.13 (19 November 2011)
   * Bug fix for forecast.StructTS() due to changes in the StructTS object. The default h was being set to 0.
+    Thanks to Tarmo Leinonen for reporting this problem.
   * Bug fix for forecast.stl() where h longer than one seasonal period sometimes returned missing forecasts.
-  * forecast.stl() no longer allows a seasonal ETS model to be specified.
+    Thanks to Kevin Burton for reporting this problem.
+  * forecast.stl() no longer allows a seasonal ETS model to be specified. Thanks to Stefano Birmani for the suggestion.
 
 Version 3.12 (16 November 2011)
-  * Added option to control ets model in stlf() and forecast.stl()
+  * Added option to control ets model in stlf() and forecast.stl(). Thanks to Stefano Birmani for the suggestion.
   * Reordered arguments for forecast.lm() and stlf() to be consistent with other forecast functions.
   * Modified tslm() so that it is more likely to find the relevant data when it is not passed as an argument.
   * Fixed bug in forecast.ets which returned all zero forecasts for some models when seasonal period > 24.

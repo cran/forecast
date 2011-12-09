@@ -2,20 +2,35 @@
 #period1 is the short period
 #period2 is the long period
 
-dshw <- function(y, period1, period2, h=2*max(period1,period2), alpha=NULL, beta=NULL, gamma=NULL, omega=NULL, phi=NULL, lambda=NULL, armethod=TRUE)
+dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=NULL, beta=NULL, gamma=NULL, omega=NULL, phi=NULL, lambda=NULL, armethod=TRUE)
 {
+  if(min(y,na.rm=TRUE) <= 0)
+    stop("dshw not suitable when data contain zeros or negative numbers")
+  if(any(class(y) == "msts") & (length(attr(y, "msts")) == 2)) {
+	  period1<-as.integer(sort(attr(y, "msts"))[1])
+	  period2<-as.integer(sort(attr(y, "msts"))[2])
+  } else if(is.null(period1) | is.null(period2)) {
+	  stop("Error in dshw(): y must either be an msts object with two seasonal periods OR the seasonal periods should be specified with period1= and period2=")
+  } else {
+	  if(period1 > period2)
+	  {
+		  tmp <- period2
+		  period2 <- period1
+		  period1 <- tmp
+	  }
+	  y<-msts(y, c(period1, period2))
+  }
+	
   if(!armethod)
   {
     phi <- 0
   }
-  if(period1 > period2)
-  {
-    tmp <- period2
-    period2 <- period1
-    period1 <- tmp
-  }
+  
   if(period1 < 1 | period1 == period2)
-  stop("Inappropriate periods")
+    stop("Inappropriate periods") 
+  ratio <- period2/period1
+  if(ratio-trunc(ratio) > 1e-10)
+    stop("Seasonal periods are not nested")
 
   if (!is.null(lambda))
   {
@@ -53,7 +68,7 @@ dshw <- function(y, period1, period2, h=2*max(period1,period2), alpha=NULL, beta
   ## Starting values
   I <- sindex(y,period1)
   wstart <- sindex(y,period2)
-  wstart <- wstart / rep(I,(length(wstart)/length(I)))
+  wstart <- wstart / rep(I,ratio)
   w <- wstart
   x <- c(0,diff(y[1:period2]))
   t <- t.start <- mean(((y[1:period2]- y[(period2+1):(2*period2)])/period2 ) + x )/2
@@ -73,11 +88,14 @@ dshw <- function(y, period1, period2, h=2*max(period1,period2), alpha=NULL, beta
 
 	# Forecasts
   fcast <- (s + (1:h)*t) * rep(I[n+(1:period1)],h/period1 + 1)[1:h] * rep(w[n+(1:period2)],h/period2 + 1)[1:h]
+  fcast <- ts(fcast,f=frequency(y),s=tsp(y)[2]+1/tsp(y)[3])
   
   # Calculate MSE and MAPE
   yhat <- ts(yhat)
   tsp(yhat) <- tsp(y)
+  yhat<-msts(yhat, c(period1, period2))
   e <- y - yhat
+  e<-msts(e, c(period1, period2))
   if(armethod)
 	{
 		yhat <- yhat + phi * c(0,e[-n])
@@ -86,9 +104,18 @@ dshw <- function(y, period1, period2, h=2*max(period1,period2), alpha=NULL, beta
 	}
 	mse <- mean(e^2)
 	mape <- mean(abs(e)/y)*100
-	
-  fcast <- ts(fcast,f=frequency(y),s=tsp(y)[2]+1/tsp(y)[3])
+  
 
+  end.y<-end(y)
+  if(end.y[2] == frequency(y)) {
+	  end.y[1]<-end.y[1]+1
+	  end.y[2]<-1
+  } else {
+	  end.y[2]<-end.y[2]+1
+  }
+  
+  fcast<-msts(fcast, c(period1, period2))
+  
   if(!is.null(lambda))
   {
     y <- origy

@@ -13,10 +13,8 @@ The function invokes particular \emph{methods} which depend on the class of the 
 
 For example, the function \code{\link{forecast.Arima}} makes forecasts based on the results produced by \code{\link[stats]{arima}}.
 
-The function \code{\link{forecast.ts}} makes forecasts using exponential smoothing state space models.
+The function \code{\link{forecast.ts}} makes forecasts using \code{\link{ets}} models (if the data are non-seasonal or the seasonal period is 12 or less) or \code{\link{stlf}} (if the seasonal period is 13 or more).
 }
-
-\details{The default behaviour is to use a model estimated using \code{\link{ets}}.}
 
 \usage{forecast(object,...)
 \method{forecast}{ts}(object, h, level=c(80,95), fan=FALSE, ...)}
