@@ -12,7 +12,11 @@ forecast.bats <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
 	if(fan) {
 		level <- seq(51,99,by=3)
 	}
-  ts.frequency <- ifelse(!is.null(object$seasonal.periods), max(object$seasonal.periods), 1)
+  	if(any(class(object$y) == "ts")) {
+		ts.frequency <- frequency(object$y)
+	} else {
+		ts.frequency <- ifelse(!is.null(object$seasonal.periods), max(object$seasonal.periods), 1)
+	}
 
 	#if(!is.null(object$lambda)) {
 	#	y <- BoxCox(y, lambda=object$lambda)
@@ -70,13 +74,13 @@ forecast.bats <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
 		upper.bounds <- InvBoxCox(upper.bounds,object$lambda)
 	}
 	##Calc a start time for the forecast
-  start.time <- start(object$y)
+  	start.time <- start(object$y)
 	y <- ts(c(object$y,0), start=start.time, frequency=ts.frequency)
 	fcast.start.time <- end(y)
 	#Make msts object for x and mean
-	x <- msts(object$y, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { 1}), ts.frequency=ts.frequency, start=start.time)
-	fitted.values <- msts(object$fitted.values, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { 1}), start=start.time)
-	y.forecast <- msts(y.forecast, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { 1}), start=fcast.start.time)
+	x <- msts(object$y, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=start.time)
+	fitted.values <- msts(object$fitted.values, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), start=start.time)
+	y.forecast <- msts(y.forecast, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), start=fcast.start.time)
 		
 	forecast.object <- list(model=object, mean=y.forecast, level=level, x=x, upper=upper.bounds, lower=lower.bounds, fitted=fitted.values, method=makeText(object), residuals=object$errors)
 	class(forecast.object) <- "forecast"
@@ -85,43 +89,43 @@ forecast.bats <- function(object, h=10, level=c(80,95), fan=FALSE, ...)
 
 
 makeText <- function(object) {
-	name <- "BATS( {"
+	name <- "BATS("
 	if(!is.null(object$lambda)) {
-		name <- paste(name, round(object$lambda, digits=6), sep="")
+		name <- paste(name, round(object$lambda, digits=3), sep="")
 	} else {
 		name <- paste(name, "1", sep="")
 	}
-	name <- paste(name, "}, {", sep="")
+	name <- paste(name, ", {", sep="")
 	if(!is.null(object$ar.coefficients)) {
 		name <- paste(name, length(object$ar.coefficients), sep="")
 	} else {
 		name <- paste(name, "0", sep="")
 	}
-	name <- paste(name, ", ", sep="")
+	name <- paste(name, ",", sep="")
 	if(!is.null(object$ma.coefficients)) {
 		name <- paste(name, length(object$ma.coefficients), sep="")
 	} else {
 		name <- paste(name, "0", sep="")
 	}
-	name <- paste(name, "}, {", sep="")
+	name <- paste(name, "}, ", sep="")
 	if(!is.null(object$damping.parameter)) {
-		name <- paste(name, round(object$damping.parameter, digits=6), sep="")
+		name <- paste(name, round(object$damping.parameter, digits=3), sep="")
 	} else {
 		name <- paste(name, "-", sep="")
 	}
-	
+	name <- paste(name, ", ", sep="")
 	if(!is.null(object$seasonal.periods)) {
-		name <- paste(name, "}, {", sep="")
+    name <- paste(name,"{",sep="")
 		for(i in object$seasonal.periods) {
 			name <- paste(name, i, sep="")
 			if(i != object$seasonal.periods[length(object$seasonal.periods)]) {
-				name <- paste(name, ", ", sep="")
+				name <- paste(name, ",", sep="")
 			} else {
 				name <- paste(name, "})", sep="")
 			}
 		}
 	} else {
-		name <- paste(name, "})", sep="")	
+		name <- paste(name, "-)", sep="")	
 	}
 	return(name)
 }

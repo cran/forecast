@@ -1,9 +1,11 @@
 \name{forecast.bats}
 \alias{forecast.bats}
-\title{Forecasting using BATS models}
+\alias{forecast.tbats}
+\title{Forecasting using BATS and TBATS models}
 
-\usage{\method{forecast}{bats}(object, h=10, level=c(80,95), fan=FALSE, ...)}
-
+\usage{\method{forecast}{bats}(object, h=10, level=c(80,95), fan=FALSE, ...)
+\method{forecast}{tbats}(object, h=10, level=c(80,95), fan=FALSE, ...)
+}
 \arguments{
 \item{object}{An object of class "\code{bats}". Usually the result of a call to \code{\link{bats}}.}
 \item{h}{Number of periods for forecasting}
@@ -37,9 +39,9 @@ An object of class \code{"forecast"} is a list containing at least the following
 \references{De Livera, A.M., Hyndman, R.J., & Snyder, R. D. (2012), Forecasting time series with complex seasonal patterns using exponential smoothing, \emph{Journal of the American Statistical Association}, to appear.
 }
 
-\seealso{\code{\link{bats}}, \code{\link{forecast.ets}}.}
+\seealso{\code{\link{bats}}, \code{\link{tbats}},\code{\link{forecast.ets}}.}
 
-\author{Rob J Hyndman and Slava Razbash}
+\author{Slava Razbash and Rob J Hyndman}
 
 \examples{
 fit <- bats(USAccDeaths)

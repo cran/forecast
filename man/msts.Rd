@@ -16,7 +16,7 @@
 
 \value{An object of class \code{c("msts", "ts")}.}
 
-\author{Rob J Hyndman and Slava Razbash}
+\author{Slava Razbash and Rob J Hyndman}
 
 \examples{
 x <- msts(taylor, seasonal.periods=c(48,336), ts.frequency=48, start=2000+22/52)

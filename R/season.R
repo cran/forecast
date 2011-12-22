@@ -191,10 +191,3 @@ fourierf <- function(x, K, h)
     colnames(X) <- paste(c("S","C"),rep(1:K,rep(2,K)),sep="")
     return(X)
 }
-
-#Changed definition of observed to use passed data rather than construct on fly
-plot.decomposed.ts <- function (x, ...) 
-{
-    plot(cbind(observed = x$x, trend = x$trend, seasonal = x$seasonal, random = x$random), 
-        main = paste("Decomposition of", x$type, "time series"), ...)
-}

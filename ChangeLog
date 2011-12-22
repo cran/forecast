@@ -1,3 +1,9 @@
+Version 3.15 (22 December 2011)
+  * New functions tbats() and forecast.tbats() for multiple seasonal time series modelling.
+  * bats() and tbats() use parallel processing when possible.
+  * Minor improvements to bats() and forecast.bats().
+  * decompose() removed as the function in the stats package has now been fixed.
+  
 Version 3.14 (9 December 2011)
   * Improved documentation for forecast.ts()
   * Corrected bug in dshw() when applied to a non-ts object.
