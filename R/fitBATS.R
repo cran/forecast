@@ -280,7 +280,7 @@ fitSpecificBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.peri
 	#Get the likelihood
 	likelihood <- optim.like$value
 	#Calculate the AIC
-	aic <- likelihood+2*length(param.vector$vect)
+	aic <- likelihood+2*(length(param.vector$vect)+nrow(x.nought))
 	
 	
 	#Make a list object

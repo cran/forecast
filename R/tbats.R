@@ -38,8 +38,10 @@ tbats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL, se
 		non.seasonal.model$y <- origy
 		return(non.seasonal.model)
 	}
-	seasonal.mask <- (seasonal.periods == 1)
-	seasonal.periods <- seasonal.periods[!seasonal.mask]
+	if(!is.null(seasonal.periods)) {
+		seasonal.mask <- (seasonal.periods == 1)
+		seasonal.periods <- seasonal.periods[!seasonal.mask]
+	}
 	if(is.null(use.box.cox)) {
 		use.box.cox <- c(FALSE, TRUE)
 	} 
