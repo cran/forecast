@@ -65,8 +65,11 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
   }
   if(!is.null(object$data))
     origdata <- object$data
-  else
+  else if(!is.null(object$call$data))
     origdata <- eval(object$call$data)
+  else
+    origdata <- fitted(object) + residuals(object)
+    
   #if(!is.null(lambda))
   #  origdata[,"x"] <- BoxCox(origdata[,"x"],lambda)
   if(is.element("ts",class(origdata)))

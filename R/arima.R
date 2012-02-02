@@ -1,6 +1,7 @@
 search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     max.P=2, max.Q=2, max.order=5, stationary=FALSE, ic=c("aic","aicc","bic"),
-    trace=FALSE,approximation=FALSE,xreg=NULL,offset=offset,allowdrift=TRUE)
+    trace=FALSE,approximation=FALSE,xreg=NULL,offset=offset,allowdrift=TRUE,
+    parallel=FALSE, num.cores=NULL)
 {
     #dataname <- substitute(x)
     ic <- match.arg(ic)
@@ -16,33 +17,80 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         maxK <- ((d+D) == 0)
 
     # Choose model orders
-    best.ic <- 1e20
-    for(i in 0:max.p)
+    #Serial - technically could be combined with the code below
+    if (parallel==FALSE)
     {
-        for(j in 0:max.q)
+        best.ic <- 1e20
+        for(i in 0:max.p)
         {
-            for(I in 0:max.P)
+            for(j in 0:max.q)
             {
-                for(J in 0:max.Q)
+                for(I in 0:max.P)
                 {
-                    if(i+j+I+J <= max.order)
+                    for(J in 0:max.Q)
                     {
-                        for(K in 0:maxK)
+                        if(i+j+I+J <= max.order)
                         {
-                            fit <- myarima(x,order=c(i,d,j),seasonal=c(I,D,J),constant=(K==1),trace=trace,ic=ic,approximation=approximation,offset=offset,xreg=xreg)
-                            if(fit$ic < best.ic)
+                            for(K in 0:maxK)
                             {
-                                best.ic <- fit$ic
-                                bestfit <- fit
-                                constant <- (K==1)
+                                fit <- myarima(x,order=c(i,d,j),seasonal=c(I,D,J),constant=(K==1),trace=trace,ic=ic,approximation=approximation,offset=offset,xreg=xreg)
+                                if(fit$ic < best.ic)
+                                {
+                                    best.ic <- fit$ic
+                                    bestfit <- fit
+                                    constant <- (K==1)
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
- 
+    } else
+################################################################################
+    # Parallel
+    if (parallel==TRUE){
+
+		to.check <- WhichModels(max.p, max.q, max.P, max.Q, maxK)
+		
+            par.all.arima <- function(l){
+                .tmp <- UndoWhichModels(l)
+                i <- .tmp[1]; j <- .tmp[2]; I <- .tmp[3]; J <- .tmp[4]; K <- .tmp[5]==1
+
+                if (i+j+I+J <= max.order){
+                    fit <- myarima(x,order=c(i,d,j),seasonal=c(I,D,J),constant=(K==1),trace=trace,ic=ic,approximation=approximation,offset=offset,xreg=xreg)
+                }
+                if (exists("fit")){
+                    return(cbind(fit, K))
+                } else return(NULL)
+            }
+			
+			if(is.null(num.cores)) {
+				num.cores <- detectCores()
+			}
+			
+            # clusterApplyLB() for Windows, mclapply() for POSIX
+            if (Sys.info()[1] == "Windows"){
+                cl <- makeCluster(num.cores)
+                all.models <- clusterApplyLB(cl=cl, x=to.check, fun=par.all.arima)
+                stopCluster(cl=cl)
+            } else all.models <- mclapply(X=to.check, FUN=par.all.arima, mc.cores=num.cores)
+
+            # Removing null elements
+            all.models <- all.models[!sapply(all.models, is.null)]
+
+            # Choosing best model
+            best.ic <- 1e20
+            for (i in 1:length(all.models)){
+                if(!is.null(all.models[[i]][, 1]$ic) && all.models[[i]][, 1]$ic < best.ic){
+                    bestfit <- all.models[[i]][, 1]
+                    best.ic <- bestfit$ic
+                    constant <- unlist(all.models[[i]][1, 2])
+                }
+            }
+            class(bestfit) <- "Arima"
+        }
+################################################################################
     if(exists("bestfit"))
     {
         # Refit using ML if approximation used for IC
@@ -75,6 +123,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 
     return(bestfit)
 }
+
 
 ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
 {
