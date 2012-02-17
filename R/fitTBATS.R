@@ -1,5 +1,5 @@
 
-fitSpecificTBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.periods=NULL, k.vector=NULL, starting.params=NULL, x.nought=NULL, ar.coefs=NULL, ma.coefs=NULL) {
+fitSpecificTBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.periods=NULL, k.vector=NULL, starting.params=NULL, x.nought=NULL, ar.coefs=NULL, ma.coefs=NULL, init.box.cox=NULL) {
 	#print(k.vector)
 	if(!is.null(seasonal.periods)) {
 		seasonal.periods <- sort(seasonal.periods)
@@ -64,7 +64,11 @@ fitSpecificTBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.per
 			s.vector <- NULL
 		}
 		if(use.box.cox) {
-			lambda <- BoxCox.lambda(y, lower=0, upper=1.5)
+			if(!is.null(init.box.cox)) {
+				lambda<-init.box.cox
+			} else {
+				lambda <- BoxCox.lambda(y, lower=0, upper=1.5)
+			}
 			y.transformed <- BoxCox(y, lambda=lambda)
 			#print(lambda)
 		} else { #the "else" is not needed at the moment

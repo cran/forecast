@@ -41,7 +41,7 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
         start.f <- tsp(object$x)[2] + 1/object$m
     else
         start.f <- length(object$x)+1
-    out <- list(model=object,mean=ts(f$mu,f=object$m,s=start.f),level=level,x=object$x)
+    out <- list(model=object,mean=ts(f$mu,frequency=object$m,start=start.f),level=level,x=object$x)
     if(!is.null(f$var))
     {
         out$lower <- out$upper <- matrix(NA,ncol=length(level),nrow=h)
@@ -54,8 +54,8 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
     }
     else if(!is.null(f$lower))
     {
-        out$lower <- ts(f$lower,f=object$m,s=start.f)
-        out$upper <- ts(f$upper,f=object$m,s=start.f)
+        out$lower <- ts(f$lower,frequency=object$m,start=start.f)
+        out$upper <- ts(f$upper,frequency=object$m,start=start.f)
     }
     else if(PI)
         warning("No prediction intervals for this model")

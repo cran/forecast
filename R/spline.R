@@ -116,10 +116,10 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE, lambda=NULL)
         upper[,i] <- Yhat + conf.factor*sd
         lower[,i] <- Yhat - conf.factor*sd
     }
-    lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
-    upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
+    lower <- ts(lower,start=tsp(x)[2]+1/freq,frequency=freq)
+    upper <- ts(upper,start=tsp(x)[2]+1/freq,frequency=freq)
 		
-	res <- ts(x - yfit,start=start(x),f=freq)
+	res <- ts(x - yfit,start=start(x),frequency=freq)
 	
 		if(!is.null(lambda))
 		{
@@ -131,13 +131,13 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE, lambda=NULL)
 			x <- origx
 		}
 
-    return(structure(list(method="Cubic Smoothing Spline",level=level,x=x,mean=ts(Yhat,f=freq,start=tsp(x)[2]+1/freq),
-            upper=ts(upper,start=tsp(x)[2]+1/freq,f=freq),
-            lower=ts(lower,start=tsp(x)[2]+1/freq,f=freq),
+    return(structure(list(method="Cubic Smoothing Spline",level=level,x=x,mean=ts(Yhat,frequency=freq,start=tsp(x)[2]+1/freq),
+            upper=ts(upper,start=tsp(x)[2]+1/freq,frequency=freq),
+            lower=ts(lower,start=tsp(x)[2]+1/freq,frequency=freq),
             model=list(beta=beta.est*n^3,call=match.call()),
-            fitted =ts(sfits,start=start(x),f=freq), residuals = res,
-			standardizedresiduals=ts(e,start=start(x),f=freq),
-            onestepf = ts(yfit,start=start(x),f=freq)),
+            fitted =ts(sfits,start=start(x),frequency=freq), residuals = res,
+			standardizedresiduals=ts(e,start=start(x),frequency=freq),
+            onestepf = ts(yfit,start=start(x),frequency=freq)),
 			lambda=lambda, 
             class=c("splineforecast","forecast")))
 }

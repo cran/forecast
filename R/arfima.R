@@ -10,7 +10,7 @@ na.ends <- function(x)
 	k <- nonmiss[length(nonmiss)]
 	x <- x[j:k]
 	if(!is.null(tspx))
-		x <- ts(x,start=tspx[1]+(j-1)/tspx[3],f=tspx[3])
+		x <- ts(x,start=tspx[1]+(j-1)/tspx[3],frequency=tspx[3])
 	return(x)
 }
 
@@ -56,7 +56,7 @@ unfracdiff <- function(x,y,n,h,d)
 	tspx <- tsp(x)
 	if(is.null(tspx))
 		tspx <- c(1,length(x),1)
-	return(ts(xnew,f=tspx[3],s=tspx[2]+1/tspx[3]))    
+	return(ts(xnew,frequency=tspx[3],start=tspx[2]+1/tspx[3]))    
 }
 
 ## Automatic ARFIMA modelling
@@ -221,9 +221,9 @@ forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, lambda=ob
 	data.tsp <- tsp(x)
 	if(is.null(data.tsp))
 		data.tsp <- c(1,length(x),1)
-	mean.fcast <- ts(fcast.x+meanx, f=data.tsp[3], s=data.tsp[2] + 1/data.tsp[3])
-	lower <- ts(lower+meanx, f=data.tsp[3], s=data.tsp[2] + 1/data.tsp[3])
-	upper <- ts(upper+meanx, f=data.tsp[3], s=data.tsp[2] + 1/data.tsp[3])
+	mean.fcast <- ts(fcast.x+meanx, frequency=data.tsp[3], start=data.tsp[2] + 1/data.tsp[3])
+	lower <- ts(lower+meanx, frequency=data.tsp[3], start=data.tsp[2] + 1/data.tsp[3])
+	upper <- ts(upper+meanx, frequency=data.tsp[3], start=data.tsp[2] + 1/data.tsp[3])
 	method <- paste("ARFIMA(",p,",",round(object$d,2),",",q,")",sep="")
 	
 	if(!is.null(lambda))

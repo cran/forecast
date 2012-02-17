@@ -11,7 +11,7 @@ meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
 		origx <- x
 		x <- BoxCox(x,lambda)
 	}
-  f <- ts(rep(mean(x,na.rm=TRUE),h),start=start.x,f=frequency(x))
+  f <- ts(rep(mean(x,na.rm=TRUE),h),start=start.x,frequency=frequency(x))
   if(fan)
     level <- seq(51,99,by=3)
   else
@@ -31,9 +31,9 @@ meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
     lower[,i] <- f-w
     upper[,i] <- f+w
   }
-  freq=frequency(x)
-  lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
-  upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
+  freq <- frequency(x)
+  lower <- ts(lower,start=tsp(x)[2]+1/freq,frequency=freq)
+  upper <- ts(upper,start=tsp(x)[2]+1/freq,frequency=freq)
   colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
   fits <- rep(NA,n-1)
   for(i in 1:(n-1))
@@ -49,9 +49,9 @@ meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
 		upper <- InvBoxCox(upper,lambda)
 	}	
 
-  junk <- list(method="Mean",level=level,x=x,xname=xname,mean=ts(f,start=tsp(x)[2]+1/freq,f=freq),lower=lower,upper=upper,
+  junk <- list(method="Mean",level=level,x=x,xname=xname,mean=ts(f,start=tsp(x)[2]+1/freq,frequency=freq),lower=lower,upper=upper,
         model=list(mu=f[1],mu.se=s/sqrt(length(x)),sd=s), lambda=lambda,
-        fitted =ts(c(NA,fits),start=start.x,f=freq), residuals=ts(c(NA,res),start=start.x,f=freq))
+        fitted =ts(c(NA,fits),start=start.x,frequency=freq), residuals=ts(c(NA,res),start=start.x,frequency=freq))
   junk$model$call <- match.call()
 
   return(structure(junk,class="forecast"))
@@ -94,7 +94,7 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE,lambda=NULL)
 {
   xname <- deparse(substitute(x))
   n <- length(x)
-  freq=frequency(x)
+  freq <- frequency(x)
   nn <- 1:h
   if(!is.ts(x))
     x <- ts(x)
@@ -116,7 +116,7 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE,lambda=NULL)
   {
     b <- b.se <- 0
     s <- sd(diff(x),na.rm=TRUE)
-#    fits <- ts(x[-n],start=tsp(x)[1]+1/freq,f=freq)
+#    fits <- ts(x[-n],start=tsp(x)[1]+1/freq,frequency=freq)
     res <- ts(c(NA,diff(x)))
     method <- "Random walk"
   }
@@ -141,10 +141,10 @@ rwf <- function(x,h=10,drift=FALSE,level=c(80,95),fan=FALSE,lambda=NULL)
     lower[,i] <- f - z[i]*se
     upper[,i] <- f + z[i]*se
   }
-  lower <- ts(lower,start=tsp(x)[2]+1/freq,f=freq)
-  upper <- ts(upper,start=tsp(x)[2]+1/freq,f=freq)
+  lower <- ts(lower,start=tsp(x)[2]+1/freq,frequency=freq)
+  upper <- ts(upper,start=tsp(x)[2]+1/freq,frequency=freq)
   colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
-  fcast <- ts(f,start=tsp(x)[2]+1/freq,f=freq)
+  fcast <- ts(f,start=tsp(x)[2]+1/freq,frequency=freq)
   fits <- x - res
   if(!is.null(lambda))
   {
@@ -318,7 +318,7 @@ croston2 <- function(x,h=10,alpha=0.1,nofits=FALSE)
         start.f <- length(x) + 1
         freq.x <- 1
     }
-    ratio <- ts(y.f$mean/p.f$mean,start=start.f, f = freq.x)
+    ratio <- ts(y.f$mean/p.f$mean,start=start.f, frequency = freq.x)
     if(nofits)
         return(ratio)
     else

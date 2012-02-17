@@ -285,8 +285,8 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
     {
         tspx[2] <- time(x)[nx]
         start.f <- tspx[2]+1/tspx[3]
-        pred$pred <- ts(pred$pred,f=tspx[3],s=start.f)
-        pred$se <- ts(pred$se,f=tspx[3],s=start.f)
+        pred$pred <- ts(pred$pred,frequency=tspx[3],start=start.f)
+        pred$se <- ts(pred$se,frequency=tspx[3],start=start.f)
     }
         
     if(fan)
@@ -348,8 +348,8 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL, ...)
     colnames(lower)=colnames(upper)=paste(level,"%",sep="")
     method <- paste("AR(",object$order,")",sep="")
     x <- as.ts(eval.parent(parse(text=object$series)))
-    f=frequency(x)
-    res <- ts(object$resid[-(1:object$order)],start=tsp(x)[1]+object$order/f,f=f)
+    f <- frequency(x)
+    res <- ts(object$resid[-(1:object$order)],start=tsp(x)[1]+object$order/f,frequency=f)
     fits <- x-res
     
     if(!is.null(lambda))
@@ -392,7 +392,7 @@ arima.errors <- function(z)
   norder <- sum(z$arma[1:4])
   if(is.element("intercept",names(z$coef)))
     xreg <- cbind(rep(1,length(x)),xreg)
-  return(ts(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)]),f=frequency(x),s=start(x)))
+  return(ts(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)]),frequency=frequency(x),start=start(x)))
 }
 
 # Return one-step fits

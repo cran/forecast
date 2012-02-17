@@ -22,6 +22,8 @@ tslm <- function(formula,data,lambda=NULL,...)
     if("season" %in% attr(terms(formula), "term.labels"))
       stop("Non-seasonal data cannot be modelled using a seasonal factor")
   }
+  if(sum(is.na(x))>0)
+    warning("This function may not work correctly when the data contains missing values")
   orig.x <- x
   if(!is.null(lambda))
     x <- data[,1] <- BoxCox(data[,1],lambda)
@@ -41,8 +43,8 @@ tslm <- function(formula,data,lambda=NULL,...)
   tspx <- c(min(timesx),max(timesx),tspx[3])
   fit$data <- ts(data)
   fit$x <- ts(orig.x)
-  fit$residuals <- ts(fit$residuals)
-  fit$fitted.values <- ts(fit$fitted.values)
+  fit$residuals <- ts(residuals(fit))
+  fit$fitted.values <- ts(fitted(fit))
   tsp(fit$data) <- tsp(fit$residuals) <- tsp(fit$fitted.values) <- tsp(fit$x) <- tspx
   if(!is.null(dataname))
     fit$call$data <- dataname
@@ -110,12 +112,14 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
     out[[i]] <- predict(object, newdata=newdata, se.fit=TRUE, interval="prediction", level=level[i]/100, ...)
   fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],level=level,x=object$x)
   fcast$method <- "Linear regression model"
+  fcast$newdata <- newdata
   fcast$residuals <- residuals(object)
   fcast$fitted <- fitted(object)
   if(nrow(origdata) != length(fcast$x)) # Give up on ts attributes as some data are missing
     tspx <- NULL
   if(length(fcast$x) != length(fcast$residuals))
     tspx <- NULL
+  
 
   if(!is.null(tspx))
   {

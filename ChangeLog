@@ -1,3 +1,13 @@
+Version 3.18 (17 February 2012)
+  * Added method for plotting non-time-series forecasts to plot.forecast().
+  * Removed partial arg matching.
+  * Cleaned up some code, removing commented out sections, etc.
+  * Added robust option to stlf().
+  * Added naive and rwdrift options to stlf() and forecast.stl().
+  * Improved handling of msts objects in BoxCox.lambda()
+  * Fixed some minor bugs in tbats() and bats()
+  * Improved speed of bats() and tbats().
+  
 Version 3.17 (2 February 2012)
   * Improved forecast.lm() so it is more likely to find the original data from an lm object.
   * Parallel processing now available in auto.arima() when stepwise=FALSE

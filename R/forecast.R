@@ -142,114 +142,136 @@ summary.forecast <- function(object,...)
     }
 }
 
+plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.col, pi.lty, 
+  xlim=NULL, ylim, main, ylab, xlab, ...)
+{
+  if(ncol(object$newdata) != 1)
+    stop("Forecast plot for regression models only available for a single predictor")
+  if(is.null(xlim))
+    xlim <- range(object$newdata[,1],object$model$model[,attributes(object$model$term)$term.labels])
+  if(is.null(ylim))
+    ylim <- range(object$upper,object$lower,fitted(object$model)+residuals(object$model))
+  plot(object$model$terms,data=object$model$model,xlim=xlim,ylim=ylim,xlab=xlab,ylab=ylab,main=main,col=col,...)
+  abline(object$model)
+  nf <- length(object$mean)
+  if(plot.conf)
+  {
+    nint <- length(object$level)
+    idx <- rev(order(object$level))
+    if(is.null(shadecols))
+      shadecols <- heat.colors(nint+2)[switch(1+(nint>1),2,nint:1)+1]
+    for(i in 1:nf)
+    {
+      for(j in 1:nint)
+      {
+        if(shaded)
+          lines(rep(object$newdata[i,1],2), c(object$lower[i,idx[j]],object$upper[i,idx[j]]), col=shadecols[j],lwd=6)
+        else
+          lines(rep(object$newdata[i,1],2), c(object$lower[i,idx[j]],object$upper[i,idx[j]]), col=pi.col, lty=pi.lty)
+      }
+    }
+  }
+  points(object$newdata[,1],object$mean,pch=19,col=fcol)
+}
+
 plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(length(x$mean)<5),
         shadecols=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
 {
-    if(is.element("x",names(x))) # Assume stored as x
-        data=as.ts(x$x)
+  if(is.element("x",names(x))) # Assume stored as x
+    data <- x$x
+  else
+    data=NULL
+  if(length(data)==0)
+    include <- 0
+  else if(missing(include))
+    include <- length(data)
+  if(is.null(x$lower) | is.null(x$upper) | is.null(x$level))
+    plot.conf=FALSE
+  if(!shaded)
+    shadebars <- FALSE
+  if(is.null(main))
+    main <- paste("Forecasts from ",x$method,sep="")
+  if(plot.conf)
+  {
+    x$upper <- as.matrix(x$upper)
+    x$lower <- as.matrix(x$lower)
+  }
+
+  if(class(x$model)=="lm" & class(x$mean) != "ts") # Non time series linear model
+  {
+    plotlmforecast(x, plot.conf=plot.conf, shaded=shaded, shadecols=shadecols, col=col, fcol=fcol, pi.col=pi.col, pi.lty=pi.lty, 
+      ylim=ylim, main=main, xlab=xlab, ylab=ylab, ...)
+    if(plot.conf)
+      return(invisible(list(mean=x$mean,lower=as.matrix(x$lower),upper=as.matrix(x$upper))))
     else
-    {
-        data=NULL
-        include=0
-    }
+      return(invisible(list(mean=x$mean)))
+  }
+      
+  # Otherwise assume x is from a time series forecast
+  if(length(data) > 0)
+    data <- as.ts(data)
+  freq <- frequency(data)
+  strt <- start(data)
+  n <- length(data)
+  pred.mean <- x$mean
+  xx <- data
 
-    if(missing(include))
-        include <- length(data)
-
-    if(is.null(x$lower) | is.null(x$upper) | is.null(x$level))
-        plot.conf=FALSE
-        
-    if(!shaded)
-        shadebars <- FALSE
-
-    # Extract components of predict if it exists
-    # This occurs for the pegels functions.
-    if(is.null(main))
-        main=paste("Forecasts from ",x$method,sep="")
-
-    freq <- frequency(data)
-    strt <- start(data)
-    n <- length(data)
+  # Remove final missing values
+  nx <- max(which(!is.na(xx)))
+  xxx <- xx[1:nx]
+  include <- min(include,nx)
+  if(is.null(ylim))
+  {
+    ylim <- range(c(xx[(n-include+1):n],pred.mean),na.rm=TRUE)
     if(plot.conf)
-    {
-        upper <- as.matrix(x$upper)
-        lower <- as.matrix(x$lower)
-    }
-    pred.mean <- x$mean
-    # if(!is.null(lambda))  # undo Box-Cox transformation
-    # {
-        # pred.mean <- InvBoxCox(x$mean,lambda)
-        # if(plot.conf)
-        # {
-            # lower <- InvBoxCox(lower,lambda)
-            # upper <- InvBoxCox(upper,lambda)
-        # }
-        # xx <- InvBoxCox(data,lambda)
-        # if(lambda<0 & plot.conf)
-        # {
-            # junk <- upper
-            # upper <- lower
-            # lower <- junk
-        # }
-    # }
-    # else
-        xx <- data
-    # Remove final missing values
-    nx <- max(which(!is.na(xx)))
-    xxx <- xx[1:nx]
-    include <- min(include,nx)
-    if(is.null(ylim))
-    {
-        ylim <- range(c(xx[(n-include+1):n],pred.mean),na.rm=TRUE)
-        if(plot.conf)
-            ylim <- range(ylim,lower,upper,na.rm=TRUE)
-    }
-    npred <- length(pred.mean)
-    plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, f=freq),
-        xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,...)
+      ylim <- range(ylim,x$lower,x$upper,na.rm=TRUE)
+  }
+  npred <- length(pred.mean)
+  plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, frequency=freq),
+    xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,...)
 
-    if(plot.conf)
-    {
-        xxx <- tsp(pred.mean)[1] - 1/freq + (1:npred)/freq            
-        idx <- rev(order(x$level))
-        nint <- length(x$level)
-        for(i in 1:nint)
-        {
+  if(plot.conf)
+  {
+    xxx <- tsp(pred.mean)[1] - 1/freq + (1:npred)/freq            
+    idx <- rev(order(x$level))
+    nint <- length(x$level)
       if(is.null(shadecols))
-        shadecols <- heat.colors(length(x$level)+2)[switch(1+(length(x$level)>1),2,length(x$level):1)+1]
-            if(shadebars)
+        shadecols <- heat.colors(nint+2)[switch(1+(nint>1),2,nint:1)+1]
+    for(i in 1:nint)
+    {
+      if(shadebars)
       {
-                for(j in 1:npred)
-                {
-                    polygon(xxx[j] + c(-0.5,0.5,0.5,-0.5)/freq, c(rep(lower[j,idx[i]],2),rep(upper[j,idx[i]],2)),
-                        col=shadecols[i], border=FALSE)
-                }
-      }
-            else if(shaded)
-            {
-                polygon(c(xxx,rev(xxx)), c(lower[,idx[i]],rev(upper[,idx[i]])),
-                        col=shadecols[i], border=FALSE)
-            }
-            else if(npred == 1)
-            {
-                lines(xxx+c(-0.5,0.5)/freq,rep(lower[,idx[i]],2),col=pi.col,lty=pi.lty)
-                lines(xxx+c(-0.5,0.5)/freq,rep(upper[,idx[i]],2),col=pi.col,lty=pi.lty)
-            }
-            else
-            {
-                lines(xxx,lower[,idx[i]],col=pi.col,lty=pi.lty)
-                lines(xxx,upper[,idx[i]],col=pi.col,lty=pi.lty)
-            }
+        for(j in 1:npred)
+        {
+          polygon(xxx[j] + c(-0.5,0.5,0.5,-0.5)/freq, c(rep(x$lower[j,idx[i]],2),rep(x$upper[j,idx[i]],2)),
+            col=shadecols[i], border=FALSE)
         }
+      }
+      else if(shaded)
+      {
+        polygon(c(xxx,rev(xxx)), c(x$lower[,idx[i]],rev(x$upper[,idx[i]])),
+          col=shadecols[i], border=FALSE)
+      }
+      else if(npred == 1)
+      {
+        lines(xxx+c(-0.5,0.5)/freq,rep(x$lower[,idx[i]],2),col=pi.col,lty=pi.lty)
+        lines(xxx+c(-0.5,0.5)/freq,rep(x$upper[,idx[i]],2),col=pi.col,lty=pi.lty)
+      }
+      else
+      {
+        lines(xxx,x$lower[,idx[i]],col=pi.col,lty=pi.lty)
+        lines(xxx,x$upper[,idx[i]],col=pi.col,lty=pi.lty)
+      }
     }
-    if(npred > 1 & !shadebars)
-        lines(pred.mean, lty=1,col=fcol)
-    else
-        points(pred.mean, col=fcol, pch=19)
-    if(plot.conf)
-        invisible(list(mean=pred.mean,lower=lower,upper=upper))
-    else
-        invisible(list(mean=pred.mean))
+  }
+  if(npred > 1 & !shadebars)
+    lines(pred.mean, lty=1,col=fcol)
+  else
+    points(pred.mean, col=fcol, pch=19)
+  if(plot.conf)
+    invisible(list(mean=pred.mean,lower=x$lower,upper=x$upper))
+  else
+    invisible(list(mean=pred.mean))
 }
 
 predict.default <- function(object, ...)

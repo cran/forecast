@@ -138,13 +138,7 @@ SEXP calcBATSFaster(SEXP ys, SEXP yHats, SEXP wTransposes, SEXP Fs, SEXP xs, SEX
 		///Temporary fix!
 		//x.col(0) += g * e(0,0);
 		//End
-		//std::cout<<x.col(0)<<std::endl;
-		//if(lengthArma > 0) {
 
-		//std::cout<<(x.col(0) + g * e(0,0))<<std::endl;
-		//}
-		//std::cout<<g<<std::endl;
-		//std::cout<<e(0,0)<<std::endl;
 		///////////
 		x(0,0) += g(0,0) * e(0,0);
 		if(adjBeta == 1) {
@@ -204,18 +198,6 @@ SEXP calcBATSFaster(SEXP ys, SEXP yHats, SEXP wTransposes, SEXP Fs, SEXP xs, SEX
 			}
 /*
 			if(lengthArma > 0) {
-				Rprintf("Three-LL-9.9\n");
-				//std::cout<<(adjBeta+ *tau + 1)<<std::endl;
-				//std::cout<<(F.n_rows - 1 - lengthArma)<<std::endl;
-				//std::cout<<((F.n_rows - 1))<<std::endl;
-				//std::cout<<(x.n_rows-1)<<std::endl;
-				Rprintf(".001\n");
-				std::cout<<x.submat((adjBeta+ *tau + 1),t, (x.n_rows-1),t)<<std::endl;
-				Rprintf(".002\n");
-				std::cout<<F.submat((adjBeta+ *tau + 1), (adjBeta+ *tau + 1), (F.n_rows - 1), (F.n_rows - 1))<<std::endl;
-				Rprintf(".003\n");
-				std::cout<<x.submat((adjBeta+ *tau + 1),(t-1), (x.n_rows-1),(t-1))<<std::endl;
-				Rprintf(".004\n");
 				x.submat((adjBeta+ *tau + 1),t, (x.n_rows-1),t) = F.submat((adjBeta+ *tau + 1), (adjBeta+ *tau + 1), (F.n_rows - 1), (F.n_rows - 1)) * x.submat((adjBeta+ *tau + 1),(t-1), (x.n_rows-1),(t-1));
 			}
 */
@@ -224,51 +206,19 @@ SEXP calcBATSFaster(SEXP ys, SEXP yHats, SEXP wTransposes, SEXP Fs, SEXP xs, SEX
 
 				x.submat((adjBeta+ *tau + 1),t, (adjBeta+ *tau + 1),t) = F.submat((adjBeta + *tau +1), (adjBeta + *tau +1), (adjBeta + *tau + 1), (F.n_cols-1)) * x.submat((adjBeta+*tau+1), (t-1), (F.n_cols-1), (t-1));
 				if(*p > 1) {
-					//Rprintf("bg-10");
+
 					x.submat((adjBeta + *tau + 2),t,(adjBeta + *tau + *p),t) = x.submat((adjBeta + *tau + 1), (t-1), (adjBeta + *tau + *p -1), (t-1));
-					//Rprintf("corp brear!!!\n");
-					//std::cout<<x.submat(arma::span((adjBeta + *tau + 2), (adjBeta + *tau + *p)), arma::span(t, t))<<std::endl;
-					//std::cout<<x.submat(arma::span((adjBeta + *tau + 1), (adjBeta + *tau + *p -1)), arma::span((t-1), (t-1)))<<std::endl;
-					//Rprintf("steve!!!\n");
-					//std::cout<<x.submat(arma::span((adjBeta + *tau + 1), (adjBeta + *tau + *p -1)), arma::span((t-1), (t-1)) )<<std::endl;
-					//std::cout<<x.submat(arma::span((adjBeta + *tau + 2), (adjBeta + *tau + *p)),arma::span(t, t))<<std::endl;
-					//Rprintf("Ahmed!!!\n");
-					/*for(int j = (adjBeta + *tau + 2); j <= (adjBeta + *tau + *p); j++) {
-
-						std::cout<<j<<std::endl;
-						std::cout<<t<<std::endl;
-						std::cout<<x((j-1), (t-1))<<std::endl;
-						std::cout<<x(j, t)<<std::endl;
-						double a = xr((j-1), (t-1));
-						Rprintf("a is set\n");
-						std::cout<<a<<std::endl;
-						xr(j, t) = 1.1;
-						Rprintf("b is set\n");
-						xr(j, t) = 1.1;
-						Rprintf("c is set--3\n");
-						std::cout<<x.n_cols<<std::endl;
-						std::cout<<x.n_rows<<std::endl;
-						xr(j,t) = 5 * a / 5;
-						Rprintf("argh!-1\n");
-					}*/
-
-					//x.submat(arma::span((adjBeta + *tau + 2), (adjBeta + *tau + *p)),arma::span(t, t)) = x.submat(arma::span((adjBeta + *tau + 1), (adjBeta + *tau + *p -1)), arma::span((t-1), (t-1)));
 				}
 			}
 			if(*q > 0) {
-				//Rprintf("argh!");
 				x((adjBeta+ *tau + *p + 1),t) = 0;
 				if(*q > 1) {
-					//Rprintf("Three-L-12\n");
 					x.submat((adjBeta+ *tau + *p + 2), t, (adjBeta + *tau + *p + *q) , t) = x.submat((adjBeta + *tau + *p + 1), (t-1), (adjBeta + *tau + *p + *q - 1), (t-1));
 				}
 			}
-			//Rprintf("argh!2\n");
 			///Temporary fix!
 			//x.col(t) += g * e(0,t);
 			//End
-			//Rprintf("argh!5\n");
-
 			///////////
 			x(0,t) += g(0,0) * e(0,t);
 			if(adjBeta == 1) {
@@ -304,13 +254,6 @@ SEXP calcBATSFaster(SEXP ys, SEXP yHats, SEXP wTransposes, SEXP Fs, SEXP xs, SEX
 		}
 	}
 
-
-
-
-
-
-
-	//Rprintf("returning....");
 	return R_NilValue;
 
 	END_RCPP

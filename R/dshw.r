@@ -1,6 +1,8 @@
-###Double seasonal Holt winters method with or without AR adjustment
-#period1 is the short period
-#period2 is the long period
+####################################################################
+## Double Seasonal Holt Winters method as per Taylor (2003)
+## Periods must be nested. 
+## y can be an msts object, or periods can be passed explicitly.
+####################################################################
 
 dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=NULL, beta=NULL, gamma=NULL, omega=NULL, phi=NULL, lambda=NULL, armethod=TRUE)
 {
@@ -12,13 +14,13 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
   } else if(is.null(period1) | is.null(period2)) {
 	  stop("Error in dshw(): y must either be an msts object with two seasonal periods OR the seasonal periods should be specified with period1= and period2=")
   } else {
-	  if(period1 > period2)
-	  {
-		  tmp <- period2
-		  period2 <- period1
-		  period1 <- tmp
-	  }
-	  y<-msts(y, c(period1, period2))
+    if(period1 > period2)
+    {
+      tmp <- period2
+      period2 <- period1
+      period1 <- tmp
+    }
+    y <- msts(y, c(period1, period2))
   }
 	
   if(!armethod)
@@ -53,7 +55,7 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
   # Estimate parameters
   if(sum(is.na(pars)) > 0)
   {
-    pars <- parameters_optim_dshw(y,period1,period2,pars)
+    pars <- par_dshw(y,period1,period2,pars)
     alpha <- pars[1]
     beta <- pars[2]
     gamma <- pars[3]
@@ -66,8 +68,8 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
   yhat <- numeric(n)
 
   ## Starting values
-  I <- sindex(y,period1)
-  wstart <- sindex(y,period2)
+  I <- seasindex(y,period1)
+  wstart <- seasindex(y,period2)
   wstart <- wstart / rep(I,ratio)
   w <- wstart
   x <- c(0,diff(y[1:period2]))
@@ -88,7 +90,7 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
 
 	# Forecasts
   fcast <- (s + (1:h)*t) * rep(I[n+(1:period1)],h/period1 + 1)[1:h] * rep(w[n+(1:period2)],h/period2 + 1)[1:h]
-  fcast <- ts(fcast,f=frequency(y),s=tsp(y)[2]+1/tsp(y)[3])
+  fcast <- ts(fcast,frequency=frequency(y),start=tsp(y)[2]+1/tsp(y)[3])
   
   # Calculate MSE and MAPE
   yhat <- ts(yhat)
@@ -106,7 +108,7 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
 	mape <- mean(abs(e)/y)*100
   
 
-  end.y<-end(y)
+  end.y <- end(y)
   if(end.y[2] == frequency(y)) {
 	  end.y[1]<-end.y[1]+1
 	  end.y[2]<-1
@@ -114,7 +116,7 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
 	  end.y[2]<-end.y[2]+1
   }
   
-  fcast<-msts(fcast, c(period1, period2))
+  fcast <- msts(fcast, c(period1, period2))
   
   if(!is.null(lambda))
   {
@@ -129,10 +131,9 @@ dshw <- function(y, period1=NULL, period2=NULL, h=2*max(period1,period2), alpha=
 
 }
 
-###------------------------------------------------------------------------------------------------
-###Double seasonal holt winters parameter optimisation
+### Double Seasonal Holt-Winters smoothing parameter optimization
 
-parameters_optim_dshw <- function(y, period1, period2, pars)
+par_dshw <- function(y, period1, period2, pars)
 {
   start <- c(0.1,0.01,0.001,0.001,0.0)[is.na(pars)]
   out <- optim(start, dshw.mse, y=y, period1=period1, period2=period2, pars=pars)
@@ -144,31 +145,29 @@ dshw.mse <- function(par, y, period1, period2, pars)
 {
   pars[is.na(pars)] <- par
   if(max(pars) > 0.99 | min(pars) < 0 | pars[5] > .9)
-    return(1e10)
+    return(1e20)
   else
     return(dshw(y, period1, period2, h=1, pars[1], pars[2], pars[3], pars[4], pars[5], armethod=(abs(pars[5]) >1e-7))$model$mse)
 }
 
-###------------------------------------------------------------------------------------------------
-###Calculating seasonal indexes
-
-sindex <- function(y,p)
+### Calculating seasonal indexes
+seasindex <- function(y,p)
 {
   require(zoo)
   n <- length(y)
   n2 <- 2*p
-  y2 <- y[1:n2]
+  shorty <- y[1:n2]
   average <- numeric(n)
-  simple_ma <- rollmean(y2, p)
-  if (identical(p%%2,0))
+  simplema <- rollmean(shorty, p)
+  if (identical(p%%2,0)) # Even order
   {
-    centered_ma <- rollmean(simple_ma[1:(n2-p+1)],2)
-    average[p/2 + 1:p] <- y2[p/2 + 1:p]/centered_ma[1:p]
+    centeredma <- rollmean(simplema[1:(n2-p+1)],2)
+    average[p/2 + 1:p] <- shorty[p/2 + 1:p]/centeredma[1:p]
     si <- average[c(p+(1:(p/2)),(1+p/2):p)]
   }
-  else
+  else # Odd order
   {
-    average[(p-1)/2 + 1:p] <- y2[(p-1)/2 + 1:p]/simple_ma[1:p]
+    average[(p-1)/2 + 1:p] <- shorty[(p-1)/2 + 1:p]/simplema[1:p]
     si <- average[c(p+(1:((p-1)/2)),(1+(p-1)/2):p)]
   } 
   return(si)

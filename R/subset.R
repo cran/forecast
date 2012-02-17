@@ -12,7 +12,7 @@ subset.ts <- function(x, subset=NULL, month=NULL, quarter=NULL, season=NULL, ...
     stop("No subset specified")
   x.time <- subset(time(x),cycle(x)==season)
   if(length(season)==1) # one value per year
-    return(ts(subset(x,cycle(x)==season),f=1,s=x.time[1]))
+    return(ts(subset(x,cycle(x)==season),frequency=1,start=x.time[1]))
   else # ignore ts attributes
     return(subset(x,cycle(x)==season))
 }

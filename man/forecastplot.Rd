@@ -28,7 +28,8 @@
 \item{xlab}{X-axis label}
 \item{fitcol}{Line colour for fitted values.}
 \item{\dots}{additional arguments to \code{\link[graphics]{plot}}.} }
-\description{Plots a time series with forecasts and prediction intervals.}
+
+\description{Plots historical data with forecasts and prediction intervals.}
 
 \value{None.
 }

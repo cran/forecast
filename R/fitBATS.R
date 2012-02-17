@@ -2,7 +2,7 @@
 # 
 # Author: srazbash
 ###############################################################################
-fitSpecificBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.periods=NULL, starting.params=NULL, x.nought=NULL, ar.coefs=NULL, ma.coefs=NULL) {
+fitSpecificBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.periods=NULL, starting.params=NULL, x.nought=NULL, ar.coefs=NULL, ma.coefs=NULL, init.box.cox=NULL) {
 	if(!is.null(seasonal.periods)) {
 		seasonal.periods <- as.integer(sort(seasonal.periods))
 	}
@@ -58,7 +58,11 @@ fitSpecificBATS <- function(y, use.box.cox, use.beta, use.damping, seasonal.peri
 			s.vector <- NULL
 		}
 		if(use.box.cox) {
-			lambda <- BoxCox.lambda(y, lower=0, upper=1.5)
+			if(!is.null(init.box.cox)) {
+				lambda<-init.box.cox
+			} else {
+				lambda <- BoxCox.lambda(y, lower=0, upper=1.5)
+			}
 			y.transformed <- BoxCox(y, lambda=lambda)
 			#print(lambda)
 		} else { #the "else" is not needed at the moment

@@ -263,7 +263,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     mse <- e$amse[1]
     amse <- mean(e$amse[1:nmse])
 
-    states=ts(e$states,f=tsp.y[3],s=tsp.y[1]-1/tsp.y[3])
+    states=ts(e$states,frequency=tsp.y[3],start=tsp.y[1]-1/tsp.y[3])
     colnames(states)[1] <- "l"
     if(trendtype!="N")
         colnames(states)[2] <- "b"
@@ -278,7 +278,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     else
         fits <- y/(1+e$e)
 
-    return(list(loglik=-0.5*e$lik,aic=aic,bic=bic,aicc=aicc,mse=mse,amse=amse,fit=fred,residuals=ts(e$e,f=tsp.y[3],s=tsp.y[1]),fitted=ts(fits,f=tsp.y[3],s=tsp.y[1]),
+    return(list(loglik=-0.5*e$lik,aic=aic,bic=bic,aicc=aicc,mse=mse,amse=amse,fit=fred,residuals=ts(e$e,frequency=tsp.y[3],start=tsp.y[1]),fitted=ts(fits,frequency=tsp.y[3],start=tsp.y[1]),
         states=states,par=fit.par))
 }
 

@@ -12,7 +12,7 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
     on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
   }
 	if(is.null(tsp(object$x)))
-		object$x <- ts(object$x,f=1,s=1)
+		object$x <- ts(object$x,frequency=1,start=1)
 	
 	if(future) 
 		initstate <- object$state[length(object$x)+1,] 
@@ -39,7 +39,7 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
             as.integer(nsim),
             as.double(numeric(nsim)),
             as.double(e),
-        PACKAGE="forecast")[[11]],f=object$m,s=tsp(object$x)[2]+1/tsp(object$x)[3])
+        PACKAGE="forecast")[[11]],frequency=object$m,start=tsp(object$x)[2]+1/tsp(object$x)[3])
     if(is.na(tmp[1]))
         stop("Problem with multiplicative damped trend")
 	if(!is.null(object$lambda))
@@ -72,7 +72,7 @@ myarima.sim <- function (model, n, x, e, ...)
 	x <- ts(c(start.innov, innov), start = 1 - n.start, frequency=model$seasonal.period)
 	flag.noadjust <- FALSE
 	if(is.null(tsp(data)))
-		data <- ts(data,f=1,s=1)
+		data <- ts(data,frequency=1,start=1)
   if (!is.list(model)) 
     stop("'model' must be list")
   p <- length(model$ar)
@@ -224,7 +224,7 @@ myarima.sim <- function (model, n, x, e, ...)
 	
 	########
 	
-  x <- ts(x[1:n],f=frequency(data),s=tsp(data)[2]+1/tsp(data)[3])
+  x <- ts(x[1:n],frequency=frequency(data),start=tsp(data)[2]+1/tsp(data)[3])
 	return(x)    
 }
 
@@ -343,7 +343,7 @@ simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, 
         x <- object$x <- eval.parent(parse(text = object$series))
 		
 	if(is.null(tsp(x)))
-		x <- ts(x,f=1,s=1)
+		x <- ts(x,frequency=1,start=1)
 
     n <- length(x)
 	d <- order[2]
@@ -439,7 +439,7 @@ simulate.ar <- function(object, nsim=object$n.used, seed=NULL, future=TRUE, boot
     if (!is.element("x", names(object))) 
         object$x <- eval.parent(parse(text = object$series))
 	if(is.null(tsp(object$x)))
-		object$x <- ts(object$x,f=1,s=1)
+		object$x <- ts(object$x,frequency=1,start=1)
     object$x <- eval.parent(parse(text = object$series)) - x.mean
 	if(bootstrap)
 		e <- sample(model$residuals,nsim,replace=TRUE)
@@ -458,7 +458,7 @@ simulate.fracdiff <- function(object, nsim=object$n, seed=NULL, future=TRUE, boo
     else 
 		x <- object$x <- eval.parent(parse(text = as.character(object$call)[2]))
 	if(is.null(tsp(x)))
-		x <- ts(x,f=1,s=1)
+		x <- ts(x,frequency=1,start=1)
     
     # Strip initial and final missing values
     xx <- na.ends(x)
@@ -490,7 +490,7 @@ simulate.fracdiff <- function(object, nsim=object$n, seed=NULL, future=TRUE, boo
         # xsim[k] <- RHS[k] - LHS[k]
     # }
 	# tspx <- tsp(x)
-	# return(ts(xsim,f=tspx[3],s=tspx[2]+1/tspx[3]))
+	# return(ts(xsim,frequency=tspx[3],start=tspx[2]+1/tspx[3]))
 }
 
 

@@ -20,7 +20,7 @@ monthdays <- function(x)
     else
         dummy[leap.years,1] <- 91
     xx <- c(t(dummy))[start(x)[2]-1+(1:length(x))]
-    return(ts(xx,start=start(x),f=f))
+    return(ts(xx,start=start(x),frequency=f))
 }
 
 sindexf <- function(object,h)
@@ -43,7 +43,7 @@ sindexf <- function(object,h)
     }
     else
         stop("Object of unknown class")
-    out <- ts(rep(ss,h/m+1)[1:h], f=m, start=tsp.x[2]+1/m)
+    out <- ts(rep(ss,h/m+1)[1:h], frequency=m, start=tsp.x[2]+1/m)
 
     return(out)
 }
@@ -89,11 +89,11 @@ seasonaldummyf <- function(x, h)
 {
     if(!is.ts(x))
         stop("Not a time series")
-    f=frequency(x)
-    return(seasonaldummy(ts(rep(0,h),start=tsp(x)[2]+1/f,freq=f)))
+    f <- frequency(x)
+    return(seasonaldummy(ts(rep(0,h),start=tsp(x)[2]+1/f,frequency=f)))
 }
 
-forecast.stl <- function(object, method=c("ets","arima"), etsmodel="ZZN",
+forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsmodel="ZZN",
      h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, lambda=NULL, ...)
 {
   method <- match.arg(method)
@@ -103,19 +103,30 @@ forecast.stl <- function(object, method=c("ets","arima"), etsmodel="ZZN",
   # De-seasonalize
   x.sa <- seasadj(object)
   # Forecast
-  if(method=="ets")
+  if(method=="naive")
   {
-    # Ensure non-seasonal model
-    if(substr(etsmodel,3,3) != "N")
-    {
-      warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
-      substr(etsmodel,3,3) <- "N"
-    }
-    fit <- ets(x.sa,model=etsmodel,...)
+    fcast <- rwf(x.sa,h=h,level=level,fan=fan,drift=FALSE)
+  }
+  else if(method=="rwdrift")
+  {
+    fcast <- rwf(x.sa,h=h,level=level,fan=fan,drift=TRUE)
   }
   else
-    fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
-  fcast <- forecast(fit,h=h,level=level,fan=fan)
+  {
+    if(method=="ets")
+    {
+      # Ensure non-seasonal model
+      if(substr(etsmodel,3,3) != "N")
+      {
+        warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
+        substr(etsmodel,3,3) <- "N"
+      }
+      fit <- ets(x.sa,model=etsmodel,...)
+    }
+    else
+      fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,...)
+    fcast <- forecast(fit,h=h,level=level,fan=fan)
+  }
   # Reseasonalize
   fcast$mean <- fcast$mean + lastseas
   fcast$upper <- fcast$upper + lastseas
@@ -123,7 +134,7 @@ forecast.stl <- function(object, method=c("ets","arima"), etsmodel="ZZN",
   fcast$x <- ts(rowSums(object$time.series))
   tsp(fcast$x) <- tsp(object$time.series)
   fcast$method <- paste("STL + ",fcast$method)
-  fcast$seasonal <- ts(lastseas[1:m],f=m,start=tsp(object$time.series)[2]-1+1/m)
+  fcast$seasonal <- ts(lastseas[1:m],frequency=m,start=tsp(object$time.series)[2]-1+1/m)
   fcast$fitted <- fitted(fcast)+object$time.series[,1]
   fcast$residuals <- fcast$x - fcast$fitted
   
@@ -140,7 +151,7 @@ forecast.stl <- function(object, method=c("ets","arima"), etsmodel="ZZN",
    return(fcast)
 }
 
-stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), etsmodel="ZZN", level = c(80, 95), fan = FALSE, lambda=NULL, ...)
+stlf <- function(x ,h=frequency(x)*2, s.window=7, robust=FALSE, method=c("ets","arima","naive","rwdrift"), etsmodel="ZZN", level = c(80, 95), fan = FALSE, lambda=NULL, ...)
 {
 	if (!is.null(lambda)) 
 	{
@@ -148,7 +159,7 @@ stlf <- function(x ,h=frequency(x)*2, s.window=7, method=c("ets","arima"), etsmo
 		x <- BoxCox(x, lambda)
 	}
 
-	fit <- stl(x,s.window=s.window)
+	fit <- stl(x,s.window=s.window,robust=robust)
 	fcast <- forecast(fit,h=h,method=method,etsmodel=etsmodel, level=level,fan=fan,...)
 
 	if (!is.null(lambda)) 
