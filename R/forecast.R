@@ -145,13 +145,16 @@ summary.forecast <- function(object,...)
 plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.col, pi.lty, 
   xlim=NULL, ylim, main, ylab, xlab, ...)
 {
-  if(ncol(object$newdata) != 1)
+  xvar <- attributes(terms(object$model))$term.labels
+  if(length(xvar) > 1)
     stop("Forecast plot for regression models only available for a single predictor")
+  else if(ncol(object$newdata)==1) # Make sure column has correct name
+    colnames(object$newdata) <- xvar
   if(is.null(xlim))
-    xlim <- range(object$newdata[,1],object$model$model[,attributes(object$model$term)$term.labels])
+    xlim <- range(object$newdata[,xvar],model.frame(object$model)[,xvar])
   if(is.null(ylim))
     ylim <- range(object$upper,object$lower,fitted(object$model)+residuals(object$model))
-  plot(object$model$terms,data=object$model$model,xlim=xlim,ylim=ylim,xlab=xlab,ylab=ylab,main=main,col=col,...)
+  plot(formula(object$model),data=model.frame(object$model),xlim=xlim,ylim=ylim,xlab=xlab,ylab=ylab,main=main,col=col,...)
   abline(object$model)
   nf <- length(object$mean)
   if(plot.conf)
@@ -165,17 +168,17 @@ plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.c
       for(j in 1:nint)
       {
         if(shaded)
-          lines(rep(object$newdata[i,1],2), c(object$lower[i,idx[j]],object$upper[i,idx[j]]), col=shadecols[j],lwd=6)
+          lines(rep(object$newdata[i,xvar],2), c(object$lower[i,idx[j]],object$upper[i,idx[j]]), col=shadecols[j],lwd=6)
         else
-          lines(rep(object$newdata[i,1],2), c(object$lower[i,idx[j]],object$upper[i,idx[j]]), col=pi.col, lty=pi.lty)
+          lines(rep(object$newdata[i,xvar],2), c(object$lower[i,idx[j]],object$upper[i,idx[j]]), col=pi.col, lty=pi.lty)
       }
     }
   }
-  points(object$newdata[,1],object$mean,pch=19,col=fcol)
+  points(object$newdata[,xvar],object$mean,pch=19,col=fcol)
 }
 
 plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(length(x$mean)<5),
-        shadecols=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="",...)
+        shadecols=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, ylab="",xlab="", type="l", ...)
 {
   if(is.element("x",names(x))) # Assume stored as x
     data <- x$x
@@ -197,7 +200,7 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     x$lower <- as.matrix(x$lower)
   }
 
-  if(class(x$model)=="lm" & class(x$mean) != "ts") # Non time series linear model
+  if(is.element("lm",class(x$model)) & !is.element("ts",class(x$mean))) # Non time series linear model
   {
     plotlmforecast(x, plot.conf=plot.conf, shaded=shaded, shadecols=shadecols, col=col, fcol=fcol, pi.col=pi.col, pi.lty=pi.lty, 
       ylim=ylim, main=main, xlab=xlab, ylab=ylab, ...)
@@ -227,9 +230,14 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
       ylim <- range(ylim,x$lower,x$upper,na.rm=TRUE)
   }
   npred <- length(pred.mean)
+  tsx <- is.ts(pred.mean)
+  if(!tsx)
+  {
+    pred.mean <- ts(pred.mean,start=nx+1,frequency=1)
+    type <- "p"
+  }
   plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, frequency=freq),
-    xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,...)
-
+    xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,type=type, ...)
   if(plot.conf)
   {
     xxx <- tsp(pred.mean)[1] - 1/freq + (1:npred)/freq            
@@ -264,7 +272,7 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
       }
     }
   }
-  if(npred > 1 & !shadebars)
+  if(npred > 1 & !shadebars & tsx)
     lines(pred.mean, lty=1,col=fcol)
   else
     points(pred.mean, col=fcol, pch=19)

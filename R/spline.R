@@ -142,8 +142,8 @@ splinef <- function(x, h=10, level=c(80,95), fan=FALSE, lambda=NULL)
             class=c("splineforecast","forecast")))
 }
 
-plot.splineforecast <- function(x,fitcol=2,...)
+plot.splineforecast <- function(x,fitcol=2,type="o",pch=19,...)
 {
-    plot.forecast(x,type="o",pch=19,...)
+    plot.forecast(x,type=type,pch=pch,...)
     lines(x$fitted,col=fitcol)
 }

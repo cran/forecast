@@ -106,6 +106,9 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
       newdata <- data.frame(trend,season)
   }
   newdata <- as.data.frame(newdata)
+  responsevar <- as.character(formula(object$model))[2]
+  object$x <- model.frame(object$model)[,responsevar]
+
   out <- list()
   nl <- length(level)
   for(i in 1:nl)
@@ -119,8 +122,6 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
     tspx <- NULL
   if(length(fcast$x) != length(fcast$residuals))
     tspx <- NULL
-  
-
   if(!is.null(tspx))
   {
     fcast$x <- ts(fcast$x)

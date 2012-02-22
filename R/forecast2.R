@@ -3,15 +3,13 @@ meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
 {
   xname <- deparse(substitute(x))
   n <- length(x)
-  if(!is.ts(x))
-    x <- ts(x)
-  start.x <- tsp(x)[1]
+  #if(!is.ts(x))
 	if(!is.null(lambda))
 	{
 		origx <- x
 		x <- BoxCox(x,lambda)
 	}
-  f <- ts(rep(mean(x,na.rm=TRUE),h),start=start.x,frequency=frequency(x))
+  f <- rep(mean(x,na.rm=TRUE),h)
   if(fan)
     level <- seq(51,99,by=3)
   else
@@ -31,15 +29,25 @@ meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
     lower[,i] <- f-w
     upper[,i] <- f+w
   }
-  freq <- frequency(x)
-  lower <- ts(lower,start=tsp(x)[2]+1/freq,frequency=freq)
-  upper <- ts(upper,start=tsp(x)[2]+1/freq,frequency=freq)
   colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
-  fits <- rep(NA,n-1)
-  for(i in 1:(n-1))
-      fits[i] <- mean(x[1:i],na.rm=TRUE)
-  res <- x[2:n] - fits	
-	
+  if(is.ts(x))
+  {
+    freq <- frequency(x)
+    f <- ts(f,start=tsp(x)[2]+1/freq,frequency=freq)
+    lower <- ts(lower,start=tsp(x)[2]+1/freq,frequency=freq)
+    upper <- ts(upper,start=tsp(x)[2]+1/freq,frequency=freq)
+    fits <- ts(rep(NA,n))
+    tsp(fits) <- tsp(x)
+    for(i in 2:n)
+      fits[i] <- mean(x[1:(i-1)],na.rm=TRUE)
+    res <- x - fits	
+  }
+  else
+  {
+     fits <- rep(mean(x,na.rm=TRUE),length(x))
+     res <- x-fits
+  }
+  
 	if(!is.null(lambda))
 	{
 		fits <- InvBoxCox(fits,lambda)
@@ -49,9 +57,8 @@ meanf <- function(x,h=10,level=c(80,95),fan=FALSE, lambda=NULL)
 		upper <- InvBoxCox(upper,lambda)
 	}	
 
-  junk <- list(method="Mean",level=level,x=x,xname=xname,mean=ts(f,start=tsp(x)[2]+1/freq,frequency=freq),lower=lower,upper=upper,
-        model=list(mu=f[1],mu.se=s/sqrt(length(x)),sd=s), lambda=lambda,
-        fitted =ts(c(NA,fits),start=start.x,frequency=freq), residuals=ts(c(NA,res),start=start.x,frequency=freq))
+  junk <- list(method="Mean",level=level,x=x,xname=xname,mean=f,lower=lower,upper=upper,
+        model=list(mu=f[1],mu.se=s/sqrt(length(x)),sd=s), lambda=lambda, fitted=fits, residuals=res)
   junk$model$call <- match.call()
 
   return(structure(junk,class="forecast"))
