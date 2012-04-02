@@ -70,10 +70,9 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
   else if(!is.null(object$call$data))
     origdata <- eval(object$call$data)
   else
-    origdata <- fitted(object) + residuals(object)
+    origdata <- as.data.frame(fitted(object) + residuals(object))
     
-  #if(!is.null(lambda))
-  #  origdata[,"x"] <- BoxCox(origdata[,"x"],lambda)
+  
   if(is.element("ts",class(origdata)))
   {
     tspx <- tsp(origdata)
@@ -94,7 +93,10 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
   }
   # Add trend and seasonal to data frame
   if(!missing(newdata))
+  {
+    newdata <- as.data.frame(newdata)
     h <- nrow(newdata)
+  }
   if(!is.null(tspx) & is.element("trend",colnames(origdata)))
   {
     x <- ts(1:h, start=tspx[2]+1/tspx[3], frequency=tspx[3])
@@ -107,13 +109,19 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
   }
   newdata <- as.data.frame(newdata)
   responsevar <- as.character(formula(object$model))[2]
+  responsevar <- gsub("`","",responsevar)
   object$x <- model.frame(object$model)[,responsevar]
 
   out <- list()
   nl <- length(level)
   for(i in 1:nl)
     out[[i]] <- predict(object, newdata=newdata, se.fit=TRUE, interval="prediction", level=level[i]/100, ...)
-  fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],level=level,x=object$x)
+    
+  if(nrow(newdata) != length(out[[1]]$fit[,1]))
+    stop("Variables not found in newdata")
+    
+  fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],
+    level=level,x=object$x)
   fcast$method <- "Linear regression model"
   fcast$newdata <- newdata
   fcast$residuals <- residuals(object)
@@ -146,7 +154,7 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
 
   if(!is.null(lambda))
   {
-    #fcast$x <- InvBoxCox(fcast$x,lambda)
+    fcast$x <- InvBoxCox(fcast$x,lambda)
     fcast$mean <- InvBoxCox(fcast$mean,lambda)
     fcast$lower <- InvBoxCox(fcast$lower,lambda)
     fcast$upper <- InvBoxCox(fcast$upper,lambda)
