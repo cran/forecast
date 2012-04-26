@@ -1,44 +1,39 @@
 tbats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL, seasonal.periods=NULL, use.arma.errors=TRUE, use.parallel=TRUE, num.cores=NULL, ...) {
-	if(any((y <= 0))) {
+	if(any((y <= 0)))
 		stop("TBATS requires positive data")
-	}
 	origy <- y
 	non.seasonal.model <- bats(as.numeric(y), use.box.cox=use.box.cox, use.trend=use.trend, use.damped.trend=use.damped.trend, use.arma.errors=use.arma.errors, use.parallel=use.parallel, num.cores=num.cores, ...)
-	if(any(class(y) == "msts")) {
-		start.time <- start(y)
-		seasonal.periods <- attr(y,"msts")
-		y <- as.numeric(y)
-		if(all((seasonal.periods == 1))) {
-			seasonal.periods <- NULL
-		}
-	} else if(class(y) == "ts") {
-		start.time <- start(y)
-		if(frequency(y) == 1) {
-			seasonal.periods <- NULL
-		} else {
-			seasonal.periods <- frequency(y)
-		}
-		y <- as.numeric(y)
-	}  else {
-		start.time <- 1
-		y <- as.numeric(y)
-	}
-	y <- as.numeric(y)
-	if(is.null(seasonal.periods)) {
+
+  # Get start time and seasonal periods
+  if(is.null(seasonal.periods))
+  {
+    if(any(class(y) == "msts")) 
+      seasonal.periods <- attr(y,"msts")
+    else if(class(y) == "ts") 
+      seasonal.periods <- frequency(y)
+  }
+  if(all(seasonal.periods == 1))
+     seasonal.periods <- NULL
+  start.time <- start(y)
+  y <- as.numeric(y)
+
+  if(is.null(seasonal.periods)) 
+  {
 		non.seasonal.model$call <- match.call()
 		# Add ts attributes
-		if(!any(class(origy) == "ts")) {
-			if(is.null(seasonal.periods)) {
+		if(!any(class(origy) == "ts")) 
+    {
+			if(is.null(seasonal.periods)) 
 				origy <- ts(origy,start=1,frequency=1)
-			} else {
+      else 
 				origy <- msts(origy,seasonal.periods)
-			}
 		}
 		attributes(non.seasonal.model$fitted.values) <- attributes(non.seasonal.model$errors) <- attributes(origy)
 		non.seasonal.model$y <- origy
 		return(non.seasonal.model)
 	}
-	if(!is.null(seasonal.periods)) {
+	else
+  {
 		seasonal.mask <- (seasonal.periods == 1)
 		seasonal.periods <- seasonal.periods[!seasonal.mask]
 	}
@@ -504,3 +499,42 @@ print.tbats <- function(x, ...) {
 	cat(x$AIC)
 	cat("\n")	
 }
+
+
+
+plot.tbats <- function (x, main="Decomposition by TBATS model", ...) 
+{
+  # Get original data, transform if necessary
+  if (!is.null(x$lambda)) 
+    y <- BoxCox(x$y, x$lambda)
+  else 
+    y <- x$y
+  # Compute matrices
+  tau <- ifelse(!is.null(x$k.vector), 2*sum(x$k.vector), 0)
+	w <- .Call("makeTBATSWMatrix", smallPhi_s = x$damping.parameter, kVector_s=as.integer(x$k.vector), arCoefs_s = x$ar.coefficients, maCoefs_s = x$ma.coefficients, tau_s=as.integer(tau), PACKAGE = "forecast")
+	
+  out <- cbind(observed=c(y), level=x$x[1,])
+  if(!is.null(x$beta))
+    out <- cbind(out, slope=x$x[2,])
+  nonseas <- 2+!is.null(x$beta) # No. non-seasonal columns in out
+  nseas <- length(x$seasonal.periods) # No. seasonal periods
+
+  seas.states <- cbind(x$seed.states,x$x)[-(1:(1+!is.null(x$beta))),]
+  seas.states <- seas.states[,-ncol(seas.states)]
+  w <- w$w.transpose[,-(1:(1+!is.null(x$beta))),drop=FALSE]
+  w <- w[,1:tau,drop=FALSE]
+  j <- cumsum(c(1,2*x$k.vector))
+  for(i in 1:nseas)
+    out <- cbind(out, season=c(w[,j[i]:(j[i+1]-1),drop=FALSE] %*% seas.states[j[i]:(j[i+1]-1),]))
+  if(nseas > 1)
+    colnames(out)[nonseas + 1:nseas] <- paste("season",1:nseas,sep="")
+  
+  # Add time series characteristics
+  out <- ts(out)
+  tsp(out) <- tsp(y)
+  
+  # Do the plot
+  plot(out, main=main, nc=1, ...)
+}
+
+

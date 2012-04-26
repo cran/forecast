@@ -121,15 +121,18 @@ bats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL, sea
 		stop("BATS requires positive data")
 	}
   origy <- y
-	if(any(class(y) == "msts")) {
-		seasonal.periods <- attr(y,"msts")
-	} else if(class(y) == "ts") {
-		seasonal.periods <- frequency(y)
+  if(is.null(seasonal.periods))
+  {
+    if(any(class(y) == "msts")) 
+      seasonal.periods <- attr(y,"msts")
+    else if(class(y) == "ts") 
+      seasonal.periods <- frequency(y)
 	}
-	if(all((seasonal.periods == 1))) {
-		seasonal.periods <- NULL	
-	}
-	if(!is.null(seasonal.periods)) {
+	if(all(seasonal.periods == 1))
+    seasonal.periods <- NULL
+
+	if(!is.null(seasonal.periods)) 
+  {
 		seasonal.mask <- (seasonal.periods == 1)
 		seasonal.periods <- seasonal.periods[!seasonal.mask]
 	}
@@ -270,5 +273,37 @@ print.bats <- function(x,...) {
 }
 residuals.bats <- function(object, ...) {
 	object$errors
+}
+
+plot.bats <- function (x, main="Decomposition by BATS model", ...) 
+{
+  # Get original data, transform if necessary
+  if (!is.null(x$lambda)) 
+    y <- BoxCox(x$y, x$lambda)
+  else 
+    y <- x$y
+
+  # Extract states
+  out <- cbind(observed=c(y), level=x$x[1,])
+  if(!is.null(x$beta))
+    out <- cbind(out, slope=x$x[2,])
+  nonseas <- 2+!is.null(x$beta) # No. non-seasonal columns in out
+  nseas <- length(x$gamma.values) # No. seasonal periods
+  if(!is.null(x$gamma))
+  {
+    seas.states <- x$x[-(1:(1+!is.null(x$beta))),]
+    j <- cumsum(c(1,x$seasonal.periods))
+    for(i in 1:nseas)
+      out <- cbind(out, season=seas.states[j[i],])
+    if(nseas > 1)
+      colnames(out)[nonseas + 1:nseas] <- paste("season",1:nseas,sep="")
+  }
+  
+  # Add time series characteristics
+  out <- ts(out)
+  tsp(out) <- tsp(y)
+  
+  # Do the plot
+  plot(out, main=main, nc=1, ...)
 }
 
