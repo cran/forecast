@@ -72,7 +72,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
             # clusterApplyLB() for Windows, mclapply() for POSIX
             if (Sys.info()[1] == "Windows"){
                 cl <- makeCluster(num.cores)
-                all.models <- clusterApplyLB(cl=cl, x=to.check, fun=par.all.arima)
+                all.models <- parLapply(cl=cl, X=to.check, fun=par.all.arima)
                 stopCluster(cl=cl)
             } else all.models <- mclapply(X=to.check, FUN=par.all.arima, mc.cores=num.cores)
 
@@ -445,6 +445,10 @@ Arima <- function(x, order=c(0, 0, 0),
       include.mean <- TRUE
       if((order[2] + seasonal$order[2]) == 1)
         include.drift <- TRUE
+    }
+    else
+    {
+      include.mean <- include.drift <- FALSE
     }
   }
     
