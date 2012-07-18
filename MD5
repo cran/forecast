@@ -1,10 +1,10 @@
-8f5665d14db234475edad3f0aa05324c *ChangeLog
-75c99f701754726d4cac6673cb8c8bf1 *DESCRIPTION
+b6d0e7d7fcd72a32621a79eca9841254 *ChangeLog
+1360d2acfa3d6bee31cc2b840d2fac33 *DESCRIPTION
 c1b64f2dcb4d452e0d0688b53a3c1962 *NAMESPACE
 b764dd1842ed769fbe55e4c52927659f *R/DM.R
 007c5465fcc9d2d68437af6496c5a47e *R/adjustSeasonalSeeds.R
-f583fb74eb2c37e4ad38623812e7e934 *R/arfima.R
-ccbd79c794ad7abadcb8703d40f204c9 *R/arima.R
+dc4a0facb91257a36a0735464cee67c4 *R/arfima.R
+23348f60dff6041d06779b7d27feedec *R/arima.R
 4aa3acc57364fb4e8aca3bc9a7424e88 *R/attach.R
 57210459989e68ea63339246ff53beec *R/bats.R
 9de36666fb7f576cdc1dfe15761ffbe5 *R/checkAdmissibility.R
@@ -25,7 +25,7 @@ f10443807909120b03139f327630cf31 *R/forecastBATS.R
 abf40efbe317ad29b1ddf2f978bdbc50 *R/makeMatrices.R
 0b6601c24ccce4496093b7a5644991f0 *R/makeParamVector.R
 08a1d757dc8a4d9049cb33ab17b9e547 *R/msts.R
-5c7f074a0d2d1277d32d1073cbf1c27e *R/newarima2.R
+da0b498e57bcf70f1ac3963b6bd61423 *R/newarima2.R
 71483e36b4b82b5c1caf1036c2e3bb1f *R/season.R
 6432ba5fb435f032d6f42a9f620a0abb *R/simulate.R
 a5595a18fb126d57932c2f4a587ee683 *R/spline.R
@@ -78,7 +78,7 @@ ed418d349c86617aea35997ed29338eb *man/plot.bats.Rd
 0a4f501c50dd09bd099d86c597082330 *man/seas.adj.Rd
 c669ffe8f6a35da8bdb7b1509756dee7 *man/seasonal.dummy.Rd
 49cdab88b126af97bade98e32b527438 *man/seasonplot.Rd
-31717fa87b99d3af99ce72de0284028c *man/ses.Rd
+fd828e603e07c577ef61bf648eb36bb2 *man/ses.Rd
 caab7f0be556fb5f03b4b32b72061919 *man/simulate.Rd
 23383a236d7d27195e38829f1068f5bd *man/sindex.Rd
 b2f65fb70b6ffb0b23b95d7eaf7b3018 *man/spline.f.Rd
