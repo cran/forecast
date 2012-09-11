@@ -1,10 +1,10 @@
 auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     max.P=2, max.Q=2, max.order=5,
     start.p=2, start.q=2, start.P=1, start.Q=1,
-    stationary=FALSE, ic=c("aicc","aic","bic"),
+    stationary=FALSE, seasonal=TRUE, ic=c("aicc","aic","bic"),
     stepwise=TRUE, trace=FALSE,
     approximation=(length(x)>100 | frequency(x)>12), xreg=NULL,
-    test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"), 
+    test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"),
     allowdrift=TRUE,lambda=NULL,
     parallel=FALSE, num.cores=NULL)
 {
@@ -14,6 +14,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     warning("Parallel computer is only implemented when stepwise=FALSE, the model will be fit in serial.")
     parallel <- FALSE
   }
+
 
   # Check for constant data
   # arbitrary small constant added to scaling denominator to avoid problem of all zeros
@@ -31,8 +32,12 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   ic <- match.arg(ic)
   test <- match.arg(test)
   seasonal.test <- match.arg(seasonal.test)
-  m <- frequency(x)
 
+  # Only consider non-seasonal models
+  if(seasonal)
+    m <- frequency(x)
+  else
+    m <- 1
   if(m < 1)
   {
     #warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
@@ -46,7 +51,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   orig.x <- x
   if(!is.null(lambda))
     x <- BoxCox(x,lambda)
-    
+
   # Choose order of differencing
   if(!is.null(xreg))
   {
@@ -54,7 +59,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     xreg <- as.matrix(xreg)
     if(ncol(xreg)==1 & length(nmxreg) > 1)
       nmxreg <- "xreg"
-    if (is.null(colnames(xreg))) 
+    if (is.null(colnames(xreg)))
         colnames(xreg) <- if (ncol(xreg) == 1) nmxreg
                           else paste(nmxreg, 1:ncol(xreg), sep = "")
     j <- !is.na(x) & !is.na(rowSums(xreg))
@@ -126,11 +131,11 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   Q <- start.Q <- min(start.Q,max.Q)
   if(allowdrift)
     constant <- (d+D <= 1)
-  else 
+  else
     constant <- ((d+D) == 0)
-      
+
   results <- matrix(NA,nrow=100,ncol=8)
- 
+
   oldwarn <- options()$warn
   options(warn=-1)
   on.exit(options(warn=oldwarn))
@@ -342,7 +347,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
       warning("Unable to fit final model using maximum likelihood. AIC value approximated")
     }
     else
-      bestfit <- newbestfit            
+      bestfit <- newbestfit
   }
 
   if(bestfit$ic > 1e19)
@@ -350,9 +355,9 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     cat("\n")
     stop("No suitable ARIMA model found")
   }
-  
+
   # Return best fit
-      
+
   bestfit$x <- orig.x
   bestfit$series <- deparse(substitute(x))
   bestfit$ic <- NULL
@@ -426,7 +431,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
         if(order[1] + seasonal[1] > 0)
         {
             testvec <- fit$model$phi
-            last.nonzero <- max(which(abs(testvec)>1e-8)) 
+            last.nonzero <- max(which(abs(testvec)>1e-8))
             if(last.nonzero > 0)
             {
                 testvec <- testvec[1:last.nonzero]
@@ -439,7 +444,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
         if(order[3] + seasonal[3] > 0)
         {
             testvec <- fit$model$theta
-            last.nonzero <- max(which(abs(testvec)>1e-8)) 
+            last.nonzero <- max(which(abs(testvec)>1e-8))
             if(last.nonzero > 0)
             {
                 testvec <- testvec[1:last.nonzero]
@@ -553,63 +558,67 @@ CHtest <- function(x,m)
 
 # Return critical values for OCSB test at 5% level
 # Approximation based on extensive simulations.
-calcOCSBCritVal <- function(seasonal.period) 
+calcOCSBCritVal <- function(seasonal.period)
 {
     log.m <- log(seasonal.period)
     return(-0.2937411*exp(-0.2850853*(log.m-0.7656451)+(-0.05983644)*((log.m-0.7656451)^2))-1.652202)
 }
 
 
-OCSBtest <- function(time.series, period) 
+OCSBtest <- function(time.series, period)
 {
-    if(length(time.series) < (2*period+5)) 
+    if(length(time.series) < (2*period+5))
     {
         return(0)
     }
-    
+
     seas.diff.series <- diff(time.series, lag = period, differences=1)
-    diff.series <- diff(seas.diff.series, lag = 1, differences=1)    
-    
+    diff.series <- diff(seas.diff.series, lag = 1, differences=1)
+
     y.one <- time.series[2:length(time.series)]
     y.one <- diff(y.one, lag=period, differences=1)
-    
+
     y.two <- time.series[(1+period):length(time.series)]
     y.two <- diff(y.two, lag=1, differences=1)
-    
+
     y.one <- y.one[(1+period):(length(y.one)-1)]
     y.two <- y.two[2:(length(y.two)-period)]
     diff.series <- diff.series[(1+period+1):(length(diff.series))]
     contingent.series <- diff.series
-    
+
     x.reg <- cbind(y.one, y.two)
     diff.series <- ts(data = diff.series, frequency=period)
     ##Turn off warnings
     old.warning.level <- options()$warn
     options(warn=-1)
     regression <- try(Arima(diff.series, order=c(3,0,0), seasonal=list(order=c(1,0,0),period=period), xreg=x.reg), silent=TRUE)
-        
-    if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE)) 
+
+    if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE))
     {
         regression <- try(Arima(diff.series, order=c(3,0,0), seasonal=list(order=c(0,0,0),period=period), xreg=x.reg), silent=TRUE)
-            
-        if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE)) 
+
+        if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE))
         {
             regression <- try(Arima(diff.series, order=c(2,0,0), seasonal=list(order=c(0,0,0),period=period), xreg=x.reg), silent=TRUE)
-                
-            if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE)) 
+
+            if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE))
             {
                 regression <- try(Arima(diff.series, order=c(1,0,0), seasonal=list(order=c(0,0,0),period=period), xreg=x.reg), silent=TRUE)
-                    
-                if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE)) 
+
+                if(class(regression) == "try-error" | tryCatch(any(is.nan(sqrt(diag(regression$var.coef)))), error=function(e) TRUE))
                 {
                     regression <- try(lm(contingent.series ~ y.one + y.two - 1, na.action=NULL), silent=TRUE)
+                    if(class(regression) == "try-error")
+                      return(0) # Give up
+                    if(is.na(sum(regression$coeff)))
+                      return(0) # Some problem, probably due to not enough data, so give up.
                     reg.summary <- summary(regression)
                     t.two <- reg.summary$coefficients[2,3]
-                        
+
                     ###Re-enable warnings
                     options(warn=old.warning.level)
-                    
-                    if((is.nan(t.two)) | (is.infinite(t.two)) | (is.na(t.two)) | (class(regression) == "try-error")) 
+
+                    if((is.nan(t.two)) | (is.infinite(t.two)) | (is.na(t.two)) | (class(regression) == "try-error"))
                     {
                         return(1)
                     }
@@ -618,7 +627,7 @@ OCSBtest <- function(time.series, period)
                 }
             }
         }
-    } 
+    }
 
     se <- sqrt(diag(regression$var.coef))
     t.two <- regression$coef[names(regression$coef)=="y.two"]/se[names(se)=="y.two"]
