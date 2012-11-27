@@ -18,7 +18,7 @@
 \item{shaded}{Logical flag indicating whether prediction intervals should be shaded (TRUE) or lines (FALSE)}
 \item{shadebars}{Logical flag indicating if prediction intervals should be plotted as shaded bars (if TRUE) or a shaded polygon (if FALSE).
     Ignored if \code{shaded=FALSE}. Bars are plotted by default if there are fewer than five forecast horizons.}
-\item{shadecols}{Colors for shaded prediction intervals}
+\item{shadecols}{Colors for shaded prediction intervals. To get default colors used prior to v3.26, set \code{shadecols="oldstyle"}.}
 \item{col}{Colour for the data line.}
 \item{fcol}{Colour for the forecast line.}
 \item{flty}{Line type for the forecast line.}
@@ -38,8 +38,7 @@
 
 \value{None.
 }
-\references{Makridakis, Wheelwright and Hyndman (1998) \emph{Forecasting:
-methods and applications}, Wiley: New York. \url{http://robjhyndman.com/forecasting/}.
+\references{  Hyndman and Athanasopoulos (2012) \emph{Forecasting: principles and practice}, OTexts: Melbourne, Australia. \url{http://otexts.com/fpp/}
 }
 \author{Rob J Hyndman}
 \seealso{\code{\link[stats]{plot.ts}}}

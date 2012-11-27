@@ -162,7 +162,19 @@ plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.c
     nint <- length(object$level)
     idx <- rev(order(object$level))
     if(is.null(shadecols))
-      shadecols <- heat.colors(nint+2)[switch(1+(nint>1),2,nint:1)+1]
+    {
+      require(colorspace)
+      if(min(object$level) < 50) # Using very small confidence levels.
+        shadecols <- rev(sequential_hcl(100)[object$level])
+      else # This should happen almost all the time. Colors mapped to levels.
+        shadecols <- rev(sequential_hcl(52)[object$level-49])
+    }
+    if(length(shadecols)==1)
+    {
+      if(shadecols=="oldstyle") # Default behaviour up to v3.25.
+        shadecols <- heat.colors(nint+2)[switch(1+(nint>1),2,nint:1)+1]
+    }
+
     for(i in 1:nf)
     {
       for(j in 1:nint)
@@ -244,8 +256,19 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     xxx <- tsp(pred.mean)[1] - 1/freq + (1:npred)/freq
     idx <- rev(order(x$level))
     nint <- length(x$level)
-      if(is.null(shadecols))
+    if(is.null(shadecols))
+    {
+      require(colorspace)
+      if(min(x$level) < 50) # Using very small confidence levels.
+        shadecols <- rev(sequential_hcl(100)[x$level])
+      else # This should happen almost all the time. Colors mapped to levels.
+        shadecols <- rev(sequential_hcl(52)[x$level-49])
+    }
+    if(length(shadecols)==1)
+    {
+      if(shadecols=="oldstyle") # Default behaviour up to v3.25.
         shadecols <- heat.colors(nint+2)[switch(1+(nint>1),2,nint:1)+1]
+    }
     for(i in 1:nint)
     {
       if(shadebars)

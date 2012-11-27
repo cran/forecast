@@ -3,9 +3,11 @@
 \alias{stlf}
 \alias{stl}
 \title{Forecasting using stl objects}
-\usage{\method{forecast}{stl}(object, method=c("ets","arima", "naive", "rwdrift"), etsmodel="ZZN",
-    h=frequency(object$time.series)*2, level=c(80,95), fan=FALSE, lambda=NULL, ...)
-stlf(x, h=frequency(x)*2, s.window=7, robust=FALSE, method=c("ets","arima", "naive", "rwdrift"), etsmodel="ZZN",
+\usage{\method{forecast}{stl}(object, method=c("ets","arima","naive","rwdrift"), 
+    etsmodel="ZZN", h=frequency(object$time.series)*2, level=c(80,95), 
+    fan=FALSE, lambda=NULL, ...)
+stlf(x, h=frequency(x)*2, s.window=7, robust=FALSE, 
+    method=c("ets","arima", "naive", "rwdrift"), etsmodel="ZZN",
     level=c(80,95), fan=FALSE, lambda=NULL, ...)
 }
 
@@ -18,7 +20,7 @@ stlf(x, h=frequency(x)*2, s.window=7, robust=FALSE, method=c("ets","arima", "nai
 \item{level}{Confidence level for prediction intervals.}
 \item{fan}{If \code{TRUE}, level is set to seq(50,99,by=1). This is suitable for fan plots.}
 \item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated and back-transformed after forecasts are computed.}
-\item{s.window}{Either the character string "periodic" (default) or the span (in lags) of the loess window for seasonal extraction.}
+\item{s.window}{Either the character string "periodic" or the span (in lags) of the loess window for seasonal extraction.}
 \item{robust}{If \code{TRUE}, robust fitting will used in the loess procedure within \code{\link[stats]{stl}}.}
 \item{...}{Other arguments passed to \code{\link[forecast]{ets}()} or \code{\link[forecast]{auto.arima}()}.}
 }
