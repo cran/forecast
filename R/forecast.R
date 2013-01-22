@@ -131,7 +131,7 @@ summary.forecast <- function(object,...)
 #    cat(paste("\n\nCall:\n",deparse(object$call)))
     cat(paste("\n\nModel Information:\n"))
     print(object$model)
-    cat("\nIn-sample error measures:\n")
+    cat("\nTraining set error measures:\n")
     print(accuracy(object))
     if(is.null(object$mean))
         cat("\n No forecasts\n")
@@ -163,11 +163,11 @@ plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.c
     idx <- rev(order(object$level))
     if(is.null(shadecols))
     {
-      require(colorspace)
+      #require(colorspace)
       if(min(object$level) < 50) # Using very small confidence levels.
-        shadecols <- rev(sequential_hcl(100)[object$level])
+        shadecols <- rev(colorspace:::sequential_hcl(100)[object$level])
       else # This should happen almost all the time. Colors mapped to levels.
-        shadecols <- rev(sequential_hcl(52)[object$level-49])
+        shadecols <- rev(colorspace:::sequential_hcl(52)[object$level-49])
     }
     if(length(shadecols)==1)
     {
@@ -258,11 +258,11 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     nint <- length(x$level)
     if(is.null(shadecols))
     {
-      require(colorspace)
+      #require(colorspace)
       if(min(x$level) < 50) # Using very small confidence levels.
-        shadecols <- rev(sequential_hcl(100)[x$level])
+        shadecols <- rev(colorspace:::sequential_hcl(100)[x$level])
       else # This should happen almost all the time. Colors mapped to levels.
-        shadecols <- rev(sequential_hcl(52)[x$level-49])
+        shadecols <- rev(colorspace:::sequential_hcl(52)[x$level-49])
     }
     if(length(shadecols)==1)
     {
