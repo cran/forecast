@@ -17,7 +17,7 @@ forecast.HoltWinters, forecast.lm, forecast.stl, forecast.StructTS, forecast.bat
 meanf, logLik.ets, monthdays, na.interp, ets, plot.bats, plot.tbats, plot.ets, plot.forecast,
 plot.splineforecast, rwf, seasadj, seasonaldummy,naive,snaive,stlf,
 seasonaldummyf, seasonplot, ses, sindexf, splinef,tslm,fourier,fourierf,forecast.lm,
-thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, nsdiffs, dm.test,
+thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, nsdiffs, dm.test,tbats.components,
 Acf,Pacf,ma,CV,BoxCox.lambda,dshw, bats, tbats, msts, getResponse)
 
 S3method(as.data.frame,forecast)
@@ -70,5 +70,8 @@ S3method(summary,ets)
 S3method(summary,forecast)
 S3method(tsdiag,ets)
 S3method(subset,ts)
+S3method(plot,mforecast)
+S3method(print,mforecast)
+S3method(forecast,varest)
 
 useDynLib(forecast)
