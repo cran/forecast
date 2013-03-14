@@ -1,5 +1,5 @@
-34688875b54d9d0ae0143ba24e7210f4 *ChangeLog
-1b4d2f91744e9bc6ff6c11cb7e09a48c *DESCRIPTION
+85ab0707067810bd53a6e4d1974cdafd *ChangeLog
+e538ec90133562fb9e02cb67d8fb8bd9 *DESCRIPTION
 3f2b3e8f97d73b55622cae042ac990fe *NAMESPACE
 2d7081ca47ba885bbde04fcb8b400770 *R/DM2.R
 f89f54be0e0a7d05855b3b0f5ea22603 *R/HoltWintersNew.R
@@ -24,7 +24,7 @@ d9d8045b2995ff31cf4cc59d38e36d94 *R/forecastTBATS.R
 9a1377177822a39ca28f2aa3550d3293 *R/getResponse.R
 5b3b4b1a8c0bf99fd7887189d9d4b666 *R/graph.R
 8d253a4d0fdf9584542faf23555a4df8 *R/guerrero.R
-11e2e788732b5d28af58b6ad6bde7e1e *R/lm.R
+cf403bddd8c1c249c4bcd137fc60de93 *R/lm.R
 abf40efbe317ad29b1ddf2f978bdbc50 *R/makeMatrices.R
 0b6601c24ccce4496093b7a5644991f0 *R/makeParamVector.R
 08a1d757dc8a4d9049cb33ab17b9e547 *R/msts.R
