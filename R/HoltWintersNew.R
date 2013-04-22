@@ -178,11 +178,20 @@ HoltWintersZZ  <- function (x,
   param <- alpha
   names(param) <- "alpha"
   if(trendtype!="N")
+  {
   	param <- c(param,beta=beta)
+    names(param)[length(param)] <- "beta"
+  }
   if(seasontype!="N")
+  {
   	param <- c(param,gamma=gamma)
+    names(param)[length(param)] <- "gamma"
+  }
   if(damped)
+  {
   	param <- c(param,phi=phi)
+    names(param)[length(param)] <- "phi"
+  }
 
   if(components[1]=="A")
   	sigma2 <- mean(final.fit$residuals^2)
