@@ -1,5 +1,5 @@
-31fe1fc48aaa9ca7abb3e43aad9d69d8 *ChangeLog
-ce2af04f3260f32c7dc585d5052912c6 *DESCRIPTION
+d3053de6d380fcc65f3c63a4f8605303 *ChangeLog
+7d010440f79f48243cf6f1daedb66fd3 *DESCRIPTION
 c24a65e3f84e0a5d762aae2e26a5c498 *NAMESPACE
 2d7081ca47ba885bbde04fcb8b400770 *R/DM2.R
 1c519c704ff4de648f1aa402e7012f2f *R/HoltWintersNew.R
@@ -10,7 +10,7 @@ c24a65e3f84e0a5d762aae2e26a5c498 *NAMESPACE
 a5acef8571cdfedbf034afed257b7ca2 *R/bats.R
 9ac4c30cb5fb1e8316b7048af9f6c8fd *R/checkAdmissibility.R
 3c067120a463c02ce8bb2e4096edb43a *R/dshw.r
-e1b7ee9b3b3b1b6de43b28ea4cfd4e1e *R/errors.R
+2098b01c130eb0c654a7f9abc62e5c1c *R/errors.R
 ab8c652c6e40d6c4f5305ca767c6f7a7 *R/ets.R
 7b0e749a503416703180c93c79f67f6c *R/etsforecast.R
 b86e1dda0281fc666085c20c2d34f7e8 *R/fitBATS.R
