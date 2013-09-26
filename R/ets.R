@@ -63,7 +63,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
   if(!is.element(seasontype,c("N","A","M","Z")))
     stop("Invalid season type")
 
-  if(m < 1)
+  if(m < 1 | length(y) <= m)
   {
     #warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
     seasontype <- "N"
@@ -106,6 +106,18 @@ ets <- function(y, model="ZZZ", damped=NULL,
     if(damped & trendtype=="N")
       stop("Forbidden model combination")
   }
+
+  # Check we have enough data to fit a model
+  n <- length(y)
+  npars <- 2L # alpha + l0
+  if(trendtype=="A" | trendtype=="M") 
+    npars <- npars + 2L # beta + b0
+  if(seasontype=="A" | seasontype=="M")
+    npars <- npars + m # gamma + s
+  if(!is.null(damped))
+    npars <- npars + as.numeric(damped)
+  if(n <= npars + 1)
+    stop("You've got to be joking. I need more data!")
 
   # Fit model (assuming only one nonseasonal model)
   if(errortype=="Z")
@@ -617,36 +629,65 @@ initstate <- function(y,trendtype,seasontype)
   {
     # Do decomposition
     m <- frequency(y)
-    if(length(y)>=3*m)
-      y.d <- decompose(y,type=switch(seasontype,A="additive",M="multiplicative"))
-    else
-      y.d <- list(seasonal= switch(seasontype,A=y-mean(y[1:m]),M=y/mean(y[1:m])))
-    init.seas <- rev(y.d$seasonal[2:m])
+    n <- length(y)
+    if(n < 4)
+      stop("You've got to be joking (not enough data).")
+    else if(n < 3*m) # Fit simple Fourier model.
+    {
+      fit <- tslm(y ~ trend + fourier(y,1))
+      if(seasontype=="A")
+        y.d <- list(seasonal=y -fit$coef[1] - fit$coef[2]*(1:n))
+      else # seasontype=="M". Biased method, but we only need a starting point
+        y.d <- list(seasonal=y / (fit$coef[1] + fit$coef[2]*(1:n)))
+    }
+    else # n is large enough to do a decomposition
+      y.d <- decompose(y,type=switch(seasontype, A="additive", M="multiplicative"))
+
+    init.seas <- rev(y.d$seasonal[2:m]) # initial seasonal component
     names(init.seas) <- paste("s",0:(m-2),sep="")
+    # Seasonally adjusted data
     if(seasontype=="A")
       y.sa <- y-y.d$seasonal
     else
       y.sa <- y/y.d$seasonal
   }
-  else
+  else # non-seasonal model
   {
     m <- 1
     init.seas <- NULL
     y.sa <- y
   }
+
   maxn <- min(max(10,2*m),length(y.sa))
-  fit <- lsfit(1:maxn,y.sa[1:maxn])
-  l0 <- fit$coef[1]
-  if(trendtype=="A")
-    b0 <- fit$coef[2]
-  else if(trendtype=="M")
+
+  if(trendtype=="N")
   {
-    b0 <- 1+fit$coef[2]/fit$coef[1]
-    if(abs(b0) > 1e10) # Avoid infinite slopes
-      b0 <- sign(b0)*1e10
-  }
-  else
+    l0 <- mean(y.sa[1:maxn])
     b0 <- NULL
+  }
+  else  # Simple linear regression on seasonally adjusted data
+  {
+    fit <- lsfit(1:maxn,y.sa[1:maxn])
+    if(trendtype=="A")
+    {
+      l0 <- fit$coef[1]
+      b0 <- fit$coef[2]
+    }
+    else #if(trendtype=="M")
+    {
+      l0 <- fit$coef[1]+fit$coef[2] # First fitted value
+      b0 <- (fit$coef[1] + 2*fit$coef[2])/l0 # Ratio of first two fitted values
+      l0 <- l0/b0 # First fitted value divided by b0
+      if(abs(b0) > 1e10) # Avoid infinite slopes
+        b0 <- sign(b0)*1e10
+      if(l0 < 0 | b0 < 0) # Simple linear approximation didn't work.
+      {
+        l0 <- max(y.sa[1],1e-3)
+        b0 <- max(y.sa[2]/y.sa[1],1e-3)
+      }
+    }
+  }
+
   names(l0) <- "l"
   if(!is.null(b0))
     names(b0) <- "b"

@@ -127,45 +127,46 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 
 ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
 {
-    test <- match.arg(test)
-    #require(tseries)
-    x <- c(na.omit(c(x)))
-    d <- 0
+  test <- match.arg(test)
+  #require(tseries)
+  x <- c(na.omit(c(x)))
+  d <- 0
 
   if(is.constant(x))
-    return(0)
+    return(d)
 
-    oldwarn <- options(warn=-1)
-    if(test=="kpss")
-        dodiff <- tseries:::kpss.test(x)$p.value < alpha
-    else if(test=="adf")
-        dodiff <- tseries:::adf.test(x)$p.value > alpha
-    else if(test=="pp")
-        dodiff <- tseries:::pp.test(x)$p.value > alpha
+  oldwarn <- options(warn=-1)
+  on.exit(options(warn=oldwarn$warn))
+  if(test=="kpss")
+    dodiff <- tseries::kpss.test(x)$p.value < alpha
+  else if(test=="adf")
+    dodiff <- tseries::adf.test(x)$p.value > alpha
+  else if(test=="pp")
+    dodiff <- tseries::pp.test(x)$p.value > alpha
   else
     stop("This shouldn't happen")
-    if(is.na(dodiff))
-    {
-        options(warn=oldwarn$warn)
-        return(d)
-    }
-    while(dodiff & d<2)
-    {
-        x <- diff(x)
-        d <- d+1
-        if(test=="kpss")
-            dodiff <- tseries:::kpss.test(x)$p.value < alpha
+  if(is.na(dodiff))
+  {
+    return(d)
+  }
+  while(dodiff & d<2)
+  {
+    d <- d+1
+    x <- diff(x)
+    if(is.constant(x))
+      return(d)
+    if(test=="kpss")
+      dodiff <- tseries::kpss.test(x)$p.value < alpha
     else if(test=="adf")
-      dodiff <- tseries:::adf.test(x)$p.value > alpha
+      dodiff <- tseries::adf.test(x)$p.value > alpha
     else if(test=="pp")
-      dodiff <- tseries:::pp.test(x)$p.value > alpha
+      dodiff <- tseries::pp.test(x)$p.value > alpha
     else
       stop("This shouldn't happen")
-        if(is.na(dodiff))
-            return(d-1)
-    }
-    options(warn=oldwarn$warn)
-    return(d)
+    if(is.na(dodiff))
+      return(d-1)
+  }
+  return(d)
 }
 
 # Set up seasonal dummies using Fourier series
@@ -200,7 +201,7 @@ SD.test <- function (wts, s=frequency(wts))
     frec <- rep(1, as.integer((s+1)/2))
     ltrunc <- round(s * (N/100)^0.25)
     R1 <- as.matrix(SeasDummy(wts))
-    lmch <- lm(wts ~ R1,na.action=na.exclude)   # run the regression : y(i)=mu+f(i)'gamma(i)+e(i)
+    lmch <- lm(wts ~ R1, na.action=na.exclude)   # run the regression : y(i)=mu+f(i)'gamma(i)+e(i)
     Fhat <- Fhataux <- matrix(nrow=N, ncol=s-1)
     for (i in 1:(s-1))
         Fhataux[, i] <- R1[,i] * residuals(lmch)
@@ -232,7 +233,12 @@ SD.test <- function (wts, s=frequency(wts))
         A[i, j] <- 1
         ifelse(frecob[i] == 1, j <- j + 1, j <- j)
     }
-    stL <- (1/N^2) * sum(diag(solve(t(A) %*% Omfhat %*% A, tol=1e-25) %*% t(A) %*% t(Fhat) %*% Fhat %*% A))
+    tmp <- t(A) %*% Omfhat %*% A
+    problems <- (min(svd(tmp)$d) < .Machine$double.eps)
+    if(problems)
+        stL <- 0
+    else
+        stL <- (1/N^2) * sum(diag(solve(tmp, tol=1e-25) %*% t(A) %*% t(Fhat) %*% Fhat %*% A))
     return(stL)
 }
 
@@ -478,10 +484,10 @@ Arima <- function(x, order=c(0, 0, 0),
       xreg <- cbind(drift=drift,xreg)
     }
     if(is.null(xreg))
-      tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,include.mean=include.mean,
+      tmp <- stats::arima(x=x,order=order,seasonal=seasonal,include.mean=include.mean,
           transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
     else
-      tmp <- stats:::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,
+      tmp <- stats::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,
              transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
   }
   tmp$series <- series

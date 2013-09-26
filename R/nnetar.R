@@ -12,7 +12,7 @@ nnetar <- function(x, p, P=1, size, repeats=20, lambda=NULL)
     xx <- x
 
   # Scale data
-  scale <- max(abs(xx))
+  scale <- max(abs(xx),na.rm=TRUE)
   xx <- xx/scale
   # Set up lagged matrix
   n <- length(xx)
@@ -21,7 +21,7 @@ nnetar <- function(x, p, P=1, size, repeats=20, lambda=NULL)
   if(m==1)
   {
     if(missing(p))
-      p <- length(ar(xx)$ar)
+      p <- length(ar(na.interp(xx))$ar)
     lags <- 1:p
     P <- 0
   }
@@ -29,7 +29,7 @@ nnetar <- function(x, p, P=1, size, repeats=20, lambda=NULL)
   {
     if(missing(p))
     {
-      x.sa <- seasadj(stl(xx,s.window=7))
+      x.sa <- seasadj(stl(na.interp(xx),s.window=7))
       p <- length(ar(x.sa)$ar)
     }
     if(P > 0)
@@ -43,8 +43,10 @@ nnetar <- function(x, p, P=1, size, repeats=20, lambda=NULL)
   lags.X <- matrix(NA,ncol=nlag,nrow=n-maxlag)
   for(i in 1:nlag)
     lags.X[,i] <- xx[(maxlag-lags[i]+1):(n-lags[i])]
+  # Remove missing values if present
+  j <- complete.cases(lags.X,y)
   # Fit average ANN. 
-  fit <- avnnet(lags.X,y,size=size,linout=1,trace=FALSE,repeats=repeats)
+  fit <- avnnet(lags.X[j,],y[j],size=size,linout=1,trace=FALSE,repeats=repeats)
   # Return results
   out <- list()
   out$x <- as.ts(x)
@@ -55,10 +57,12 @@ nnetar <- function(x, p, P=1, size, repeats=20, lambda=NULL)
   out$size <- size
   out$lambda <- lambda
   out$model <- fit
-  out$fitted <- c(rep(NA,maxlag), rowMeans(matrix(unlist(lapply(fit, nnet:::predict.nnet)),ncol=length(fit))))
-  out$fitted <- ts(out$fitted*scale)
+  fits <- c(rep(NA,maxlag), rowMeans(matrix(unlist(lapply(fit, predict)),ncol=length(fit))))
+  fits <- ts(fits*scale)
   if(!is.null(lambda))
-    out$fitted <- InvBoxCox(out$fitted,lambda)
+    fits <- InvBoxCox(fits,lambda)
+  out$fitted <- ts(numeric(length(out$x)))
+  out$fitted[j] <- fits
   tsp(out$fitted) <- tsp(out$x)
   out$residuals <- out$x - out$fitted
   out$lags <- lags
@@ -78,7 +82,7 @@ avnnet <- function(x,y,repeats,...)
 {
   mods <- list()
   for(i in 1:repeats)
-    mods[[i]] <- nnet:::nnet(x, y, ...)
+    mods[[i]] <- nnet::nnet(x, y, ...)
   return(structure(mods,class="nnetarmodels"))
 }
 
@@ -102,7 +106,7 @@ forecast.nnetar <- function(object, h=ifelse(object$m > 1, 2 * object$m, 10), la
   flag <- tail(xx/object$scale, n=max(object$lags))
   for(i in 1:h)
   {
-    fcast[i] <- mean(unlist(lapply(object$model, nnet:::predict.nnet, newdata=flag)))
+    fcast[i] <- mean(unlist(lapply(object$model, predict, newdata=flag)))
     flag <- c(flag[-1],fcast[i])
   }
   out$mean <- ts(fcast*object$scale,start=tspx[2]+1/tspx[3],frequency=tspx[3])
@@ -129,12 +133,12 @@ print.nnetar <- function(x, digits = max(3, getOption("digits") - 3), ...)
 
 # fitted.train <- function(object, ...)
 # {
-#   caret:::predict.train(object)
+#   caret::predict.train(object)
 # }
 
 # residuals.train <- function(object, ...)
 # {
-#   object$trainingData[,".outcome"] - caret:::predict.train(object)
+#   object$trainingData[,".outcome"] - caret::predict.train(object)
 # }
 
 # fitted.avNNet <- function(object, ...)
@@ -147,5 +151,5 @@ print.nnetar <- function(x, digits = max(3, getOption("digits") - 3), ...)
 
 # residuals.avNNet <- function(object, ...)
 # {
-#   object$model[[1]]$fitted.values + object$model[[1]]$residuals - caret:::predict.avNNet(object)
+#   object$model[[1]]$fitted.values + object$model[[1]]$residuals - caret::predict.avNNet(object)
 # }

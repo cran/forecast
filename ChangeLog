@@ -1,3 +1,18 @@
+Version 4.7 (26 September 2013)
+  * Added forecast.forecast() to simply return the object that is passed.
+  * Removed leading zero in package number. i.e., 4.7 instead of 4.07.
+  * better handling of nearly constant time series, and nearly linear time series
+  * improved handling of missing values in rwf()
+  * corrected fitted values and residuals in meanf() for time series data
+  * bats() and tbats() now handle missing values in the same way as ets(). i.e., using longest contiguous portion.
+  * better handling of very short time series
+  * initial states for ets() modified for very short time series (less than 3 years).
+  * nsdiffs with CH test now handles degenerate cases without returning an error.
+  * nnetar now handles missing values
+  * Fixed bug in forecast.varest() so residuals and fitted values computed correctly.
+  * Added accuracy() calculation for VAR models
+  * Fixed a bug in simulate.fracdiff() when future=TRUE. Sometimes the future argument was being ignored.
+
 Version 4.06 (30 June 2013)
   * accuracy() was returning a mape and mpe 100 times too large for in-sample errors.
 
