@@ -18,10 +18,13 @@
 
 \author{Slava Razbash and Rob J Hyndman}
 
+\seealso{\code{\link{tbats}}.}
+
 \examples{
+\dontrun{
 fit <- tbats(USAccDeaths, use.parallel=FALSE)
 components <- tbats.components(fit)
-plot(components)
+plot(components)}
 }
 
 \keyword{ts}

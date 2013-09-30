@@ -8,7 +8,8 @@ importFrom("stats", "filter")
 importFrom(colorspace,sequential_hcl)
 importFrom(fracdiff,fracdiff,diffseries,fracdiff.sim)
 importFrom(tseries,adf.test,pp.test,kpss.test)
-importFrom(zoo,rollmean)
+importFrom(zoo,rollmean, as.Date, as.yearqtr)
+importFrom(timeDate, as.timeDate, isBizday, difftimeDate, Easter)
 importFrom(nnet,nnet)
 import(parallel,Rcpp,RcppArmadillo)
 
@@ -19,7 +20,8 @@ meanf, logLik.ets, monthdays, na.interp, ets, plot.bats, plot.tbats, plot.ets, p
 plot.splineforecast, rwf, seasadj, seasonaldummy,naive,snaive,stlf,
 seasonaldummyf, seasonplot, ses, sindexf, splinef,tslm,fourier,fourierf,forecast.lm,
 thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, nsdiffs, dm.test,tbats.components,
-Acf,Pacf,ma,CV,BoxCox.lambda,dshw, bats, tbats, msts, getResponse)
+Acf,Pacf,ma,CV,BoxCox.lambda,dshw, bats, tbats, msts, getResponse, tsoutliers,
+tsclean, bizdays, easter)
 
 S3method(as.data.frame,forecast)
 S3method(coef,ets)

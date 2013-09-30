@@ -125,10 +125,9 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 }
 
 
-ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
+ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), max.d=2)
 {
   test <- match.arg(test)
-  #require(tseries)
   x <- c(na.omit(c(x)))
   d <- 0
 
@@ -149,7 +148,7 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"))
   {
     return(d)
   }
-  while(dodiff & d<2)
+  while(dodiff & d < max.d)
   {
     d <- d+1
     x <- diff(x)
@@ -254,9 +253,11 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
 #        xreg <- as.matrix(rep(1,h))
     if(!is.null(xreg))
     {
-        xreg <- as.matrix(xreg)
+        origxreg <- xreg <- as.matrix(xreg)
         h <- nrow(xreg)
     }
+    else
+      origxreg <- NULL
     if (use.drift)
     {
         n <- length(x)
@@ -285,14 +286,6 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
     else
         pred <- predict(object, n.ahead=h)
 
-    if(bootstrap) # Recompute se using simulations
-    {
-        sim <- matrix(NA,nrow=npaths,ncol=h)
-        for(i in 1:npaths)
-            sim[i,] <- simulate(object, nsim=h, bootstrap=TRUE, xreg=xreg, lambda=NULL)
-        pred$se <- apply(sim,2,sd)
-    }
-
     # Fix time series characteristics if there are missing values at end of series.
     if(!is.null(x))
     {
@@ -317,24 +310,40 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
             stop("Confidence limit out of range")
     }
 
+    # Compute prediction intervals
     nint <- length(level)
-    lower <- matrix(NA, ncol=nint, nrow=length(pred$pred))
-    upper <- lower
-    for (i in 1:nint)
+    if(bootstrap) # Compute prediction intervals using simulations
     {
-        qq <- qnorm(0.5 * (1 + level[i]/100))
-        lower[, i] <- pred$pred - qq * pred$se
-        upper[, i] <- pred$pred + qq * pred$se
+        sim <- matrix(NA,nrow=npaths,ncol=h)
+        for(i in 1:npaths)
+            sim[i,] <- simulate(object, nsim=h, bootstrap=TRUE, xreg=origxreg, lambda=lambda)
+        lower <- apply(sim, 2, quantile, 0.5 - level/200, type = 8)
+        upper <- apply(sim, 2, quantile, 0.5 + level/200, type = 8)
+        if (nint > 1L) {
+          lower <- t(lower)
+          upper <- t(upper)
+        }
+    }
+    else { # Compute prediction intervals via the normal distribution
+      lower <- matrix(NA, ncol=nint, nrow=length(pred$pred))
+      upper <- lower
+      for (i in 1:nint)
+      {
+          qq <- qnorm(0.5 * (1 + level[i]/100))
+          lower[, i] <- pred$pred - qq * pred$se
+          upper[, i] <- pred$pred + qq * pred$se
+      }
     }
     colnames(lower)=colnames(upper)=paste(level, "%", sep="")
     method <- arima.string(object)
     fits <- fitted(object)
-    if(!is.null(lambda))
-    {
+    if(!is.null(lambda)) { # Back-transform point forecasts and prediction intervals
       pred$pred <- InvBoxCox(pred$pred,lambda)
-      lower <- InvBoxCox(lower,lambda)
-      upper <- InvBoxCox(upper,lambda)
-  }
+      if(!bootstrap) { # Bootstrapped intervals already back-transformed
+        lower <- InvBoxCox(lower,lambda)
+        upper <- InvBoxCox(upper,lambda)
+      }
+    }
     return(structure(list(method=method, model=object, level=level,
         mean=pred$pred, lower=lower, upper=upper, x=x,
         xname=deparse(substitute(x)), fitted=fits, residuals=residuals(object)),
@@ -470,6 +479,11 @@ Arima <- function(x, order=c(0, 0, 0),
       include.mean <- include.drift <- FALSE
     }
   }
+  if((order[2] + seasonal$order[2]) > 1 & include.drift)
+  {
+    warning("No drift term fitted as the order of difference is 2 or more.")
+    include.drift <- FALSE
+  }
 
   if(!is.null(model))
   {
@@ -490,6 +504,12 @@ Arima <- function(x, order=c(0, 0, 0),
       tmp <- stats::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,
              transform.pars=transform.pars,fixed=fixed,init=init,method=method,n.cond=n.cond,optim.control=optim.control,kappa=kappa)
   }
+
+  # Calculate aicc & bic based on tmp$aic
+  npar <- length(tmp$coef) + 1
+  nstar <- length(tmp$residuals) - tmp$arma[6] - tmp$arma[7]*tmp$arma[5]
+  tmp$aicc <- tmp$aic + 2*npar*(nstar/(nstar-npar-1) - 1)
+  tmp$bic <- tmp$aic + npar*(log(nstar) - 2)
   tmp$series <- series
   tmp$xreg <- xreg
   tmp$call <- match.call()
