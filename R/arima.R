@@ -68,13 +68,9 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 			if(is.null(num.cores)) {
 				num.cores <- detectCores()
 			}
-
-            # clusterApplyLB() for Windows, mclapply() for POSIX
-            if (Sys.info()[1] == "Windows"){
-                cl <- makeCluster(num.cores)
-                all.models <- parLapply(cl=cl, X=to.check, fun=par.all.arima)
-                stopCluster(cl=cl)
-            } else all.models <- mclapply(X=to.check, FUN=par.all.arima, mc.cores=num.cores)
+            cl <- makeCluster(num.cores)
+            all.models <- parLapply(cl=cl, X=to.check, fun=par.all.arima)
+            stopCluster(cl=cl)
 
             # Removing null elements
             all.models <- all.models[!sapply(all.models, is.null)]
@@ -418,7 +414,7 @@ arima.errors <- function(z)
   norder <- sum(z$arma[1:4])
   if(is.element("intercept",names(z$coef)))
     xreg <- cbind(rep(1,length(x)),xreg)
-  return(ts(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)]),frequency=frequency(x),start=start(x)))
+  return(ts(c(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)])),frequency=frequency(x),start=start(x)))
 }
 
 # Return one-step fits
@@ -440,7 +436,7 @@ fitted.Arima <- function(object,...)
 # Also allows refitting to new data
 # and drift terms to be included.
 Arima <- function(x, order=c(0, 0, 0),
-      seasonal=list(order=c(0, 0, 0), period=NA),
+      seasonal=c(0, 0, 0), 
       xreg=NULL, include.mean=TRUE, include.drift=FALSE, include.constant, lambda=model$lambda,
     transform.pars=TRUE,
       fixed=NULL, init=NULL, method=c("CSS-ML", "ML", "CSS"),
@@ -464,6 +460,14 @@ Arima <- function(x, order=c(0, 0, 0),
     xreg <- as.matrix(xreg)
     if (is.null(colnames(xreg)))
         colnames(xreg) <- if (ncol(xreg) == 1) nmxreg else paste(nmxreg, 1:ncol(xreg), sep="")
+  }
+
+  if(!is.list(seasonal))
+  {
+    if(frequency(x) <= 1)
+      seasonal <- list(order=c(0,0,0), period=NA)
+  	else
+      seasonal <- list(order=seasonal, period=frequency(x))
   }
 
   if(!missing(include.constant))

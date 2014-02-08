@@ -46,6 +46,8 @@ na.interp <- function(x, lambda = NULL)
     fit <- lm(x ~ X, na.action=na.exclude)
     pred <- predict(fit, newdata =data.frame(X))
     x[missng] <- pred[missng]
+    if(!is.null(dim(x)))
+      stop("The time series is not univariate.")
     # Now re-do it with stl to get better results
     fit <- stl(x,s.window=11,robust=TRUE)
     # Interpolate seasonally adjusted values
@@ -79,15 +81,16 @@ tsoutliers <- function(x, iterate=2, lambda = NULL)
   # Identify missing values
   missng <- is.na(x)
   n <- length(x)
+  freq <- frequency(x)
 
   # Seasonal data
-  if(frequency(x)>1)
+  if(freq > 1 & n > 2*freq)
   {
-	xx <- na.interp(x, lambda = lambda)
+	  xx <- na.interp(x, lambda = lambda)
     if(!is.null(lambda))
-	{
-	  xx <- BoxCox(xx, lambda = lambda)
-	}
+	  {
+	    xx <- BoxCox(xx, lambda = lambda)
+	  }
     fit <- stl(xx, s.window="periodic", robust=TRUE)
     resid <- fit$time.series[,"remainder"]
     # Make sure missing values are not interpeted as outliers
