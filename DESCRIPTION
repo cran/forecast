@@ -1,22 +1,23 @@
 Package: forecast
-Version: 5.2
+Version: 5.3
 Title: Forecasting functions for time series and linear models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
              via state space models and automatic ARIMA modelling.
 Depends: R (>= 3.0.2), stats, graphics, zoo, timeDate
-Imports: tseries, fracdiff, Rcpp (>= 0.11.0), RcppArmadillo (>=
-        0.2.35), nnet, colorspace, parallel
-Suggests: Rmalschains
+Imports: tseries, fracdiff, Rcpp (>= 0.11.0), nnet, colorspace,
+        parallel
+Suggests: Rmalschains, testthat, fpp
 LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.2.35)
 LazyData: yes
 ByteCompile: TRUE
 Author: Rob J Hyndman <Rob.Hyndman@monash.edu> with contributions from
 	George Athanasopoulos, Slava Razbash, Drew Schmidt, Zhenyu Zhou, Yousaf Khan, Christoph Bergmeir, Earo Wang
 Maintainer: Rob J Hyndman <Rob.Hyndman@monash.edu>
+BugReports: https://github.com/robjhyndman/forecast/issues
 License: GPL (>= 2)
 URL: http://robjhyndman.com/software/forecast/
-Packaged: 2014-02-24 06:21:51 UTC; hyndman
+Packaged: 2014-03-24 10:46:14 UTC; hyndman
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2014-02-24 08:05:42
+Date/Publication: 2014-03-24 13:26:43
