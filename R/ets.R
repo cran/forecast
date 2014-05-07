@@ -15,6 +15,11 @@ ets <- function(y, model="ZZZ", damped=NULL,
   if(any(class(y) %in% c("data.frame","list","matrix","mts")))
     stop("y should be a univariate time series")
   y <- as.ts(y)
+
+  # Check if data is constant
+  if (is.constant(y)) 
+    return(ses(y, alpha=0.99999, initial='simple')$model)
+
   # Remove missing values near ends
   ny <- length(y)
   y <- na.contiguous(y)
@@ -780,7 +785,7 @@ lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,low
     phi <- NULL
 
   if(!check.param(alpha,beta,gamma,phi,lowerb,upperb,bounds,m))
-    return(1e12)
+    return(Inf)
 
   np <- length(par)
 
@@ -793,13 +798,13 @@ lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,low
   {
     seas.states <- init.state[-(1:(1+(trendtype!="N")))]
     if(min(seas.states) < 0)
-      return(1e8)
+      return(Inf)
   }
 
   e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi)
 
   if(is.na(e$lik))
-    return(1e8)
+    return(Inf)
   if(e$lik < -1e10) # Avoid perfect fits
     return(-1e10)
 
