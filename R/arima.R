@@ -16,7 +16,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     #Serial - technically could be combined with the code below
     if (parallel==FALSE)
     {
-        best.ic <- 1e20
+        best.ic <- Inf
         for(i in 0:max.p)
         {
             for(j in 0:max.q)
@@ -72,7 +72,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
             all.models <- all.models[!sapply(all.models, is.null)]
 
             # Choosing best model
-            best.ic <- 1e20
+            best.ic <- Inf
             for (i in 1:length(all.models)){
                 if(!is.null(all.models[[i]][, 1]$ic) && all.models[[i]][, 1]$ic < best.ic){
                     bestfit <- all.models[[i]][, 1]
@@ -91,7 +91,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
             #constant <- length(bestfit$coef) - ncol(xreg) > sum(bestfit$arma[1:4])
             newbestfit <- myarima(x,order=bestfit$arma[c(1,6,2)],
                 seasonal=bestfit$arma[c(3,7,4)],constant=constant,ic,trace=FALSE,approximation=FALSE,xreg=xreg)
-            if(newbestfit$ic > 1e19)
+            if(newbestfit$ic == Inf)
             {
                 warning("Unable to fit final model using maximum likelihood. AIC value approximated")
             }
@@ -234,6 +234,15 @@ SD.test <- function (wts, s=frequency(wts))
 forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma[5], 10),
     level=c(80, 95), fan=FALSE, xreg=NULL, lambda=object$lambda,  bootstrap=FALSE, npaths=5000,...)
 {
+  # Check whether there're non-existent arguments
+  all.args <- names(formals())
+  user.args <- names(match.call())[-1L] # including arguments passed to 3 dots
+  check <- user.args %in% all.args
+  if (!all(check)) {
+    error.args <- user.args[!check]
+    warning(sprintf("The non-existent %s arguments will be ignored.", error.args))
+  }
+  
 #    use.constant <- is.element("constant",names(object$coef))
     use.drift <- is.element("drift", names(object$coef))
     x <- object$x <- getResponse(object)
@@ -343,7 +352,8 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
 
 forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL,  bootstrap=FALSE, npaths=5000,...)
 {
-    pred <- predict(object,n.ahead=h)
+     x <- getResponse(object)
+     pred <- predict(object,newdata=x,n.ahead=h)
     if(bootstrap) # Recompute se using simulations
     {
         sim <- matrix(NA,nrow=npaths,ncol=h)
@@ -371,7 +381,6 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL,  boot
     }
     colnames(lower)=colnames(upper)=paste(level,"%",sep="")
     method <- paste("AR(",object$order,")",sep="")
-    x <- getResponse(object)
     f <- frequency(x)
     res <- ts(object$resid[-(1:object$order)],start=tsp(x)[1]+object$order/f,frequency=f)
     fits <- x-res

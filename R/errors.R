@@ -3,7 +3,9 @@
 ## Actual values in x
 # dx = response variable in historical data
 ## test enables a subset of x and f to be tested.
-testaccuracy <- function(f,x,test)
+# MASE: d is the # of differencing
+# MASE: D is the # of seasonal differencing
+testaccuracy <- function(f,x,test,d,D)
 {
   dx <- getResponse(f)
   if(is.data.frame(x))
@@ -56,10 +58,22 @@ testaccuracy <- function(f,x,test)
   # Compute MASE if historical data available
   if(!is.null(dx))
   {
-    if(!is.null(tsp(dx)))
-      scale <- mean(abs(diff(dx,lag=max(1,frequency(dx)))),na.rm=TRUE)
-    else # not time series
+    tspdx <- tsp(dx)
+    if (!is.null(tspdx)) {
+      if (D > 0) { # seasonal differencing
+        nsd <- diff(dx, lag = tspdx[3L], differences = D)
+      } else { # non seasonal differencing
+        nsd <- dx
+      }
+      if (d > 0) {
+        nd <- diff(nsd, differences = d)
+      } else {
+        nd <- nsd
+      }
+      scale <- mean(abs(nd), na.rm = TRUE)
+    } else { # not time series
       scale <- mean(abs(dx-mean(dx)),na.rm=TRUE)
+    }
     mase <- mean(abs(error/scale))
     out <- c(out,mase)
     names(out)[length(out)] <- "MASE"
@@ -84,7 +98,7 @@ testaccuracy <- function(f,x,test)
 }
 
 
-trainingaccuracy <- function(f,test)
+trainingaccuracy <- function(f,test,d, D)
 {
   # Make sure x is an element of f when f is a fitted model rather than a forecast
   #if(!is.list(f))
@@ -105,6 +119,8 @@ trainingaccuracy <- function(f,test)
     test <- test[test >= 1 & test <= n]
   }
 
+  tspdx <- tsp(dx)
+
   res <- res[test]
   dx <- dx[test]
   pe <- res/dx * 100 # Percentage error
@@ -120,17 +136,28 @@ trainingaccuracy <- function(f,test)
   # Compute MASE if historical data available
   if(!is.null(dx))
   {
-    if(!is.null(tsp(dx)))
-      scale <- mean(abs(diff(dx,lag=max(1,frequency(dx)))),na.rm=TRUE)
-    else # not time series
+    if (!is.null(tspdx)) {
+      if (D > 0) { # seasonal differencing
+        nsd <- diff(dx, lag = tspdx[3L], differences = D)
+      } else { # non seasonal differencing
+        nsd <- dx
+      }
+      if (d > 0) {
+        nd <- diff(nsd, differences = d)
+      } else {
+        nd <- nsd
+      }
+      scale <- mean(abs(nd), na.rm = TRUE)
+    } else { # not time series
       scale <- mean(abs(dx-mean(dx)),na.rm=TRUE)
+    }
     mase <- mean(abs(res/scale), na.rm=TRUE)
     out <- c(out,mase)
     names(out)[length(out)] <- "MASE"
   }
 
   # Additional time series measures
-  if(!is.null(tsp(dx)))
+  if(!is.null(tspdx))
   {
     r1 <- acf(res,plot=FALSE,lag.max=2,na.action=na.pass)$acf[2,1,1]
     nj <- length(out)
@@ -141,25 +168,46 @@ trainingaccuracy <- function(f,test)
   return(out)
 }
 
-accuracy <- function(f,x,test=NULL)
+accuracy <- function(f,x,test=NULL,d=NULL,D=NULL)
 {
   if(is.element("mforecast", class(f)))
-    return(accuracy.mforecast(f,x,test))
+    return(accuracy.mforecast(f,x,test,d,D))
 
   trainset <- (is.list(f))
   testset <- (!missing(x))
+  if(testset & !is.null(test))
+    trainset <- FALSE
   if(!trainset & !testset)
     stop("Unable to compute forecast accuracy measures")
+
+  # Find d and D
+  if(testset)
+  {
+    d <- as.numeric(frequency(x) == 1)
+    D <- as.numeric(frequency(x) > 1)
+  }
+  else if(trainset)
+  {
+    d <- as.numeric(frequency(f$mean) == 1)
+    D <- as.numeric(frequency(f$mean) > 1)
+  }
+  else
+  {
+    d <- as.numeric(frequency(f)==1)
+    D <- as.numeric(frequency(f) > 1)
+  }
+
+
   if(trainset)
   {
-    trainout <- trainingaccuracy(f,test)
+    trainout <- trainingaccuracy(f,test,d,D)
     trainnames <- names(trainout)
   }
   else
     trainnames <- NULL
   if(testset)
   {
-    testout <- testaccuracy(f,x,test)
+    testout <- testaccuracy(f,x,test,d,D)
     testnames <- names(testout)
   }
   else
@@ -182,7 +230,7 @@ accuracy <- function(f,x,test=NULL)
 }
 
 # Compute accuracy for a VAR model (from the vars package)
-accuracy.mforecast <- function(object, x, test=NULL)
+accuracy.mforecast <- function(object, x, test=NULL, d, D)
 {
   fc <- object
   class(fc) <- "forecast"
@@ -194,9 +242,9 @@ accuracy.mforecast <- function(object, x, test=NULL)
     fc$x <- object$x[,i]
     fc$fitted <- object$fitted[,i]
     if(nox)
-      out1 <- accuracy(fc, test=test)
+      out1 <- accuracy(fc, test=test, d, D)
     else
-      out1 <- accuracy(fc, x[,i], test)
+      out1 <- accuracy(fc, x[,i], test, d, D)
     rownames(out1) <- paste(vnames[i],rownames(out1))
     if(i==1)
       out <- out1

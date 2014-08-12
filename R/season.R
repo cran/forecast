@@ -110,12 +110,49 @@ seasonaldummyf <- function(x, h)
     return(seasonaldummy(ts(rep(0,h),start=tsp(x)[2]+1/f,frequency=f)))
 }
 
-forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsmodel="ZZN",
-     h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, lambda=NULL, xreg=NULL, newxreg=NULL, ...)
+forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsmodel="ZZN", 
+     forecastfunction=NULL,
+     h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE, 
+     lambda=NULL, xreg=NULL, newxreg=NULL, ...)
 {
   method <- match.arg(method)
-  if(method!="arima" & (!is.null(xreg) | !is.null(newxreg)))
-    stop("xreg and newxreg arguments can only be used with ARIMA models")
+  if(is.null(forecastfunction))
+  {
+    if(method!="arima" & (!is.null(xreg) | !is.null(newxreg)))
+      stop("xreg and newxreg arguments can only be used with ARIMA models")
+    if(method=="ets")
+    {
+      # Ensure non-seasonal model
+      if(substr(etsmodel,3,3) != "N")
+      {
+        warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
+        substr(etsmodel,3,3) <- "N"
+      }
+      forecastfunction <- function(x,h,level,...){
+        fit <- ets(x,model=etsmodel,...)
+        return(forecast(fit,h=h,level=level))
+      }
+    }
+    else if(method=="arima")
+    {
+      forecastfunction <- function(x,h,level,...){
+        fit <- auto.arima(x,xreg=xreg,seasonal=FALSE,...)
+        return(forecast(fit,h=h,level=level,xreg=newxreg))
+      }
+    }    
+    else if(method=="naive")
+    {
+      forecastfunction <- function(x, h,level,...){
+        rwf(x,drift=FALSE,h=h,level=level,...)
+      }
+    }
+    else if(method=="rwdrift")
+    {
+      forecastfunction <- function(x, h,level,...){
+        rwf(x,drift=TRUE,h=h,level=level,...)
+      }
+    }
+  }
   if(is.null(xreg) != is.null(newxreg))
     stop("xreg and newxreg arguments must both be supplied")
   if(!is.null(newxreg))
@@ -123,6 +160,8 @@ forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsm
     if(nrow(as.matrix(newxreg))!=h)
       stop("newxreg should have the same number of rows as the forecast horizon h")
   }
+  if(fan)
+    level <- seq(51, 99, by = 3)
 
   m <- frequency(object$time.series)
   n <- nrow(object$time.series)
@@ -130,30 +169,8 @@ forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsm
   # De-seasonalize
   x.sa <- seasadj(object)
   # Forecast
-  if(method=="naive")
-  {
-    fcast <- rwf(x.sa,h=h,level=level,fan=fan,drift=FALSE)
-  }
-  else if(method=="rwdrift")
-  {
-    fcast <- rwf(x.sa,h=h,level=level,fan=fan,drift=TRUE)
-  }
-  else if(method=="ets")
-  {
-    # Ensure non-seasonal model
-    if(substr(etsmodel,3,3) != "N")
-    {
-      warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
-      substr(etsmodel,3,3) <- "N"
-    }
-    fit <- ets(x.sa,model=etsmodel,...)
-    fcast <- forecast(fit,h=h,level=level,fan=fan)
-  }
-  else #ARIMA
-  {
-    fit <- auto.arima(x.sa,D=0,max.P=0,max.Q=0,xreg=xreg,...)
-    fcast <- forecast(fit,h=h,level=level,fan=fan,xreg=newxreg)
-  }
+  fcast <- forecastfunction(x.sa, h=h, level=level, ...)
+
   # Reseasonalize
   fcast$mean <- fcast$mean + lastseas
   fcast$upper <- fcast$upper + lastseas
@@ -178,8 +195,97 @@ forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsm
    return(fcast)
 }
 
+
+# Function takes time series, does STL decomposition, and fits a model to seasonally adjusted series
+# But it does not forecast. Instead, the result can be passed to forecast().
+stlm <- function(x ,s.window=7, robust=FALSE, method=c("ets","arima"), 
+     modelfunction=NULL, etsmodel="ZZN", xreg=NULL, lambda=NULL, ...)
+{
+  method <- match.arg(method)
+
+  # Transform data if necessary
+  origx <- x
+  if (!is.null(lambda)) 
+    x <- BoxCox(x, lambda)
+
+  # Do STL decomposition
+  stld <- stl(x,s.window=s.window,robust=robust)
+
+  # Construct modelfunction if not passed as an argument
+  if(is.null(modelfunction))
+  {
+    if(method!="arima" & !is.null(xreg))
+      stop("xreg arguments can only be used with ARIMA models")
+    if(method=="ets")
+    {
+      # Ensure non-seasonal model
+      if(substr(etsmodel,3,3) != "N")
+      {
+        warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
+        substr(etsmodel,3,3) <- "N"
+      }
+      modelfunction <- function(x,...){return(ets(x,model=etsmodel,...))}
+    }
+    else if(method=="arima")
+      modelfunction <- function(x,...){return(auto.arima(x,xreg=xreg,seasonal=FALSE,...))}
+  }
+
+  # De-seasonalize
+  x.sa <- seasadj(stld)
+  
+  # Model seasonally adjusted data
+  fit <- modelfunction(x.sa, ...)
+  fit$x <- x.sa
+
+  return(structure(list(stl=stld,model=fit, lambda=lambda, x=origx, m=frequency(origx)),class="stlm"))
+}
+
+forecast.stlm <- function(object, h = 2*object$m, level = c(80, 95), fan = FALSE, 
+     lambda=object$lambda, newxreg=NULL, ...)
+{
+  if(!is.null(newxreg))
+  {
+    if(nrow(as.matrix(newxreg))!=h)
+      stop("newxreg should have the same number of rows as the forecast horizon h")
+  }
+  if(fan)
+    level <- seq(51, 99, by = 3)
+
+  m <- frequency(object$stl$time.series)
+  n <- nrow(object$stl$time.series)
+  lastseas <- rep(object$stl$time.series[n-(m:1)+1,"seasonal"],trunc(1+(h-1)/m))[1:h]
+ 
+  # Forecast seasonally adjusted series
+  if(class(object$model)=="Arima" & !is.null(newxreg))
+    fcast <- forecast(object$model, h=h, level=level, xreg=newxreg, ...)
+  else
+    fcast <- forecast(object$model, h=h, level=level, ...)
+
+  # Reseasonalize
+  fcast$mean <- fcast$mean + lastseas
+  fcast$upper <- fcast$upper + lastseas
+  fcast$lower <- fcast$lower + lastseas
+  fcast$method <- paste("STL + ",fcast$method)
+  fcast$seasonal <- ts(lastseas[1:m],frequency=m,start=tsp(object$stl$time.series)[2]-1+1/m)
+  fcast$fitted <- fitted(fcast)+object$stl$time.series[,1]
+  fcast$residuals <- fcast$x - fcast$fitted
+  
+  if (!is.null(lambda)) 
+  {
+    fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
+    fcast$mean <- InvBoxCox(fcast$mean, lambda)
+    fcast$lower <- InvBoxCox(fcast$lower, lambda)
+    fcast$upper <- InvBoxCox(fcast$upper, lambda)
+    fcast$lambda <- lambda
+  }
+  fcast$x <- object$x
+  
+  return(fcast)
+}
+
 stlf <- function(x ,h=frequency(x)*2, s.window=7, robust=FALSE, method=c("ets","arima","naive","rwdrift"), 
-  etsmodel="ZZN", level = c(80, 95), fan = FALSE, lambda=NULL, xreg=NULL, newxreg=NULL, ...)
+  etsmodel="ZZN", forecastfunction=NULL, level = c(80, 95), fan = FALSE, lambda=NULL, 
+  xreg=NULL, newxreg=NULL, ...)
 {
 	if (!is.null(lambda)) 
 	{
@@ -188,17 +294,18 @@ stlf <- function(x ,h=frequency(x)*2, s.window=7, robust=FALSE, method=c("ets","
 	}
 
 	fit <- stl(x,s.window=s.window,robust=robust)
-	fcast <- forecast(fit,h=h,method=method,etsmodel=etsmodel, level=level,fan=fan,xreg=xreg,newxreg=newxreg,...)
+	fcast <- forecast(fit,h=h,method=method,etsmodel=etsmodel, forecastfunction=forecastfunction,
+    level=level,fan=fan,xreg=xreg,newxreg=newxreg,lambda=lambda, ...)
 
-	if (!is.null(lambda)) 
-	{
-		fcast$x <- origx
-		fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
-		fcast$mean <- InvBoxCox(fcast$mean, lambda)
-		fcast$lower <- InvBoxCox(fcast$lower, lambda)
-		fcast$upper <- InvBoxCox(fcast$upper, lambda)
-		fcast$lambda <- lambda
-	}
+	# if (!is.null(lambda)) 
+	# {
+	# 	fcast$x <- origx
+	# 	fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
+	# 	fcast$mean <- InvBoxCox(fcast$mean, lambda)
+	# 	fcast$lower <- InvBoxCox(fcast$lower, lambda)
+	# 	fcast$upper <- InvBoxCox(fcast$upper, lambda)
+	# 	fcast$lambda <- lambda
+	# }
 
 	return(fcast)
 }
@@ -206,27 +313,61 @@ stlf <- function(x ,h=frequency(x)*2, s.window=7, robust=FALSE, method=c("ets","
 fourier <- function(x, K)
 {
     n <- length(x)
-    period <- frequency(x)
-    X <- matrix(,nrow=n,ncol=2*K)
-    for(i in 1:K)
-    {
-        X[,2*i-1] <- sin(2*pi*i*(1:n)/period)
-        X[,2*i] <- cos(2*pi*i*(1:n)/period)
+    if (any(class(x) == "msts")) {
+      period <- attr(x, "msts")
+      len.p <- length(period)
+      len.K <- length(K)
+      if (len.p != len.K) {
+        msg <- sprintf("Since it's msts object, the arg K needs %i more input(s)", len.p - len.K)
+        stop(msg)
+      }
+    } else {
+      period <- frequency(x)
+      len.p <- length(period)
     }
-    colnames(X) <- paste(c("S","C"),rep(1:K,rep(2,K)),sep="")
+    len <- 2*sum(K)
+    X <- matrix(,nrow=n,ncol=len)
+    labels <- character(length = len) # column names
+    cs.K <- cumsum(2*c(0, K))
+    for (j in 1:len.p) {
+      for(i in 1L:K[j]) {
+        X[,cs.K[j] + 2*i-1] <- sin(2*pi*i*(1:n)/period[j])
+        X[,cs.K[j] + 2*i] <- cos(2*pi*i*(1:n)/period[j])
+      }
+      labels[(cs.K[j] + 1):cs.K[j + 1]] <- paste(paste0(c("S","C"),rep(1:K[j],rep(2,K[j]))), 
+                                                  round(period[j]), sep = "-")
+    }
+    colnames(X) <- labels
     return(X)
 }
 
 fourierf <- function(x, K, h)
 {
     n <- length(x)
-    period <- frequency(x)
-    X <- matrix(,nrow=h,ncol=2*K)
-    for(i in 1:K)
-    {
-        X[,2*i-1] <- sin(2*pi*i*((n+1):(n+h))/period)
-        X[,2*i] <- cos(2*pi*i*((n+1):(n+h))/period)
+    if (any(class(x) == "msts")) {
+      period <- attr(x, "msts")
+      len.p <- length(period)
+      len.K <- length(K)
+      if (len.p != len.K) {
+        msg <- sprintf("Since it's msts object, the arg K needs %i more input(s)", len.p - len.K)
+        stop(msg)
+      }
+    } else {
+      period <- frequency(x)
+      len.p <- length(period)
     }
-    colnames(X) <- paste(c("S","C"),rep(1:K,rep(2,K)),sep="")
+    len <- 2*sum(K)
+    X <- matrix(,nrow=h,ncol=len)
+    labels <- character(length = len) # column names
+    cs.K <- cumsum(2*c(0, K))
+    for (j in 1:len.p) {
+      for(i in 1L:K[j]) {
+        X[,cs.K[j] + 2*i-1] <- sin(2*pi*i*((n+1):(n+h))/period[j])
+        X[,cs.K[j] + 2*i] <- cos(2*pi*i*((n+1):(n+h))/period[j])
+      }
+      labels[(cs.K[j] + 1):cs.K[j + 1]] <- paste(paste0(c("S","C"),rep(1:K[j],rep(2,K[j]))), 
+                                                  round(period[j]), sep = "-")
+    }
+    colnames(X) <- labels
     return(X)
 }

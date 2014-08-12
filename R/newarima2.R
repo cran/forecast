@@ -84,19 +84,28 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 
   if(is.constant(dx))
   {
-    if(D>0)
-      fit <- Arima(x,order=c(0,d,0),seasonal=list(order=c(0,D,0),period=m), fixed=mean(dx,na.rm=TRUE), include.constant=TRUE)
-    else if(d < 2)
-      fit <- Arima(x,order=c(0,d,0),fixed=mean(dx,na.rm=TRUE),include.constant=TRUE)
-    else
-      stop("Data follow a simple polynomial and are not suitable for ARIMA modelling.")
-    fit$x <- x
+    if(is.null(xreg))
+    {
+      if(D>0)
+        fit <- Arima(x,order=c(0,d,0),seasonal=list(order=c(0,D,0),period=m), fixed=mean(dx,na.rm=TRUE), include.constant=TRUE)
+      else if(d < 2)
+        fit <- Arima(x,order=c(0,d,0),fixed=mean(dx,na.rm=TRUE),include.constant=TRUE)
+      else
+        stop("Data follow a simple polynomial and are not suitable for ARIMA modelling.")
+    }
+    else # Perfect regression
+    {
+      if(D>0)
+        fit <- Arima(x,order=c(0,d,0),seasonal=list(order=c(0,D,0),period=m), xreg=xreg)
+      else
+        fit <- Arima(x,order=c(0,d,0),xreg=xreg)
+    }
+    fit$x <- orig.x
     fit$series <- series
     fit$call <- match.call()
     fit$call$x <- data.frame(x=x)
     return(fit)
   }
-
 
   if(m > 1)
   {
@@ -354,7 +363,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     #constant <- length(bestfit$coef) > sum(bestfit$arma[1:4])
     newbestfit <- myarima(x,order=bestfit$arma[c(1,6,2)],
       seasonal=bestfit$arma[c(3,7,4)],constant=constant,ic,trace=FALSE,approximation=FALSE,xreg=xreg)
-    if(newbestfit$ic > 1e19)
+    if(newbestfit$ic == Inf)
     {
       warning("Unable to fit final model using maximum likelihood. AIC value approximated")
     }
@@ -362,7 +371,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
       bestfit <- newbestfit
   }
 
-  if(bestfit$ic > 1e19)
+  if(bestfit$ic == Inf)
   {
     cat("\n")
     stop("No suitable ARIMA model found")
@@ -437,37 +446,39 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
             fit$ic <- switch(ic,bic=fit$bic,aic=fit$aic,aicc=fit$aicc)
         }
         else
-            fit$aic <- fit$bic <- fit$aicc <- fit$ic <- 1e20
+            fit$aic <- fit$bic <- fit$aicc <- fit$ic <- Inf
         # Check for unit roots
         minroot <- 2
         if(order[1] + seasonal[1] > 0)
         {
             testvec <- fit$model$phi
-            last.nonzero <- max(which(abs(testvec)>1e-8))
+            k <- abs(testvec) > 1e-8
+            if(sum(k) > 0)
+              last.nonzero <- max(which(k))
+            else
+              last.nonzero <- 0
             if(last.nonzero > 0)
             {
                 testvec <- testvec[1:last.nonzero]
-                if(last.nonzero > 48)
-                    warning("Unable to check for unit roots")
-                else
-                    minroot <- min(minroot,abs(polyroot(c(1,-testvec))))
+                minroot <- min(minroot,abs(polyroot(c(1,-testvec))))
             }
         }
         if(order[3] + seasonal[3] > 0)
         {
             testvec <- fit$model$theta
-            last.nonzero <- max(which(abs(testvec)>1e-8))
+            k <- abs(testvec) > 1e-8
+            if(sum(k) > 0)
+              last.nonzero <- max(which(k))
+            else
+              last.nonzero <- 0
             if(last.nonzero > 0)
             {
                 testvec <- testvec[1:last.nonzero]
-                if(last.nonzero > 48)
-                    warning("Unable to check for unit roots")
-                else
-                    minroot <- min(minroot,abs(polyroot(c(1,testvec))))
+                minroot <- min(minroot,abs(polyroot(c(1,testvec))))
             }
         }
         if(minroot < 1 + 1e-3)
-            fit$ic <- 1e20 # Don't like this model
+            fit$ic <- Inf # Don't like this model
         if(trace)
             cat("\n",arima.string(fit),":",fit$ic)
         fit$xreg <- xreg
@@ -488,9 +499,9 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
                 cat(" with zero mean    ")
             else
                 cat("         ")
-            cat(" :",1e20,"*")
+            cat(" :",Inf,"*")
         }
-        return(list(ic=1e20))
+        return(list(ic=Inf))
     }
 }
 
@@ -602,15 +613,19 @@ OCSBtest <- function(time.series, period)
       return(0)
     }
 
+    # Compute (1-B)(1-B^m)y_t
     seas.diff.series <- diff(time.series, lag = period, differences=1)
     diff.series <- diff(seas.diff.series, lag = 1, differences=1)
 
+    # Compute (1-B^m)y_{t-1}
     y.one <- time.series[2:length(time.series)]
     y.one <- diff(y.one, lag=period, differences=1)
 
+    # Compute (1-B)y_{t-m}
     y.two <- time.series[(1+period):length(time.series)]
     y.two <- diff(y.two, lag=1, differences=1)
 
+    # Make all series of the same length and matching time periods
     y.one <- y.one[(1+period):(length(y.one)-1)]
     y.two <- y.two[2:(length(y.two)-period)]
     diff.series <- diff.series[(1+period+1):(length(diff.series))]
@@ -636,6 +651,13 @@ OCSBtest <- function(time.series, period)
                 if(class(regression) == "try-error" | tryCatch(checkarima(regression), error=function(e) TRUE))
                 {
                     regression <- try(lm(contingent.series ~ y.one + y.two - 1, na.action=NULL), silent=TRUE)
+                    if(class(regression) == "try-error")
+                      stop("The OCSB regression model cannot be estimated")
+                    if(mean(abs(regression$residuals),na.rm=TRUE)/mean(abs(contingent.series), na.rm=TRUE) < 1e-10)
+                    {
+                      # Perfect regression. Safest to do no differencing
+                      return(0)
+                    }  
                     reg.summary <- summary(regression)
                     reg.coefs <- reg.summary$coefficients
                     t.two.pos <- grep("t.two", rownames(reg.coefs), fixed = TRUE)

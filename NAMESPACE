@@ -5,6 +5,7 @@ importFrom("stats", "end")
 importFrom("stats", "frequency")
 importFrom("stats", "window")
 importFrom("stats", "filter")
+importFrom("stats", "na.contiguous", "spec.ar")
 importFrom(colorspace,sequential_hcl)
 importFrom(fracdiff,fracdiff,diffseries,fracdiff.sim)
 importFrom(tseries,adf.test,pp.test,kpss.test)
@@ -21,7 +22,8 @@ plot.splineforecast, rwf, seasadj, seasonaldummy,naive,snaive,stlf,
 seasonaldummyf, seasonplot, ses, sindexf, splinef,tslm,fourier,fourierf,forecast.lm,
 thetaf, tsdisplay, simulate.ets, simulate.ar, simulate.Arima, simulate.fracdiff, ndiffs, nsdiffs, dm.test,tbats.components,
 Acf,Pacf,ma,CV,BoxCox.lambda,dshw, bats, tbats, msts, getResponse, tsoutliers,
-tsclean, bizdays, easter)
+tsclean, bizdays, easter,
+stlm, forecast.stlm)
 
 S3method(as.data.frame,forecast)
 S3method(coef,ets)
@@ -36,6 +38,7 @@ S3method(forecast,HoltWinters)
 S3method(forecast,lm)
 S3method(forecast,nnetar)
 S3method(forecast,stl)
+S3method(forecast,stlm)
 S3method(forecast,StructTS)
 S3method(forecast,ts)
 S3method(forecast,bats)
