@@ -358,7 +358,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   }
 
   # Refit using ML if approximation used for IC
-  if(approximation)
+  if(approximation & !is.null(bestfit$arma))
   {
     #constant <- length(bestfit$coef) > sum(bestfit$arma[1:4])
     newbestfit <- myarima(x,order=bestfit$arma[c(1,6,2)],
@@ -371,6 +371,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
       bestfit <- newbestfit
   }
 
+  # Nothing fitted
   if(bestfit$ic == Inf)
   {
     cat("\n")
@@ -653,11 +654,13 @@ OCSBtest <- function(time.series, period)
                     regression <- try(lm(contingent.series ~ y.one + y.two - 1, na.action=NULL), silent=TRUE)
                     if(class(regression) == "try-error")
                       stop("The OCSB regression model cannot be estimated")
-                    if(mean(abs(regression$residuals),na.rm=TRUE)/mean(abs(contingent.series), na.rm=TRUE) < 1e-10)
-                    {
-                      # Perfect regression. Safest to do no differencing
+                    # Check if perfect regression. In that case, safest to do no differencing
+                    meanratio <- mean(abs(regression$residuals),na.rm=TRUE)/mean(abs(contingent.series), na.rm=TRUE)
+                    if(is.nan(meanratio))
                       return(0)
-                    }  
+                    if(meanratio < 1e-10)
+                      return(0)
+                    # Proceed to do OCSB test.
                     reg.summary <- summary(regression)
                     reg.coefs <- reg.summary$coefficients
                     t.two.pos <- grep("t.two", rownames(reg.coefs), fixed = TRUE)
