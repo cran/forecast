@@ -1,3 +1,17 @@
+Version 5.7 (17 December 2014)
+  * Fixed bug in tbats/bats where optional arguments were not being passed to auto.arima().
+  * Revised fourier() and fourierf() to avoid large orders, and to avoid zero columns.
+  * Improved accuracy of fourier() and fourierf(), while simplifying the code.
+  * Removed duplicate columns returned by fourier/fourierf with multiple seasonal periods.
+  * Corrected some bugs in simulate.Arima for models involving xreg.
+  * Centred simulations from simulate.Arima for non-stationary models by conditioning on first observation.
+  * Added findfrequency() function.
+  * Fixed error in computed residuals from forecast.stl().
+  * Improved handling of very short series in auto.arima().
+  * Fixed error in forecasting with additive damped models. Damping previously applied only from second forecast horizon.
+  * Fixed misuse of abs() in two places in C code.
+  * Added na.action argument to Acf() and fixed na.action argument in tsdisplay().
+
 Version 5.6 (23 September 2014)
   * Improved tbats and bats by ensuring ARMA coefficients are not close to the
     boundary of invertibility and stationarity.
