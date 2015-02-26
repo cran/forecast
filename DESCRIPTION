@@ -1,7 +1,7 @@
 Package: forecast
-Version: 5.8
-Date: 2015-01-06
-Title: Forecasting functions for time series and linear models
+Version: 5.9
+Date: 2015-02-26
+Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
              via state space models and automatic ARIMA modelling.
@@ -19,7 +19,7 @@ Maintainer: Rob J Hyndman <Rob.Hyndman@monash.edu>
 BugReports: https://github.com/robjhyndman/forecast/issues
 License: GPL (>= 2)
 URL: http://github.com/robjhyndman/forecast
-Packaged: 2015-01-06 10:14:10 UTC; hyndman
+Packaged: 2015-02-26 11:47:49 UTC; hyndman
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2015-01-06 17:30:51
+Date/Publication: 2015-02-26 16:46:54

@@ -517,7 +517,7 @@ Arima <- function(x, order=c(0, 0, 0),
 
   if(!is.null(model))
   {
-    tmp <- arima2(x,model,xreg=xreg)
+    tmp <- arima2(x,model,xreg=xreg,method=method)
     xreg <- tmp$xreg
   }
   else
@@ -546,11 +546,11 @@ Arima <- function(x, order=c(0, 0, 0),
   tmp$lambda <- lambda
   tmp$x <- origx
 
-  return(tmp)
+  return(structure(tmp, class=c("ARIMA","Arima")))
 }
 
 # Refits the model to new data x
-arima2 <- function (x, model, xreg)
+arima2 <- function (x, model, xreg, method)
 {
     use.drift <- is.element("drift",names(model$coef))
     use.intercept <- is.element("intercept",names(model$coef))
@@ -570,20 +570,20 @@ arima2 <- function (x, model, xreg)
     {
         if(use.xreg)
             refit <- Arima(x,order=model$arma[c(1,6,2)],seasonal=list(order=model$arma[c(3,7,4)],period=model$arma[5]),
-                fixed=model$coef,include.mean=use.intercept,xreg=xreg)
+                fixed=model$coef,include.mean=use.intercept,xreg=xreg,method=method)
         else
             refit <- Arima(x,order=model$arma[c(1,6,2)],seasonal=list(order=model$arma[c(3,7,4)],period=model$arma[5]),
-                fixed=model$coef,include.mean=use.intercept)
+                fixed=model$coef,include.mean=use.intercept,method=method)
     }
     else if(length(model$coef)>0) # Nonseasonal model with some parameters
     {
         if(use.xreg)
-           refit <- Arima(x,order=model$arma[c(1,6,2)],fixed=model$coef,xreg=xreg,include.mean=use.intercept)
+           refit <- Arima(x,order=model$arma[c(1,6,2)],fixed=model$coef,xreg=xreg,include.mean=use.intercept,method=method)
         else
-            refit <- Arima(x,order=model$arma[c(1,6,2)],fixed=model$coef,include.mean=use.intercept)
+            refit <- Arima(x,order=model$arma[c(1,6,2)],fixed=model$coef,include.mean=use.intercept,method=method)
     }
     else # No parameters
-            refit <- Arima(x,order=model$arma[c(1,6,2)],include.mean=FALSE)
+            refit <- Arima(x,order=model$arma[c(1,6,2)],include.mean=FALSE,method=method)
 
     refit$var.coef <- matrix(0,length(refit$coef),length(refit$coef))
     if(use.xreg) # Why is this needed?
@@ -591,15 +591,16 @@ arima2 <- function (x, model, xreg)
     return(refit)
 }
 
-# Modified version of function in stats package
+# Modified version of function print.Arima from stats package
 
-print.Arima <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE,
+print.ARIMA <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE,
     ...)
 {
     cat("Series:",x$series,"\n")
     cat(arima.string(x),"\n")
     if(!is.null(x$lambda))
         cat("Box Cox transformation: lambda=",x$lambda,"\n")
+
     #cat("\nCall:", deparse(x$call, width.cutoff=75), "\n", sep=" ")
 #    if(!is.null(x$xreg))
 #    {
@@ -615,7 +616,7 @@ print.Arima <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE,
         cat("\nCoefficients:\n")
         coef <- round(x$coef, digits=digits)
         if (se && NROW(x$var.coef)) {
-            ses <- rep(0, length(coef))
+            ses <- rep.int(0, length(coef))
             ses[x$mask] <- round(sqrt(diag(x$var.coef)), digits=digits)
             coef <- matrix(coef, 1L, dimnames=list(NULL, names(coef)))
             coef <- rbind(coef, s.e.=ses)
@@ -644,63 +645,63 @@ print.Arima <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE,
 
 # Modified version of function in stats package
 
-predict.Arima <- function(object, n.ahead=1, newxreg=NULL, se.fit=TRUE, ...)
-{
-    myNCOL <- function(x) if (is.null(x))
-        0
-    else NCOL(x)
-    rsd <- object$residuals
-    ## LINES ADDED
-    if(!is.null(object$xreg))
-        object$call$xreg <- object$xreg
-    ## END ADDITION
-    xr <- object$call$xreg
-    xreg <- if (!is.null(xr))
-        eval.parent(xr)
-    else NULL
-    ncxreg <- myNCOL(xreg)
-    if (myNCOL(newxreg) != ncxreg)
-        stop("'xreg' and 'newxreg' have different numbers of columns: ", ncxreg, " != ", myNCOL(newxreg))
-    class(xreg) <- NULL
-    xtsp <- tsp(rsd)
-    n <- length(rsd)
-    arma <- object$arma
-    coefs <- object$coef
-    narma <- sum(arma[1:4])
-    if (length(coefs) > narma) {
-        if (names(coefs)[narma + 1] == "intercept") {
-            xreg <- cbind(intercept=rep(1, n), xreg)
-            newxreg <- cbind(intercept=rep(1, n.ahead), newxreg)
-            ncxreg <- ncxreg + 1
-        }
-        xm <- if (narma == 0)
-            drop(as.matrix(newxreg) %*% coefs)
-        else drop(as.matrix(newxreg) %*% coefs[-(1:narma)])
-    }
-    else xm <- 0
-    if (arma[2] > 0) {
-        ma <- coefs[arma[1] + 1:arma[2]]
-        if (any(Mod(polyroot(c(1, ma))) < 1))
-            warning("MA part of model is not invertible")
-    }
-    if (arma[4] > 0) {
-        ma <- coefs[sum(arma[1:3]) + 1:arma[4]]
-        if (any(Mod(polyroot(c(1, ma))) < 1))
-            warning("seasonal MA part of model is not invertible")
-    }
-    z <- KalmanForecast(n.ahead, object$model)
-    pred <- ts(z[[1]] + xm, start=xtsp[2] + deltat(rsd), frequency=xtsp[3])
-    if (se.fit) {
-        se <- ts(sqrt(z[[2]] * object$sigma2), start=xtsp[2] +
-            deltat(rsd), frequency=xtsp[3])
-        return(list(pred=pred, se=se))
-    }
-    else return(pred)
-}
+# predict.Arima <- function(object, n.ahead=1, newxreg=NULL, se.fit=TRUE, ...)
+# {
+#     myNCOL <- function(x) if (is.null(x))
+#         0
+#     else NCOL(x)
+#     rsd <- object$residuals
+#     ## LINES ADDED
+#     if(!is.null(object$xreg))
+#         object$call$xreg <- object$xreg
+#     ## END ADDITION
+#     xr <- object$call$xreg
+#     xreg <- if (!is.null(xr))
+#         eval.parent(xr)
+#     else NULL
+#     ncxreg <- myNCOL(xreg)
+#     if (myNCOL(newxreg) != ncxreg)
+#         stop("'xreg' and 'newxreg' have different numbers of columns: ", ncxreg, " != ", myNCOL(newxreg))
+#     class(xreg) <- NULL
+#     xtsp <- tsp(rsd)
+#     n <- length(rsd)
+#     arma <- object$arma
+#     coefs <- object$coef
+#     narma <- sum(arma[1:4])
+#     if (length(coefs) > narma) {
+#         if (names(coefs)[narma + 1] == "intercept") {
+#             xreg <- cbind(intercept=rep(1, n), xreg)
+#             newxreg <- cbind(intercept=rep(1, n.ahead), newxreg)
+#             ncxreg <- ncxreg + 1
+#         }
+#         xm <- if (narma == 0)
+#             drop(as.matrix(newxreg) %*% coefs)
+#         else drop(as.matrix(newxreg) %*% coefs[-(1:narma)])
+#     }
+#     else xm <- 0
+#     if (arma[2] > 0) {
+#         ma <- coefs[arma[1] + 1:arma[2]]
+#         if (any(Mod(polyroot(c(1, ma))) < 1))
+#             warning("MA part of model is not invertible")
+#     }
+#     if (arma[4] > 0) {
+#         ma <- coefs[sum(arma[1:3]) + 1:arma[4]]
+#         if (any(Mod(polyroot(c(1, ma))) < 1))
+#             warning("seasonal MA part of model is not invertible")
+#     }
+#     z <- KalmanForecast(n.ahead, object$model)
+#     pred <- ts(z[[1]] + xm, start=xtsp[2] + deltat(rsd), frequency=xtsp[3])
+#     if (se.fit) {
+#         se <- ts(sqrt(z[[2]] * object$sigma2), start=xtsp[2] +
+#             deltat(rsd), frequency=xtsp[3])
+#         return(list(pred=pred, se=se))
+#     }
+#     else return(pred)
+# }
 
 arimaorder <- function (object) 
 {
-	if(class(object) == "Arima")
+	if(is.element("Arima",class(object)))
 	{
 		order <- object$arma[c(1, 6, 2, 3, 7, 4, 5)]
 		seasonal <- (order[7] > 1 & sum(order[4:6]) > 0)
@@ -709,11 +710,11 @@ arimaorder <- function (object)
 		else
 			return(order[1:3])
 	}
-	else if(class(object) == "ar")
+	else if(is.element("ar",class(object)))
 	{
 		return(c(object$order,0,0))	
 	}
-	else if(class(object) == "fracdiff")
+	else if(is.element("fracdiff",class(object)))
 	{
 		return(c(length(object$ar), object$d, length(object$ma)))
 	}
