@@ -78,13 +78,38 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   if(m == 1)
     D <- max.P <- max.Q <- 0
   else if(is.na(D))
+  {
     D <- nsdiffs(xx, m=m, test=seasonal.test, max.D=max.D)
+    # Make sure xreg is not null after differencing
+    if(D > 0 & !is.null(xreg))
+    {
+      diffxreg <- diff(xreg, differences=D, lag=m)
+      if(any(apply(diffxreg, 2, is.constant)))
+        D <- D-1
+    }
+  }
   if(D > 0)
     dx <- diff(xx,differences=D,lag=m)
   else
     dx <- xx
+  if(!is.null(xreg))
+  {
+    if(D > 0)
+      diffxreg <- diff(xreg, differences=D, lag=m)
+    else
+      diffxreg <- xreg
+  }
   if(is.na(d))
+  {
     d <- ndiffs(dx,test=test, max.d=max.d)
+    # Make sure xreg is not null after differencing
+    if(d > 0 & !is.null(xreg))
+    {
+      diffxreg <- diff(diffxreg, differences=d, lag=1)
+      if(any(apply(diffxreg, 2, is.constant)))
+        d <- d-1
+    }
+  }
   if(d>0)
     dx <- diff(dx,differences=d,lag=1)
 
@@ -171,7 +196,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 
   bestfit <- myarima(x,order=c(p,d,q),seasonal=c(P,D,Q),constant=constant,ic,trace,approximation,offset=offset,xreg=xreg)
   results[1,] <- c(p,d,q,P,D,Q,constant,bestfit$ic)
-  # Null model
+  # Null model with possible constant
   fit <- myarima(x,order=c(0,d,0),seasonal=c(0,D,0),constant=constant,ic,trace,approximation,offset=offset,xreg=xreg)
   results[2,] <- c(0,d,0,0,D,0,constant,fit$ic)
   if(fit$ic < bestfit$ic)
@@ -205,7 +230,20 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
       q <- (max.q>0)
     }
   }
-   k <- 4
+  k <- 4
+  # Null model with no constant
+  if(constant)
+  {
+    fit <- myarima(x,order=c(0,d,0),seasonal=c(0,D,0),constant=FALSE,ic,trace,approximation,offset=offset,xreg=xreg)
+    results[5,] <- c(0,d,0,0,D,0,0,fit$ic)
+    if(fit$ic < bestfit$ic)
+    {
+      bestfit <- fit
+      p <- q <- P <- Q <- 0
+    }
+    k <- 5
+  }
+
 
   startk <- 0
   while(startk < k & k < 94)

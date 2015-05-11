@@ -1,5 +1,5 @@
-3fd080d6896e1a706f9091d8c3471fb9 *ChangeLog
-b7542008008cba8ffea7975661fc10d4 *DESCRIPTION
+3e1d7e05b19696d9716c20ad696bf72f *ChangeLog
+45ca79482fde2b48eba65eb80d6b546e *DESCRIPTION
 6fe4a1c89a7e2150e47a42ab231732a2 *NAMESPACE
 68293506df8eec7d4bae1e64091d0b34 *R/DM2.R
 2b1727d0e5dcad4c0cb5c4084c51c5ad *R/HoltWintersNew.R
@@ -10,7 +10,7 @@ f6806b5522fdb23e445154403534a6aa *R/arima.R
 479a50685990aed60bfda926e6ad1e96 *R/armaroots.R
 4aa3acc57364fb4e8aca3bc9a7424e88 *R/attach.R
 500d664d8d9b978cd42512a8f4fabf28 *R/bats.R
-833487f5672475d7ae88f5b6efbeb867 *R/bootstrap.R
+1182c8333f5ca23018b3b9b6b696b1e4 *R/bootstrap.R
 293012d72b235801eb649ae898000d6e *R/calendar.R
 7f453570598771422b2f910fcbaadfe0 *R/checkAdmissibility.R
 56d6f2fa693e0735d902da261d6f4b77 *R/clean.R
@@ -32,7 +32,7 @@ a264a2cfcaaf662d52ab50918bbfdec8 *R/guerrero.R
 abf40efbe317ad29b1ddf2f978bdbc50 *R/makeMatrices.R
 0b6601c24ccce4496093b7a5644991f0 *R/makeParamVector.R
 7c2d5393d0a24d2a702e2bf11d82cb69 *R/msts.R
-0d7dde9d5af81c9db4ccceb560640b23 *R/newarima2.R
+5992f432d0a7ae505e9d5468eba1ce9b *R/newarima2.R
 6c4dd9e7155d2dafa79c9421599e0b18 *R/nnetar.R
 79882d9bd1016c8c25bfa0676f179097 *R/season.R
 3e36e54ba40d67a29f4c3f171e8f3883 *R/simulate.R
