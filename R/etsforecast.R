@@ -45,18 +45,20 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
   out <- list(model=object,mean=ts(f$mu,frequency=object$m,start=start.f),level=level,x=object$x)
   if(!is.null(f$var))
   {
-    out$lower <- out$upper <- matrix(NA,ncol=length(level),nrow=h)
+    out$lower <- out$upper <- ts(matrix(NA,ncol=length(level),nrow=h))
     for(i in 1:length(level))
     {
       marg.error <- sqrt(f$var) * abs(qnorm((100-level[i])/200))
       out$lower[,i] <- out$mean - marg.error
       out$upper[,i] <- out$mean + marg.error
     }
+    tsp(out$lower) <- tsp(out$upper) <- tsp(out$mean)
   }
   else if(!is.null(f$lower))
   {
-    out$lower <- ts(f$lower,frequency=object$m,start=start.f)
-    out$upper <- ts(f$upper,frequency=object$m,start=start.f)
+    out$lower <- ts(f$lower)
+    out$upper <- ts(f$upper)
+    tsp(out$lower) <- tsp(out$upper) <- tsp(out$mean)
   }
   else if(PI)
     warning("No prediction intervals for this model")
@@ -67,9 +69,9 @@ forecast.ets <- function(object, h=ifelse(object$m>1, 2*object$m, 10),
 
   if(!is.null(lambda))
   {
-	#out$x <- InvBoxCox(object$x,lambda)
-	#out$fitted <- InvBoxCox(out$fitted,lambda)
-  out$mean <- InvBoxCox(out$mean,lambda)
+	  #out$x <- InvBoxCox(object$x,lambda)
+	  #out$fitted <- InvBoxCox(out$fitted,lambda)
+    out$mean <- InvBoxCox(out$mean,lambda)
 	  if(PI)  # PI = TRUE
 	  {
 		out$lower <- InvBoxCox(out$lower,lambda)
@@ -98,8 +100,8 @@ pegelsfcast.C <- function(h,obj,npaths,level,bootstrap)
   if(abs(y.f[1]+99999) < 1e-7)
     stop("Problem with multiplicative damped trend")
 
-  lower <- apply(y.paths,2,quantile,0.5 - level/200,type=8)
-  upper <- apply(y.paths,2,quantile,0.5 + level/200,type=8)
+  lower <- apply(y.paths,2,quantile,0.5 - level/200, type=8, na.rm=TRUE)
+  upper <- apply(y.paths,2,quantile,0.5 + level/200, type=8, na.rm=TRUE)
   if(length(level)>1)
   {
     lower <- t(lower)

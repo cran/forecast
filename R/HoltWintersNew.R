@@ -337,7 +337,7 @@ ses <- function (x, h = 10, level = c(80, 95), fan = FALSE, initial=c("optimal",
   else
     fcast <- forecast(HoltWintersZZ(x, alpha=alpha, beta=FALSE, gamma=FALSE), h, level = level, fan = fan, ...)
 
-  fcast$method <- "Simple exponential smoothing"
+  fcast$method <- fcast$model$method <- "Simple exponential smoothing"
   fcast$model$call <- match.call()
   return(fcast)
 }
@@ -359,22 +359,24 @@ holt <- function (x, h = 10, damped = FALSE, level = c(80, 95), fan = FALSE,
   if (damped)
   {
 	  fcast$method <- "Damped Holt's method"
-    if(initial=="heuristic")
+    if(initial=="simple")
       warning("Damped Holt's method requires optimal initialization")
   }
 	else
 	  fcast$method <- "Holt's method"
   if(exponential)
 	  fcast$method <- paste(fcast$method,"with exponential trend")
+  fcast$model$method <- fcast$method
   fcast$model$call <- match.call()
   return(fcast)
 }
 
-hw <- function(x, h = 2 * frequency(x), seasonal = "additive", damped = FALSE,
+hw <- function(x, h = 2 * frequency(x), seasonal = c("additive","multiplicative"), damped = FALSE,
     level = c(80, 95), fan = FALSE, initial=c("optimal","simple"), exponential=FALSE,
     alpha=NULL, beta=NULL,gamma=NULL,...)
 {
   initial <- match.arg(initial)
+  seasonal <- match.arg(seasonal)
   if(initial=="optimal" | damped)
   {
     if (seasonal == "additive" & exponential)
@@ -398,9 +400,10 @@ hw <- function(x, h = 2 * frequency(x), seasonal = "additive", damped = FALSE,
   if (damped)
   {
     fcast$method <- paste("Damped",fcast$method)
-    if(initial=="heuristic")
+    if(initial=="simple")
       warning("Damped methods require optimal initialization")
   }
+  fcast$model$method <- fcast$method
   fcast$model$call <- match.call()
   return(fcast)
 }

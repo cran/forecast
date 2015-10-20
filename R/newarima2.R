@@ -35,7 +35,8 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
 
   # Use AIC if npar <= 3
   # AICc won't work for tiny samples.
-  if(length(x) <= 3L)
+  serieslength <- length(x)
+  if(serieslength <= 3L)
     ic <- "aic"
 
   # Only consider non-seasonal models
@@ -48,10 +49,13 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     #warning("I can't handle data with frequency less than 1. Seasonality will be ignored.")
     m <- 1
   }
-	max.p<-ifelse(max.p <= floor(length(x)/3), max.p, floor(length(x)/3))
-	max.q<-ifelse(max.q <= floor(length(x)/3), max.q, floor(length(x)/3))
-	max.P<-ifelse(max.P <= floor((length(x)/3)/m), max.P, floor((length(x)/3)/m))
-	max.Q<-ifelse(max.Q <= floor((length(x)/3)/m), max.Q, floor((length(x)/3)/m))
+  else
+    m <- round(m) # Avoid non-integer seasonal periods
+    
+	max.p<-ifelse(max.p <= floor(serieslength/3), max.p, floor(serieslength/3))
+	max.q<-ifelse(max.q <= floor(serieslength/3), max.q, floor(serieslength/3))
+	max.P<-ifelse(max.P <= floor((serieslength/3)/m), max.P, floor((serieslength/3)/m))
+	max.Q<-ifelse(max.Q <= floor((serieslength/3)/m), max.Q, floor((serieslength/3)/m))
 
   orig.x <- x
   if(!is.null(lambda))
@@ -154,7 +158,7 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     else
       fit <- try(arima(x,order=c(1,d,0),seasonal=list(order=c(0,D,0),period=m,xreg=xreg)))
     if(!is.element("try-error",class(fit)))
-      offset <- -2*fit$loglik - length(x)*log(fit$sigma2)
+      offset <- -2*fit$loglik - serieslength*log(fit$sigma2)
     else
     {
       warning("Unable to calculate AIC offset")
@@ -164,9 +168,16 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   else
     offset <- 0
 
+  allowdrift <- allowdrift & (d+D)==1
+  allowmean <- allowmean & (d+D)==0
+
+  constant <- allowdrift | allowmean
+
   if(!stepwise)
   {
-    bestfit <- search.arima(x,d,D,max.p,max.q,max.P,max.Q,max.order,stationary,ic,trace,approximation,xreg=xreg,offset=offset,allowdrift=allowdrift,parallel=parallel, num.cores=num.cores)
+    bestfit <- search.arima(x,d,D,max.p,max.q,max.P,max.Q,max.order,stationary,
+      ic,trace,approximation,xreg=xreg,offset=offset,allowdrift=allowdrift,allowmean=allowmean,
+      parallel=parallel, num.cores=num.cores)
     bestfit$call <- match.call()
     bestfit$call$x <- data.frame(x=x)
     bestfit$lamba <- lambda
@@ -186,11 +197,6 @@ auto.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   q <- start.q <- min(start.q,max.q)
   P <- start.P <- min(start.P,max.P)
   Q <- start.Q <- min(start.Q,max.Q)
-
-  allowdrift <- allowdrift & (d+D)==1
-  allowmean <- allowmean & (d+D)==0
-
-  constant <- allowdrift | allowmean
 
   results <- matrix(NA,nrow=100,ncol=8)
 
@@ -626,7 +632,7 @@ nsdiffs <- function(x, m=frequency(x), test=c("ocsb", "ch"), max.D=1)
 
 CHtest <- function(x,m)
 {
-
+    m <- round(m) # Avoid non-integer seasonal period
     if(length(x) < 2*m + 5)
       return(0)
     chstat <- SD.test(x, m)
@@ -656,6 +662,7 @@ calcOCSBCritVal <- function(seasonal.period)
 
 OCSBtest <- function(time.series, period)
 {
+    period <- round(period) # Avoid non-integer seasonal period
     if(length(time.series) < (2*period+5))
     {
       #warning("Time series too short for seasonal differencing")
@@ -742,8 +749,7 @@ checkarima <- function(object)
 is.constant <- function(x)
 {
   x <- as.numeric(x)
-  y <- rep(x[1],length(x))
-  isequal <- all.equal(c(x),y)
-  return(isequal==TRUE)
+  y <- rep(x[1], length(x))
+  return(identical(x, y))
 }
 

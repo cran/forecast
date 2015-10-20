@@ -1,16 +1,16 @@
 search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     max.P=2, max.Q=2, max.order=5, stationary=FALSE, ic=c("aic","aicc","bic"),
     trace=FALSE,approximation=FALSE,xreg=NULL,offset=offset,allowdrift=TRUE,
-    parallel=FALSE, num.cores=2)
+    allowmean=TRUE, parallel=FALSE, num.cores=2)
 {
-    #dataname <- substitute(x)
-    ic <- match.arg(ic)
-    m <- frequency(x)
+  #dataname <- substitute(x)
+  ic <- match.arg(ic)
+  m <- frequency(x)
 
-    if(allowdrift)
-        maxK <- (d+D <= 1)
-    else
-        maxK <- ((d+D) == 0)
+  allowdrift <- allowdrift & (d+D)==1
+  allowmean <- allowmean & (d+D)==0
+
+  maxK <- (allowdrift | allowmean)
 
     # Choose model orders
     #Serial - technically could be combined with the code below
@@ -29,7 +29,9 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
                         {
                             for(K in 0:maxK)
                             {
-                                fit <- myarima(x,order=c(i,d,j),seasonal=c(I,D,J),constant=(K==1),trace=trace,ic=ic,approximation=approximation,offset=offset,xreg=xreg)
+                                fit <- myarima(x,order=c(i,d,j),seasonal=c(I,D,J),
+                                  constant=(K==1),trace=trace,ic=ic,
+                                  approximation=approximation,offset=offset,xreg=xreg)
                                 if(fit$ic < best.ic)
                                 {
                                     best.ic <- fit$ic
@@ -329,6 +331,9 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
       qq <- qnorm(0.5 * (1 + level[i]/100))
       lower[, i] <- pred$pred - qq * pred$se
       upper[, i] <- pred$pred + qq * pred$se
+    }
+    if(!is.finite(max(upper))){
+    	warning("Upper prediction intervals are not finite.")
     }
   }
   colnames(lower)=colnames(upper)=paste(level, "%", sep="")

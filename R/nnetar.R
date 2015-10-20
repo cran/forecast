@@ -69,9 +69,8 @@ nnetar <- function(x, p, P=1, size, repeats=20, lambda=NULL)
   out$series <- deparse(substitute(x))
   out$method <- paste("NNAR(",p,sep="")
   if(P>0)
-    out$method <- paste(out$method,",",P,")",sep="")
-  else
-    out$method <- paste(out$method,")",sep="")
+    out$method <- paste(out$method,",",P,sep="")
+  out$method <- paste(out$method,",",size,")",sep="")
   out$call <- match.call()
   return(structure(out,class=c("nnetar")))
 }
@@ -103,7 +102,7 @@ forecast.nnetar <- function(object, h=ifelse(object$m > 1, 2 * object$m, 10), la
   xx <- object$x
   if(!is.null(lambda))
     xx <- BoxCox(xx,lambda)
-  flag <- tail(xx/object$scale, n=max(object$lags))
+  flag <- rev(tail(xx/object$scale, n=max(object$lags)))
   for(i in 1:h)
   {
     fcast[i] <- mean(unlist(lapply(object$model, predict, newdata=flag)))

@@ -1,11 +1,12 @@
 ### Time series graphics and transformations
 
-tsdisplay <- function(x,plot.type=c("partial", "scatter", "spectrum"),points=TRUE,ci.type="white",
+tsdisplay <- function(x,plot.type=c("partial", "scatter", "spectrum"),points=TRUE,ci.type=c("white", "ma"),
                 lag.max, na.action=na.contiguous, main=NULL,xlab="",ylab="",
                 pch=1,cex=0.5, ...)
 
 {
   plot.type <- match.arg(plot.type)
+  ci.type <- match.arg(ci.type)
 
   def.par <- par(no.readonly = TRUE)# save default, for resetting...
   nf <- layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
@@ -16,20 +17,20 @@ tsdisplay <- function(x,plot.type=c("partial", "scatter", "spectrum"),points=TRU
     x <- ts(x)
   if(missing(lag.max))
     lag.max <- round(min(max(10*log10(length(x)), 3*frequency(x)), length(x)/3))
-     
+
   plot.ts(x,main=main,ylab=ylab,xlab=xlab,ylim=range(x,na.rm=TRUE),...)
   if(points)
     points(x,pch=pch,cex=cex,...)
   ylim <- c(-1,1)*3/sqrt(length(x))
 
-  junk1 <- acf(c(x),lag.max=lag.max,plot=FALSE,na.action=na.action)
+  junk1 <- stats::acf(c(x),lag.max=lag.max,plot=FALSE,na.action=na.action)
   junk1$acf[1,1,1]<-0
   if(ci.type=="ma")
     ylim <- range(ylim,0.66*ylim * max(sqrt(cumsum(c(1, 2 * junk1$acf[-1, 1, 1]^2)))))
   ylim <- range(ylim,junk1$acf)
   if(plot.type == "partial")
   {
-    junk2 <- pacf(c(x),lag.max=lag.max,plot=FALSE,na.action=na.action)
+    junk2 <- stats::pacf(c(x),lag.max=lag.max,plot=FALSE,na.action=na.action)
     ylim <- range(ylim,junk2$acf)
   }
 
@@ -100,7 +101,7 @@ seasonplot <- function(x, s, season.labels=NULL, year.labels=FALSE, year.labels.
   if(year.labels.left)
     xlim[1] <- 0.4-labelgap
   plot(Season,xnew,xaxt="n",xlab=xlab,type=type,ylab=ylab,main=main,xlim=xlim,col=0,...)
-  nn <- length(Season)/s	    
+  nn <- length(Season)/s
   col <- rep(col,nn)[1:nn]
   for(i in 0:(nn-1))
     lines(Season[(i*(s+1)+1) : ((s+1)*(i+1))], xnew[(i*(s+1)+1) : ((s+1)*(i+1))], type = type, col = col[i+1], ...)

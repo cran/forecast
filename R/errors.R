@@ -64,7 +64,7 @@ testaccuracy <- function(f,x,test,d,D)
     tspdx <- tsp(dx)
     if (!is.null(tspdx)) {
       if (D > 0) { # seasonal differencing
-        nsd <- diff(dx, lag = tspdx[3L], differences = D)
+        nsd <- diff(dx, lag = round(tspdx[3L]), differences = D)
       } else { # non seasonal differencing
         nsd <- dx
       }
@@ -141,7 +141,7 @@ trainingaccuracy <- function(f,test,d, D)
   {
     if (!is.null(tspdx)) {
       if (D > 0) { # seasonal differencing
-        nsd <- diff(dx, lag = tspdx[3L], differences = D)
+        nsd <- diff(dx, lag = round(tspdx[3L]), differences = D)
       } else { # non seasonal differencing
         nsd <- dx
       }
@@ -162,7 +162,10 @@ trainingaccuracy <- function(f,test,d, D)
   # Additional time series measures
   if(!is.null(tspdx))
   {
-    r1 <- acf(res,plot=FALSE,lag.max=2,na.action=na.pass)$acf[2,1,1]
+    if(length(res) > 1)
+      r1 <- acf(res,plot=FALSE,lag.max=2,na.action=na.pass)$acf[2,1,1]
+    else
+      r1 <- NA
     nj <- length(out)
     out <- c(out,r1)
     names(out)[nj+1] <- "ACF1"
@@ -173,7 +176,7 @@ trainingaccuracy <- function(f,test,d, D)
 
 accuracy <- function(f,x,test=NULL,d=NULL,D=NULL)
 {
-  if(!any(is.element(class(f), c("mforecast","forecast","ts","integer","numeric","Arima","ets","lm"))))
+  if(!any(is.element(class(f), c("mforecast","forecast","ts","integer","numeric","Arima","ets","lm","bats","tbats"))))
     stop("First argument should be a forecast object or a time series.")
   if(is.element("mforecast", class(f)))
     return(accuracy.mforecast(f,x,test,d,D))
