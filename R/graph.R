@@ -56,11 +56,12 @@ seasonplot <- function(x, s, season.labels=NULL, year.labels=FALSE, year.labels.
 {
   if(missing(main))
     main = paste("Seasonal plot:", deparse(substitute(x)))
+  
   if(missing(s))
     s = frequency(x)
   if(s<=1)
     stop("Frequency must be > 1")
-
+  
   # Pad series
   tsx <- x
   if(start(x)[2]>1)
@@ -108,13 +109,13 @@ seasonplot <- function(x, s, season.labels=NULL, year.labels=FALSE, year.labels.
   if(year.labels)
   {
     idx <- which(Season[!is.na(xnew)]==s)
-    year <- time(tsx)[idx]
+    year <- round(time(tsx)[idx], nchar(s))
     text(x=rep(s+labelgap,length(year)),y=tsx[idx],labels=paste(c(trunc(year))),adj=0,...,col=col[1:length(idx)])
   }
   if(year.labels.left)
   {
     idx <- which(Season[!is.na(xnew)]==1)
-    year <- time(tsx)[idx]
+    year <- round(time(tsx)[idx], nchar(s))
     if(min(idx)>1) # First year starts after season 1n
       col <- col[-1]
     text(x=rep(1-labelgap,length(year)),y=tsx[idx],labels=paste(c(trunc(year))),adj=1,...,col=col[1:length(idx)])

@@ -1,3 +1,16 @@
+Version 7.0 (3 April 2016)
+  * Added ggplot2 graphics
+  * Bias adjustment option added for all functions that allow Box-Cox transformations
+  * Added Ccf function, and rewrote Acf to handle multivariate series.
+  * tslm() completely rewritten to be more robust and to handle fourier terms more easily
+  * Support for multivariate linear models added
+  * subset.ts() more robust, and captures some errors.
+  * Added xreg argument to nnetar()
+  * Improved labels in seasonplot()
+  * More unit tests added
+  * Documentation improvements
+  * Bug fixes
+
 Version 6.2 (20 October 2015)
   * Many unit tests added using testthat.
   * Fixed bug in ets when very short seasonal series were passed in a data frame.
