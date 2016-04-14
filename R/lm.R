@@ -14,19 +14,12 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
     term <- vars[[i]]
     if(!is.symbol(term)){
       if(typeof(eval(term[[1]]))=="closure"){#If this term is a function (alike fourier)
-        #Renaming variable code
-        # This is to be done by datamat(functions=TRUE)
-#         floc <- match(deparse(term),colnames(data))
-#         colnames(data)[floc] <- paste("\U0192",term[[1]],"(\U2026)",sep="")
-        #formula[[3]][[i+1]]
-        attr(mt,"variables")[[i]] <- as.symbol(paste("FN.",term[[1]],"_",sep=""))
-        attr(mt,"term.labels") <- gsub(deparse(term), paste("FN.",term[[1]],"_",sep=""), attr(mt,"term.labels"), fixed = TRUE)
-        #fnvar <- c(fnvar, i)
+        fnvar <- c(fnvar, i)
       }
     }
   }
   formula <- stats::reformulate(attr(mt,"term.labels"), response = vars[[attr(mt,"response")+1]],
-                         intercept = attr(mt,"intercept"))
+                                intercept = attr(mt,"intercept"))
   if(sum(c(tsvar, fnvar))>0){
     #Remove variables not needed in data (trend+season+functions)
     vars <- vars[-c(tsvar, fnvar)]
@@ -38,16 +31,13 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
     dataname <- substitute(data)
   }
 
-  if(length(vars)>1){
-    # Grab variables missing from data
-    vars[[1]] <- quote(forecast:::datamat)
-    if(!missing(data)){
-      vars[[length(vars)+1]] <- dataname
-    }
-    data <- eval.parent(vars)
+  # Grab any variables missing from data
+  vars[[1]] <- quote(forecast:::datamat)
+  if(!missing(data)){
+    data <- datamat(eval.parent(vars), data)
   }
   else{
-    data <- datamat(data)
+    data <- eval.parent(vars)
   }
 
   # Check to see if data is univariate time series
@@ -90,30 +80,19 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
   }
   colnames(data) <- cn
   if(!missing(subset)){
-    if(is.logical(subset)){
-      subsetTF <- subset
-    }
-    else{
-      subsetTF <- eval.parent(substitute(subset)[[2]])%in%subset
-    }
-    if(NCOL(subset)!=1){
-      subsetTF <- rowSums(matrix(data=subsetTF, ncol=2))==NCOL(subset) #TODO
-    }
-    if(NROW(subsetTF)!=NROW(data)){
-      stop("Subset must specify the rows to keep in the dataset")
-    }
-    if(!is.null(tsp(subset)) & NROW(subset)!=NROW(data)){
-      tspx <- tsp(subset)
-    }
-    else{
-      warning("Subset has been assumed contiguous")
-      timesx <- time(data[,1])[subsetTF]
-      tspx <- recoverTSP(timesx)
-    }
+    if(!is.logical(subset))
+      stop("subset must be logical")
+    else if(NCOL(subset) > 1)
+      stop("subset must be a logical vector")
+    else if(NROW(subset) != NROW(data))
+      stop("Subset must be the same length as the number of rows in the dataset")
+    warning("Subset has been assumed contiguous")
+    timesx <- time(data[,1])[subset]
+    tspx <- recoverTSP(timesx)
     if(tspx[3]==1 & tsdat[2]==0 & tsvar[2]!=0){
       stop("Non-seasonal data cannot be modelled using a seasonal factor")
     }
-    data <- data[subsetTF,]#model.frame(formula,as.data.frame(data[subsetTF,]))
+    data <- data[subset,]#model.frame(formula,as.data.frame(data[subsetTF,]))
   }
   if(!is.null(lambda)){
     data[,1] <- BoxCox(data[,1],lambda)
@@ -181,27 +160,44 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
     tspx <- tsp(origdata[,1])
     timesx <- time(origdata[,1])
   }
+  else if(ts & is.element("ts",class(fitted(object)))){
+    tspx <- tsp(fitted(object))
+    timesx <- time(fitted(object))
+  }
   else
     tspx <- NULL
-  if(!is.null(object$call$subset))
-  {
-    j <- eval(object$call$subset)
-    origdata <- origdata[j,]
-    if(!is.null(tspx))
-    {
-      # Try to figure out times for subset. Assume they are contiguous.
-      timesx <- timesx[j]
-      tspx <- tsp(origdata) <- c(min(timesx),max(timesx),tspx[3])
-    }
-  }
+  # if(!is.null(object$call$subset))
+  # {
+  #   j <- eval(object$call$subset)
+  #   origdata <- origdata[j,]
+  #   if(!is.null(tspx))
+  #   {
+  #     # Try to figure out times for subset. Assume they are contiguous.
+  #     timesx <- timesx[j]
+  #     tspx <- tsp(origdata) <- c(min(timesx),max(timesx),tspx[3])
+  #   }
+  # }
   # Add trend and seasonal to data frame
+  oldterms <- terms(object)
+  #Adjust terms for function variables and rename datamat colnames to match.
   if(!missing(newdata))
   {
     reqvars <- as.character(attr(object$terms,"variables")[-1])[-attr(object$terms,"response")]
+    #Search for time series variables
+    tsvar <- match(c("trend", "season"), reqvars, 0L)
+    #Check if required variables are functions
+    fnvar <- sapply(reqvars, function(x) !(is.symbol(parse(text=x)[[1]]) || typeof(eval(parse(text=x)[[1]][[1]]))!="closure"))
+    if(!is.data.frame(newdata)){
+      newdata <- datamat(newdata)
+      colnames(newdata)[1] <- ifelse(sum(tsvar>0),reqvars[-tsvar][1],reqvars[1])
+      warning("newdata column names not specified, defaulting to first variable required.")
+    }
+    oldnewdata <- newdata
     newvars <- make.names(colnames(newdata))
-    misvar <- match(make.names(reqvars), newvars, 0L)
-    if (any(misvar != 0)){
-      tmpdata <- datamat(newdata[reqvars[misvar!=0]])
+    #Check if variables are missing
+    misvar <- match(make.names(reqvars), newvars, 0L)==0L
+    if (any(!misvar & !fnvar)){ #If any variables are not missing/functions, add them to data
+      tmpdata <- datamat(newdata[reqvars[!misvar]])
       rm1 <- FALSE
     }
     else{
@@ -209,30 +205,49 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
       tmpdata <- datamat(1:NROW(newdata))
       rm1 <- TRUE
     }
-    tsvar <- match(c("trend", "season"), reqvars, 0L)
+    #Remove trend and seasonality from required variables
     if(sum(tsvar)>0){
       reqvars <- reqvars[-tsvar]
-      misvar <- match(make.names(reqvars), newvars, 0L)
+      fnvar <- fnvar[-tsvar]
+      misvar <- match(make.names(reqvars), newvars, 0L)==0L
     }
-    if (any(misvar == 0)){
-      reqvars <- reqvars[misvar == 0]
+    if (any(misvar | fnvar)){ #If any variables are missing/functions
+      reqvars <- reqvars[misvar | fnvar] #They are required
+      fnvar <- fnvar[misvar | fnvar] #Update required function variables
       for (i in reqvars){
-        subvars <- grep(i, names(object$coefficients), value=TRUE)
-        subvars <- substr(subvars, nchar(i)+1, 999L)
-        fsub <- match(make.names(subvars), newvars, 0L)
-        if (any(fsub == 0)){
-          #Check for misnamed columns
-          fsub <- grep(paste(make.names(subvars),collapse="|"), newvars)
+        subvars <- NULL
+        for(j in 1:length(object$coefficients)){
+          subvars[j] <- pmatch(i,names(object$coefficients)[j])
         }
-        if (all(fsub != 0)){
-          imat <- as.matrix(newdata[,fsub], ncol = length(fsub))
-          colnames(imat) <- subvars
-          tmpdata[[length(tmpdata)+1]] <- imat
-          names(tmpdata)[length(tmpdata)] <- i
+        subvars <- !is.na(subvars)
+        subvars <- names(object$coefficients)[subvars]
+        #Detect if subvars if multivariate
+        if (length(subvars)>1){
+          #Extract prefix only
+          subvars <- substr(subvars, nchar(i)+1, 999L)
+          fsub <- match(make.names(subvars), newvars, 0L)
+          if (any(fsub == 0)){
+            #Check for misnamed columns
+            fsub <- grep(paste(make.names(subvars),collapse="|"), newvars)
+          }
+          if (all(fsub != 0) & length(fsub) == length(subvars)){
+            imat <- as.matrix(newdata[,fsub], ncol = length(fsub))
+            colnames(imat) <- subvars
+            tmpdata[[length(tmpdata)+1]] <- imat
+          }
+          else{
+            #Attempt to evaluate it as a function
+            subvars <- i
+          }
         }
-        else{
-          stop(paste("Could not find \"", i, "\" in newdata", sep=""))
+        if(length(subvars)==1){ #Check if it is a function
+          if(fnvar[match(i, reqvars)]){#Pre-evaluate function from data
+            tmpdata[[length(tmpdata)+1]] <- eval(parse(text=subvars)[[1]], newdata)
+          }
         }
+        names(tmpdata)[length(tmpdata)] <- paste0("solvedFN___",match(i, reqvars))
+        subvarloc <- match(i,lapply(attr(object$terms,"predvars"),deparse))
+        attr(object$terms,"predvars")[[subvarloc]] <- attr(object$terms,"variables")[[subvarloc]] <- parse(text=paste0("solvedFN___",match(i, reqvars)))[[1]]
       }
     }
     if(rm1){
@@ -264,6 +279,9 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
     }
   }
   newdata <- as.data.frame(newdata)
+  if(!exists("oldnewdata")){
+    oldnewdata <- newdata
+  }
   # If only one column, assume its name.
   if(ncol(newdata)==1 & colnames(newdata)[1]=="newdata")
     colnames(newdata) <- as.character(formula(object$model))[3]
@@ -287,10 +305,11 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
   if(nrow(newdata) != length(out[[1]]$fit[,1]))
     stop("Variables not found in newdata")
 
+  object$terms <- oldterms
   fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],
-    level=level,x=object$x)
+                level=level,x=object$x)
   fcast$method <- "Linear regression model"
-  fcast$newdata <- newdata
+  fcast$newdata <- oldnewdata
   fcast$residuals <- residuals(object)
   fcast$fitted <- fitted(object)
   if(nrow(origdata) != length(fcast$x)) # Give up on ts attributes as some data are missing
