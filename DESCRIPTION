@@ -1,5 +1,5 @@
 Package: forecast
-Version: 7.1
+Version: 7.2
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -17,8 +17,8 @@ BugReports: https://github.com/robjhyndman/forecast/issues
 License: GPL (>= 2)
 URL: http://github.com/robjhyndman/forecast
 NeedsCompilation: yes
-Packaged: 2016-04-14 05:35:26 UTC; hyndman
+Packaged: 2016-09-09 00:27:08 UTC; robjhyndman
 Author: Rob Hyndman [aut, cre, cph]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2016-04-14 14:53:40
+Date/Publication: 2016-09-09 10:13:44
