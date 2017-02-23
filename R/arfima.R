@@ -61,72 +61,85 @@ unfracdiff <- function(x,y,n,h,d)
 
 ## Automatic ARFIMA modelling
 ## Will return Arima object if d < 0.01 to prevent estimation problems
-arfima <- function(y, drange = c(0, 0.5), estim = c("mle","ls"), lambda = NULL, biasadj = FALSE, x=y, ...)
+arfima <- function(y, drange = c(0, 0.5), estim = c("mle","ls"), model = NULL, lambda = NULL, biasadj = FALSE, x=y, ...)
 {
 	estim <- match.arg(estim)
 #	require(fracdiff)
-
+	seriesname <- deparse(substitute(y))
+	
 	orig.x <- x
 	if (!is.null(lambda)){
 		x <- BoxCox(x, lambda)
 	}
-
-	# Strip initial and final missing values
-	xx <- na.ends(x)
-
-	# Remove mean
-	meanx <- mean(xx)
-	xx <- xx - meanx
-
-	# Choose differencing parameter with AR(2) proxy to handle correlations
-	suppressWarnings(fit <- fracdiff::fracdiff(xx,nar=2,drange=drange))
-
-	# Choose p and q
-	d <- fit$d
-	y <- fracdiff::diffseries(xx, d=d)
-	fit <- auto.arima(y, max.P=0, max.Q=0, stationary=TRUE, ...)
-
-	# Refit model using fracdiff
-	suppressWarnings(fit <- fracdiff::fracdiff(xx, nar=fit$arma[1], nma=fit$arma[2],drange=drange))
-
-	# Refine parameters with MLE
-	if(estim=="mle")
-	{
-		y <- fracdiff::diffseries(xx, d=fit$d)
-		p <- length(fit$ar)
-		q <- length(fit$ma)
-		fit2 <- try(Arima(y,order=c(p,0,q),include.mean=FALSE))
-		if(is.element("try-error",class(fit2)))
-      fit2 <- try(Arima(y,order=c(p,0,q),include.mean=FALSE,method="ML"))
-		if(!is.element("try-error",class(fit2)))
-		{
-			if(p>0)
-				fit$ar <- fit2$coef[1:p]
-			if(q>0)
-				fit$ma <- -fit2$coef[p+(1:q)]
-			fit$residuals <- fit2$residuals
-		}
-		else
-			warning("MLE estimation failed. Returning LS estimates")
+	
+	# Re-fit arfima model
+	if(!is.null(model)){
+	  fit <- model
+	  fit$residuals <- fit$fitted <- fit$lambda <- NULL
+	  if(!is.null(lambda)){
+	    fit$lambda <- lambda # Required for residuals.fracdiff()
+	  }
+	}
+	# Estimate model
+	else{
+  	# Strip initial and final missing values
+  	xx <- na.ends(x)
+  
+  	# Remove mean
+  	meanx <- mean(xx)
+  	xx <- xx - meanx
+  	
+	  # Choose differencing parameter with AR(2) proxy to handle correlations
+	  suppressWarnings(fit <- fracdiff::fracdiff(xx,nar=2,drange=drange))
+	  
+	  # Choose p and q
+	  d <- fit$d
+	  y <- fracdiff::diffseries(xx, d=d)
+	  fit <- auto.arima(y, max.P=0, max.Q=0, stationary=TRUE, ...)
+	  
+	  # Refit model using fracdiff
+	  suppressWarnings(fit <- fracdiff::fracdiff(xx, nar=fit$arma[1], nma=fit$arma[2],drange=drange))
+	  
+	  # Refine parameters with MLE
+	  if(estim=="mle")
+	  {
+	    y <- fracdiff::diffseries(xx, d=fit$d)
+	    p <- length(fit$ar)
+	    q <- length(fit$ma)
+	    fit2 <- try(Arima(y,order=c(p,0,q),include.mean=FALSE))
+	    if(is.element("try-error",class(fit2)))
+	      fit2 <- try(Arima(y,order=c(p,0,q),include.mean=FALSE,method="ML"))
+	    if(!is.element("try-error",class(fit2)))
+	    {
+	      if(p>0)
+	        fit$ar <- fit2$coef[1:p]
+	      if(q>0)
+	        fit$ma <- -fit2$coef[p+(1:q)]
+	      fit$residuals <- fit2$residuals
+	    }
+	    else
+	      warning("MLE estimation failed. Returning LS estimates")
+	  }
 	}
 
 	# Add things to model that will be needed by forecast.fracdiff
 	fit$x <- orig.x
 	fit$residuals <- undo.na.ends(x,residuals(fit))
 	fit$fitted <- x - fit$residuals
-	if(!is.null(lambda))
-	  fit$fitted <- InvBoxCox(fit$fitted,lambda)
-	  if(biasadj){
-	    fit$fitted <- InvBoxCoxf(fit$fitted, fvar = var(fit$residuals), lambda=lambda)
-	  }
+	if(!is.null(lambda)){
+	  fit$fitted <- InvBoxCox(fit$fitted, lambda, biasadj, var(fit$residuals))
+	  attr(lambda, "biasadj") <- biasadj
+	}
 	fit$lambda <- lambda
 	fit$call <- match.call()
+	fit$series <- seriesname
+	#fit$call$data <- data.frame(x=x) #Consider replacing fit$call with match.call for consistency and tidyness
 	return(fit)
 }
 
 # Forecast the output of fracdiff() or arfima()
 
-forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, biasadj=FALSE, ...)
+forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, biasadj=NULL, ...) 
 {
 	# Extract data
 	x <- object$x <- getResponse(object)
@@ -232,49 +245,39 @@ forecast.fracdiff <- function(object, h=10, level=c(80,95), fan=FALSE, lambda=ob
 	{
 		x <- InvBoxCox(x,lambda)
 		fits <- InvBoxCox(fits,lambda)
-		mean.fcast <- InvBoxCox(mean.fcast,lambda)
-		if(biasadj){
-		  mean.fcast <- InvBoxCoxf(list(level = level, mean = mean.fcast, upper=upper, lower=lower),lambda=lambda)
-		}
+		mean.fcast <- InvBoxCox(mean.fcast, lambda, biasadj, list(level = level, upper=upper, lower=lower))
 		lower <- InvBoxCox(lower,lambda)
 		upper <- InvBoxCox(upper,lambda)
 	}
-
-    return(structure(list(x=x, mean=mean.fcast, upper=upper, lower=lower,
-        level=level, method=method, xname=deparse(substitute(x)), model=object,
-        residuals=res, fitted=fits), class="forecast"))
-}
-
-# Residuals from arfima() or fracdiff()
-
-residuals.fracdiff <- function(object, ...)
-{
-	#require(fracdiff)
-
-	if(!is.null(object$residuals))   # Object produced by arfima()
-		return(object$residuals)
-	else                             # Object produced by fracdiff()
-	{
-		if (is.element("x", names(object)))
-			x <- object$x
-		else
-			x <- eval.parent(parse(text=as.character(object$call)[2]))
-		if(!is.null(object$lambda))
-			x <- BoxCox(x,object$lambda)
-		y <- fracdiff::diffseries(x - mean(x), d=object$d)
-		fit <- arima(y, order=c(length(object$ar),0,length(object$ma)), include.mean=FALSE, fixed=c(object$ar,object$ma))
-		return(residuals(fit))
+	
+	seriesname <- if(!is.null(object$series)){
+	  object$series
 	}
+	else {
+	  deparse(object$call$x)
+	}
+
+  return(structure(list(x=x, mean=mean.fcast, upper=upper, lower=lower,
+      level=level, method=method, model=object, series=seriesname,
+      residuals=res, fitted=fits), class="forecast"))
 }
 
 # Fitted values from arfima() or fracdiff()
 
-fitted.fracdiff <- function(object, ...)
+fitted.fracdiff <- function(object, h = 1, ...)
 {
-	if(!is.null(object$fitted))      # Object produced by arfima()
-		return(object$fitted)
-	else
-	{
+	if(!is.null(object$fitted)){      # Object produced by arfima()
+	  if(h==1){
+	    return(object$fitted)
+	  }
+    else{
+      return(hfitted(object=object, h=h, FUN="arfima", ...))
+    }
+	}
+	else {
+	  if(h!=1){
+	    warning("h-step fits are not supported for models produced by fracdiff(), returning one-step fits (h=1)")
+	  }
 		x <- getResponse(object)
 		return(x-residuals(object))
 	}

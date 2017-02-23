@@ -88,7 +88,7 @@ seasonaldummyf <- function(x, h)
 forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsmodel="ZZN",
      forecastfunction=NULL,
      h = frequency(object$time.series)*2, level = c(80, 95), fan = FALSE,
-     lambda=NULL, biasadj=FALSE, xreg=NULL, newxreg=NULL, allow.multiplicative.trend=FALSE, ...)
+     lambda=NULL, biasadj=NULL, xreg=NULL, newxreg=NULL, allow.multiplicative.trend=FALSE, ...)
 {
   method <- match.arg(method)
   if(is.null(forecastfunction))
@@ -153,6 +153,7 @@ forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsm
   fcast$x <- ts(rowSums(object$time.series))
   tsp(fcast$x) <- tsp(object$time.series)
   fcast$method <- paste("STL + ",fcast$method)
+  fcast$series <- deparse(object$call$x)
   fcast$seasonal <- ts(lastseas[1:m],frequency=m,start=tsp(object$time.series)[2]-1+1/m)
   fcast$fitted <- fitted(fcast)+object$time.series[,1]
   fcast$residuals <- fcast$x - fcast$fitted
@@ -161,12 +162,10 @@ forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsm
 	{
 		fcast$x <- InvBoxCox(fcast$x,lambda)
 		fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
-		fcast$mean <- InvBoxCox(fcast$mean, lambda)
-		if(biasadj){
-		  fcast$mean <- InvBoxCoxf(fcast, lambda = lambda)
-		}
+		fcast$mean <- InvBoxCox(fcast$mean, lambda, biasadj, fcast)
 		fcast$lower <- InvBoxCox(fcast$lower, lambda)
 		fcast$upper <- InvBoxCox(fcast$upper, lambda)
+		attr(lambda, "biasadj") <- biasadj
 		fcast$lambda <- lambda
 	}
 
@@ -176,8 +175,8 @@ forecast.stl <- function(object, method=c("ets","arima","naive","rwdrift"), etsm
 
 # Function takes time series, does STL decomposition, and fits a model to seasonally adjusted series
 # But it does not forecast. Instead, the result can be passed to forecast().
-stlm <- function(y ,s.window=7, robust=FALSE, method=c("ets","arima"),
-     modelfunction=NULL, etsmodel="ZZN", lambda=NULL, xreg=NULL, allow.multiplicative.trend=FALSE, x=y, ...)
+stlm <- function(y ,s.window=7, robust=FALSE, method=c("ets","arima"), modelfunction=NULL, model=NULL,
+                 etsmodel="ZZN", lambda=NULL, biasadj=FALSE, xreg=NULL, allow.multiplicative.trend=FALSE, x=y, ...)
 {
   method <- match.arg(method)
 
@@ -189,8 +188,24 @@ stlm <- function(y ,s.window=7, robust=FALSE, method=c("ets","arima"),
   # Do STL decomposition
   stld <- stl(x,s.window=s.window,robust=robust)
 
+  if(!is.null(model)){
+    if(inherits(model$model, "ets")){
+      modelfunction <- function(x,...){return(ets(x,model=model$model, use.initial.values = TRUE, ...))}
+    }
+    else if(inherits(model$model, "Arima")){
+      modelfunction <- function(x,...){return(Arima(x,model=model$model, ...))}
+    }
+    else if(!is.null(model$modelfunction)){
+      if("model"%in%names(formals(model$modelfunction))){
+        modelfunction <- function(x,...){return(model$modelfunction(x,model=model$model, ...))}
+      }
+    }
+    if(is.null(modelfunction)){
+      stop("Unknown model type")
+    }
+  }
   # Construct modelfunction if not passed as an argument
-  if(is.null(modelfunction))
+  else if(is.null(modelfunction))
   {
     if(method!="arima" & !is.null(xreg))
       stop("xreg arguments can only be used with ARIMA models")
@@ -219,13 +234,17 @@ stlm <- function(y ,s.window=7, robust=FALSE, method=c("ets","arima"),
   # Fitted values and residuals
   fits <- fitted(fit) + stld$time.series[,"seasonal"]
   res <- residuals(fit)
+  if(!is.null(lambda)){
+    fits <- InvBoxCox(fits, lambda, biasadj, var(res))
+    attr(lambda, "biasadj") <- biasadj
+  }
 
-  return(structure(list(stl=stld,model=fit, lambda=lambda, x=origx, m=frequency(origx),
-     fitted=fits, residuals=res),class="stlm"))
+  return(structure(list(stl=stld, model=fit, modelfunction=modelfunction, lambda=lambda,
+                        x=origx, series=deparse(substitute(y)), m=frequency(origx), fitted=fits, residuals=res),class="stlm"))
 }
 
 forecast.stlm <- function(object, h = 2*object$m, level = c(80, 95), fan = FALSE,
-     lambda=object$lambda, biasadj=FALSE, newxreg=NULL, allow.multiplicative.trend=FALSE, ...)
+     lambda=object$lambda, biasadj=NULL, newxreg=NULL, allow.multiplicative.trend=FALSE, ...)
 {
   if(!is.null(newxreg))
   {
@@ -253,6 +272,7 @@ forecast.stlm <- function(object, h = 2*object$m, level = c(80, 95), fan = FALSE
   fcast$upper <- fcast$upper + lastseas
   fcast$lower <- fcast$lower + lastseas
   fcast$method <- paste("STL + ",fcast$method)
+  fcast$series <- object$series
   fcast$seasonal <- ts(lastseas[1:m],frequency=m,start=tsp(object$stl$time.series)[2]-1+1/m)
   #fcast$residuals <- residuals()
   fcast$fitted <- fitted(fcast)+object$stl$time.series[,1]
@@ -260,12 +280,10 @@ forecast.stlm <- function(object, h = 2*object$m, level = c(80, 95), fan = FALSE
   if (!is.null(lambda))
   {
     fcast$fitted <- InvBoxCox(fcast$fitted, lambda)
-    fcast$mean <- InvBoxCox(fcast$mean, lambda)
-    if(biasadj){
-      fcast$mean <- InvBoxCoxf(fcast, lambda = lambda)
-    }
+    fcast$mean <- InvBoxCox(fcast$mean, lambda, biasadj, fcast)
     fcast$lower <- InvBoxCox(fcast$lower, lambda)
     fcast$upper <- InvBoxCox(fcast$upper, lambda)
+    attr(lambda, "biasadj") <- biasadj
     fcast$lambda <- lambda
   }
   fcast$x <- object$x
@@ -300,10 +318,10 @@ stlf <- function(y, h=frequency(x)*2, s.window=7, t.window=NULL, robust=FALSE, l
 fourier <- function(x, K, h=NULL)
 {
   if(is.null(h)){
-    return(...fourier(x, K, 1:length(x)))
+    return(...fourier(x, K, 1:NROW(x)))
   }
   else{
-    return(...fourier(x, K, length(x)+(1:h)))
+    return(...fourier(x, K, NROW(x)+(1:h)))
   }
 }
 
@@ -330,32 +348,43 @@ fourierf <- function(x, K, h)
     cospi <- function(x){cos(pi*x)}
   }
 
-  len.p <- length(period)
-  if(len.p != length(K))
+  if(length(period) != length(K))
     stop("Number of periods does not match number of orders")
   if(any(2*K > period))
     stop("K must be not be greater than period/2")
 
-  len <- 2*sum(K)
-  X <- matrix(0,nrow=length(times),ncol=len)*NA
-  labels <- character(length = len) # column names
-  cs.K <- cumsum(2*c(0, K))
-  for (j in 1:len.p) {
-    if(K[j] > 0L) {
-      for(i in 1L:K[j]) {
-        if(2*i < period[j])
-          X[,cs.K[j] + 2*i-1] <- sinpi(2*i*times/period[j])
-        X[,cs.K[j] + 2*i] <- cospi(2*i*times/period[j])
-      }
-      labels[(cs.K[j] + 1):cs.K[j + 1]] <- paste(paste0(c("S","C"),rep(1:K[j],rep(2,K[j]))),
-                                               round(period[j]), sep = "-")
+  # Compute periods of all Fourier terms
+  p <- numeric(0)
+  labels <- character(0)
+  for(j in seq_along(period))
+  {
+    if(K[j]>0)
+    {
+      p <- c(p, (1:K[j])/period[j])
+      labels <- c(labels, paste(paste0(c("S","C"),rep(1:K[j],rep(2,K[j]))),
+                      round(period[j]), sep="-"))
     }
   }
+  # Remove equivalent seasonal periods due to multiple seasonality
+  k <- duplicated(p)
+  p <- p[!k]
+  labels <- labels[!rep(k,rep(2,length(k)))]
+
+  # Remove columns where sinpi=0
+  k <- abs(2*p - round(2*p)) > .Machine$double.eps
+
+  # Compute matrix of Fourier terms
+  X <- matrix(NA_real_,nrow=length(times),ncol=2L*length(p))
+  for(j in seq_along(p))
+  {
+    if(k[j])
+      X[,2L*j-1L] <- sinpi(2*p[j]*times)
+    X[,2L*j] <- cospi(2*p[j]*times)
+  }
   colnames(X) <- labels
+
   # Remove missing columns
-  X <- X[,!is.na(colSums(X))]
-  # Remove equal columns
-  X <- unique(X, MARGIN=2)
+  X <- X[,!is.na(colSums(X)),drop=FALSE]
 
   return(X)
 }

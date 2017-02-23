@@ -15,7 +15,7 @@ getResponse.default <- function(object,...)
 
 getResponse.lm <- function(object,...) 
 {
-	responsevar <- as.character(formula(object))[2]
+	responsevar <- deparse(formula(object)[[2]])
 	ans <- model.frame(object$model)[,responsevar]
 	return(ans)
 }
@@ -79,4 +79,9 @@ getResponse.tbats <- function(object,..)
 getResponse.bats <- function(object,...)
 {
   return(getResponse.tbats(object,...))
+}
+
+getResponse.mforecast <- function(object,...)
+{
+  return(do.call(cbind, lapply(object$forecast, function(x) x$x)))
 }

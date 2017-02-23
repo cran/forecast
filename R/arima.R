@@ -244,7 +244,7 @@ SD.test <- function (wts, s=frequency(wts))
 }
 
 forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma[5], 10),
-    level=c(80, 95), fan=FALSE, xreg=NULL, lambda=object$lambda,  bootstrap=FALSE, npaths=5000, biasadj=FALSE, ...)
+    level=c(80, 95), fan=FALSE, xreg=NULL, lambda=object$lambda,  bootstrap=FALSE, npaths=5000, biasadj=NULL, ...)
 {
   # Check whether there are non-existent arguments
   all.args <- names(formals())
@@ -276,6 +276,7 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
     else if(min(level) < 0 | max(level) > 99.99)
       stop("Confidence limit out of range")
   }
+  level <- sort(level)
   if(use.drift)
   {
     n <- length(x)
@@ -347,22 +348,30 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
     }
   }
   colnames(lower)=colnames(upper)=paste(level, "%", sep="")
+  lower <- ts(lower)
+  upper <- ts(upper)
+  tsp(lower) <- tsp(upper) <- tsp(pred$pred)
   method <- arima.string(object, padding=FALSE)
-  fits <- fitted(object, biasadj)
+  seriesname <- if(!is.null(object$series)){
+    object$series
+  }
+  else if(!is.null(object$call$x)){
+    object$call$x
+  }
+  else{
+    object$call$y
+  }
+  fits <- fitted(object)
   if(!is.null(lambda) & is.null(object$constant))  { # Back-transform point forecasts and prediction intervals
-    pred$pred <- InvBoxCox(pred$pred,lambda)
-    if(biasadj){
-      pred$pred <- InvBoxCoxf(x = pred$pred,
-        fvar = var(residuals(object), na.rm=TRUE), lambda = lambda)
-    }
+    pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, var(residuals(object), na.rm=TRUE))
     if(!bootstrap) { # Bootstrapped intervals already back-transformed
       lower <- InvBoxCox(lower,lambda)
       upper <- InvBoxCox(upper,lambda)
     }
   }
   return(structure(list(method=method, model=object, level=level,
-      mean=pred$pred, lower=lower, upper=upper, x=x,
-      xname=deparse(substitute(x)), fitted=fits, residuals=residuals(object)),
+      mean=pred$pred, lower=lower, upper=upper, x=x, series=seriesname,
+      fitted=fits, residuals=residuals(object)),
       class="forecast"))
 }
 
@@ -370,8 +379,8 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
 forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL,
   bootstrap=FALSE, npaths=5000, biasadj=FALSE, ...)
 {
-     x <- getResponse(object)
-     pred <- predict(object,newdata=x,n.ahead=h)
+    x <- getResponse(object)
+    pred <- predict(object,newdata=x,n.ahead=h)
     if(bootstrap) # Recompute se using simulations
     {
         sim <- matrix(NA,nrow=npaths,ncol=h)
@@ -397,7 +406,7 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL,
         lower[,i] <- pred$pred - qq*pred$se
         upper[,i] <- pred$pred + qq*pred$se
     }
-    colnames(lower)=colnames(upper)=paste(level,"%",sep="")
+    colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
     method <- paste("AR(",object$order,")",sep="")
     f <- frequency(x)
     res <- residuals(object)
@@ -405,11 +414,8 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL,
 
     if(!is.null(lambda))
     {
-      pred$pred <- InvBoxCox(pred$pred,lambda)
-      if(biasadj){
-        pred$pred <- InvBoxCoxf(x=list(level = level, mean = pred$pred,
-          upper = upper, lower = lower), lambda=lambda)
-      }
+      pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, list(level = level, upper = upper, lower = lower))
+
       lower <- InvBoxCox(lower,lambda)
       upper <- InvBoxCox(upper,lambda)
       fits <- InvBoxCox(fits,lambda)
@@ -417,8 +423,7 @@ forecast.ar <- function(object,h=10,level=c(80,95),fan=FALSE, lambda=NULL,
     }
 
     return(structure(list(method=method,model=object,level=level,mean=pred$pred,
-        lower=lower,upper=upper, x=x, xname=deparse(substitute(x)),
-        fitted=fits,residuals=res)
+        lower=lower,upper=upper, x=x, series=deparse(object$call$x), fitted=fits,residuals=res)
         ,class="forecast"))
 }
 
@@ -450,66 +455,43 @@ getxreg <- function(z)
 }
 
 # Extract errors from ARIMA model (as distinct from residuals)
-arima.errors <- function(z)
+arima.errors <- function(object)
 {
-  if(!is.list(z))
-    stop("z must be a list")
-    x <- getResponse(z)
-  if(!is.null(z$lambda))
-    x <- BoxCox(x,z$lambda)
-  xreg <- getxreg(z)
-  # Remove intercept
-  if(is.element("intercept",names(z$coef)))
-    xreg <- cbind(rep(1,length(x)),xreg)
-  # Return errors
-  if(is.null(xreg))
-    return(x)
-  else
-  {
-    norder <- sum(z$arma[1:4])
-    return(ts(c(x - xreg %*% as.matrix(z$coef[(norder+1):length(z$coef)])),
-      frequency=frequency(x),start=start(x)))
-  }
+  message("Deprecated, use residuals.Arima(object, type='regression') instead")
+  residuals(object, type='regression')
 }
 
 # Return one-step fits
-fitted.Arima <- function(object, biasadj = FALSE, h = 1, ...)
+fitted.Arima <- function(object, h = 1, ...)
 {
   if(h==1){
     x <- getResponse(object)
     if(!is.null(object$fitted)){
       return(object$fitted)
     }
-    if(is.null(x))
-    {
+    else if(is.null(x)){
       #warning("Fitted values are unavailable due to missing historical data")
       return(NULL)
     }
-    if(is.null(object$lambda)){
+    else if(is.null(object$lambda)){
       return(x - object$residuals)
     }
     else{
-      fits <- InvBoxCox(BoxCox(x,object$lambda) - object$residuals, object$lambda)
-      if(biasadj){
-        return(InvBoxCoxf(x = fits, fvar = var(object$residuals), lambda = object$lambda))
-      }
-      else{
-        return(fits)
-      }
+      fits <- InvBoxCox(BoxCox(x,object$lambda) - object$residuals, object$lambda, NULL, var(object$residuals))
+      return(fits)
     }
   }
   else{
-    return(hfitted(object=object, h=h, FUN="Arima", biasadj=biasadj,  ...))
+    return(hfitted(object=object, h=h, FUN="Arima", ...))
   }
 }
 
 # Calls arima from stats package and adds data to the returned object
 # Also allows refitting to new data
 # and drift terms to be included.
-Arima <- function(y, order=c(0, 0, 0),
-      seasonal=c(0, 0, 0),
-      xreg=NULL, include.mean=TRUE, include.drift=FALSE, include.constant, lambda=model$lambda,
-      method=c("CSS-ML", "ML", "CSS"), model=NULL, x=y, ...)
+Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.mean=TRUE,
+                  include.drift=FALSE, include.constant, lambda=model$lambda, biasadj=FALSE,
+                  method=c("CSS-ML", "ML", "CSS"), model=NULL, x=y, ...)
 {
     # Remove outliers near ends
     #j <- time(x)
@@ -520,8 +502,10 @@ Arima <- function(y, order=c(0, 0, 0),
   series <- deparse(substitute(y))
 
   origx <- y
-  if(!is.null(lambda))
+  if(!is.null(lambda)){
     x <- BoxCox(x,lambda)
+    attr(lambda, "biasadj") <- biasadj
+  }
 
   if (!is.null(xreg))
   {
@@ -575,7 +559,7 @@ Arima <- function(y, order=c(0, 0, 0),
     if(is.null(xreg))
       suppressWarnings(tmp <- stats::arima(x=x,order=order,seasonal=seasonal,include.mean=include.mean,method=method,...))
     else
-      suppressWarnings(tmp <- stats::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,...))
+      suppressWarnings(tmp <- stats::arima(x=x,order=order,seasonal=seasonal,xreg=xreg,include.mean=include.mean,method=method,...))
   }
 
   # Calculate aicc & bic based on tmp$aic
@@ -588,13 +572,16 @@ Arima <- function(y, order=c(0, 0, 0),
   tmp$call <- match.call()
   tmp$lambda <- lambda
   tmp$x <- origx
+
   # Adjust residual variance to be unbiased
   if(is.null(model))
   {
     tmp$sigma2 <- sum(tmp$residuals^2, na.rm=TRUE) / (nstar - npar + 1)
   }
-
-  return(structure(tmp, class=c("ARIMA","Arima")))
+  out <- structure(tmp, class=c("ARIMA","Arima"))
+  out$fitted <- fitted(out)
+  out$series <- series
+  return(out)
 }
 
 # Refits the model to new data x
@@ -683,6 +670,10 @@ print.ARIMA <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE,
             coef <- matrix(coef, 1L, dimnames=list(NULL, names(coef)))
             coef <- rbind(coef, s.e.=ses)
         }
+        # Change intercept to mean if no regression variables
+        j <- match("intercept", colnames(coef))
+        if(is.null(x$xreg) & !is.na(j))
+          colnames(coef)[j] <- "mean"
         print.default(coef, print.gap=2)
     }
     cm <- x$call$method
@@ -736,11 +727,6 @@ as.character.Arima <- function(x, ...)
 
 is.Arima <- function(x){
   inherits(x, "Arima")
-}
-
-residuals.ar <- function(object, ...)
-{
-  object$resid
 }
 
 fitted.ar <- function(object, ...)

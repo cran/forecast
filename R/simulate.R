@@ -14,6 +14,8 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
       on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
   }
+  else
+    nsim <- length(innov)
   if(is.null(tsp(object$x)))
     object$x <- ts(object$x,frequency=1,start=1)
 
@@ -23,7 +25,10 @@ simulate.ets <- function(object, nsim=length(object$x), seed=NULL, future=TRUE, 
     initstate <- object$state[sample(1:length(object$x),1),]
 
   if(bootstrap)
-    e <- sample(object$residuals,nsim,replace=TRUE)
+  {
+    res <- na.omit(object$residuals - mean(object$residuals, na.rm=TRUE))
+    e <- sample(res,nsim,replace=TRUE)
+  }
   else if(is.null(innov))
     e <- rnorm(nsim,0,sqrt(object$sigma))
   else if(length(innov)==nsim)
@@ -193,7 +198,7 @@ myarima.sim <- function (model, n, x, e, ...)
     delta.four <- diff(data, lag=m, differences=D)
     regular.xi <- delta.four[(length(delta.four)-D):length(delta.four)]
     x <- diffinv(x, differences = d, xi=regular.xi[length(regular.xi)-(d:1)+1])[-(1:d)]
- 
+
     #Then seasonal
     i <- length(data) - D*m + 1
     seasonal.xi <- data[i:length(data)]
@@ -239,6 +244,9 @@ simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, 
       on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
   }
+  else
+    nsim <- length(innov)
+
   #############End Random seed code
 
 
@@ -319,7 +327,10 @@ simulate.Arima <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL, 
 
   n <- length(x)
   if(bootstrap)
-    e <- sample(model$residuals,nsim,replace=TRUE)
+  {
+    res <- na.omit(model$residuals - mean(model$residuals, na.rm=TRUE))
+    e <- sample(res,nsim,replace=TRUE)
+  }
   else if(is.null(innov))
     e <- rnorm(nsim, 0, model$sd)
   else if(length(innov)==nsim)
@@ -410,6 +421,9 @@ simulate.ar <- function(object, nsim=object$n.used, seed=NULL, future=TRUE, boot
       on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
   }
+  else
+    nsim <- length(innov)
+
   if(future)
   {
       model <- list(ar=object$ar,sd=sqrt(object$var.pred),residuals=object$resid, seasonal.difference=0, seasonal.period=1, flag.seasonal.arma=FALSE)
@@ -422,7 +436,10 @@ simulate.ar <- function(object, nsim=object$n.used, seed=NULL, future=TRUE, boot
   object$x <- getResponse(object)
   object$x <- object$x - x.mean
   if(bootstrap)
-    e <- sample(na.omit(model$residuals),nsim,replace=TRUE)
+  {
+    res <- na.omit(model$residuals - mean(model$residuals, na.rm=TRUE))
+    e <- sample(res,nsim,replace=TRUE)
+  }
   else if(is.null(innov))
     e <- rnorm(nsim, 0, model$sd)
   else if(length(innov)==nsim)
@@ -478,23 +495,33 @@ simulate.nnetar <- function(object, nsim=length(object$x), seed=NULL, xreg=NULL,
       on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
   }
+  else
+    nsim <- length(innov)
   ## only future currently implemented
   if(!future)
     warning("simulate.nnetar() currently only supports future=TRUE")
   ## set simulation innovations
   if(bootstrap)
   {
-    res <- na.omit(residuals(object))/object$scalex$scale
+    res <- na.omit(residuals(object, type="innovation"))
+    res <- res - mean(res)
+    ## scale if appropriate
+    if(!is.null(object$scalex$scale))
+      res <- res/object$scalex$scale
     e <- sample(res,nsim,replace=TRUE)
   }
   else if(is.null(innov))
   {
-    res <- na.omit(residuals(object))/object$scalex$scale
+    res <- na.omit(residuals(object, type="innovation"))
+    ## scale if appropriate
+    if(!is.null(object$scalex$scale))
+      res <- res/object$scalex$scale
     e <- rnorm(nsim, 0, sd(res, na.rm=TRUE))
   }
   else if(length(innov)==nsim)
     e <- innov/object$scalex$scale
   else if(length(innov)==1)
+    ## to pass innov=0 so simulation equals mean forecast
     e <- rep(innov, nsim)/object$scalex$scale
   else
     stop("Length of innov must be equal to nsim")

@@ -2,11 +2,11 @@
 \alias{gglagplot}
 \alias{gglagchull}
 \title{Time series lag ggplots}
-\usage{gglagplot(x, lags = 1, set.lags = 1:lags, diag=TRUE,
-  diag.col="gray", do.lines = TRUE, colour = TRUE, continuous = TRUE,
-  labels = FALSE, seasonal = TRUE, ...)
-gglagchull(x, lags = 1, set.lags = 1:lags, diag=TRUE,
-  diag.col="gray", ...)
+\usage{gglagplot(x, lags=ifelse(frequency(x)>9, 16, 9),
+	set.lags=1:lags, diag=TRUE, diag.col="gray", do.lines=TRUE, colour=TRUE,
+	continuous=frequency(x)>12, labels=FALSE, seasonal=TRUE, ...)
+gglagchull(x, lags=ifelse(frequency(x)>1, min(12,frequency(x)), 4),
+	set.lags=1:lags, diag=TRUE, diag.col="gray", ...)
 }
 \arguments{
 \item{x}{a time series object (type \code{ts}).}
@@ -34,9 +34,10 @@ gglagchull(x, lags = 1, set.lags = 1:lags, diag=TRUE,
 \author{Mitchell O'Hara-Wild}
 \seealso{\code{\link[stats]{lag.plot}}}
 \examples{
-gglagplot(AirPassengers)
-gglagchull(AirPassengers)
-gglagplot(AirPassengers,seasonal=FALSE)
+gglagplot(woolyrnq)
+gglagplot(woolyrnq,seasonal=FALSE)
+
+gglagchull(woolyrnq)
 
 lungDeaths <- cbind(mdeaths, fdeaths)
 gglagplot(lungDeaths, lags=2)

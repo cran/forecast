@@ -13,7 +13,8 @@
 ggAcf(x, lag.max = NULL,
     type = c("correlation", "covariance", "partial"),
     plot = TRUE, na.action = na.contiguous, demean=TRUE, ...)
-ggPacf(x, ...)
+ggPacf(x, lag.max = NULL,
+    plot = TRUE, na.action = na.contiguous, demean=TRUE, ...)
 ggCcf(x, y, lag.max=NULL, type=c("correlation","covariance"),
     plot=TRUE, na.action=na.contiguous, ...)
 ggtaperedacf(x, lag.max=NULL, type=c("correlation", "partial"),
@@ -51,9 +52,9 @@ If \code{autoplot} is given an \code{acf} or \code{mpacf} function, then an appr
 \examples{
 library(ggplot2)
 ggAcf(wineind)
-autoplot(Acf(wineind, plot=FALSE))
+wineind \%>\% Acf(plot=FALSE) \%>\% autoplot
 \dontrun{
-autoplot(taperedacf(wineind, plot=FALSE))
+wineind \%>\% taperedacf(plot=FALSE) \%>\% autoplot
 ggtaperedacf(wineind)
 ggtaperedpacf(wineind)}
 ggCcf(mdeaths, fdeaths)

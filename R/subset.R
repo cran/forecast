@@ -1,4 +1,5 @@
-subset.ts <- function(x, subset=NULL, month=NULL, quarter=NULL, season=NULL, ...)
+subset.ts <- function(x, subset=NULL, month=NULL, quarter=NULL, season=NULL, 
+  start=NULL, end=NULL, ...)
 {
   if(!is.null(subset))
   {
@@ -12,6 +13,19 @@ subset.ts <- function(x, subset=NULL, month=NULL, quarter=NULL, season=NULL, ...
     else{
       return(subset.default(x,subset))
     }
+  }
+  else if(!is.null(start) | !is.null(end))
+  {
+    if(is.null(start))
+      start <- 1
+    if(is.null(end))
+      end <- NROW(x)
+    if("mts" %in% class(x))
+      xsub <- x[start:end,]
+    else
+      xsub <- x[start:end]
+    tspx <- tsp(x)
+    return(ts(xsub, frequency=tspx[3], start=tspx[1L] + (start-1)/tspx[3L]))
   }
   else if(frequency(x) <= 1)
     stop("Data must be seasonal")
@@ -48,7 +62,7 @@ subset.ts <- function(x, subset=NULL, month=NULL, quarter=NULL, season=NULL, ...
   else
     if(min(season) < 1L | max(season) > frequency(x))
       stop(paste("Seasons must be between 1 and", frequency(x)))
-  
+
   start <- utils::head(time(x)[is.element(cycle(x), season)],1)
   if("mts" %in% class(x)){
     x <- subset.matrix(x, is.element(cycle(x), season))
@@ -57,4 +71,33 @@ subset.ts <- function(x, subset=NULL, month=NULL, quarter=NULL, season=NULL, ...
     x <- subset.default(x, is.element(cycle(x), season))
   }
     return(ts(x, frequency=length(season), start=start))
+}
+
+head.ts <- function(x, n=6L, ...)
+{
+  tspx <- tsp(x)
+  if(NCOL(x) > 1)
+    hx <- ts(utils::head.matrix(as.matrix(x), n=n, ...),
+      start=tspx[1], frequency=tspx[3])
+  else if((length(x) + n) > 0)
+    hx <- ts(head(c(x), n=n, ...),
+             start=tspx[1], frequency=tspx[3])
+  else
+    hx <- numeric(0)
+  return(hx)
+}
+
+
+tail.ts <- function(x, n=6L, ...)
+{
+  tspx <- tsp(x)
+  if(NCOL(x) > 1)
+    hx <- ts(utils::tail.matrix(as.matrix(x), n=n, ...),
+             end=tspx[2], frequency=tspx[3])
+  else if((length(x) + n) > 0)
+    hx <- ts(tail(c(x), n=n, ...),
+             end=tspx[2], frequency=tspx[3])
+  else
+    hx <- numeric(0)
+  return(hx)
 }

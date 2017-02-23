@@ -42,7 +42,7 @@ findfrequency <- function(x)
 
 forecast.ts <- function(object, h=ifelse(frequency(object)>1, 2*frequency(object), 10),
   level=c(80,95), fan=FALSE, robust=FALSE, lambda = NULL, find.frequency = FALSE,
-  allow.multiplicative.trend=FALSE, ...)
+  allow.multiplicative.trend=FALSE, model=NULL, ...)
 {
   n <- length(object)
   if (find.frequency) {
@@ -54,17 +54,60 @@ forecast.ts <- function(object, h=ifelse(frequency(object)>1, 2*frequency(object
   if(robust)
     object <- tsclean(object, replace.missing=TRUE, lambda = lambda)
 
+  if(!is.null(model))
+  {
+    if(inherits(model, "forecast")){
+      model <- model$model
+    }
+    if(inherits(model, "ets"))
+      fit <- ets(object, model=model, ...)
+    else if(inherits(model, "Arima"))
+      fit <- Arima(object, model=model, ...)
+    else if(inherits(model, "bats"))
+      fit <- bats(object, model=model, ...)
+    else if(inherits(model, "tbats"))
+      fit <- tbats(object, model=model, ...)
+    else if(inherits(model, "nnetar"))
+      fit <- nnetar(object, model=model, ...)
+    else
+      stop("Unknown model class")
+    return(forecast(fit,h=h,level=level,fan=fan))
+  }
+
   if(n > 3)
   {
     if(obj.freq < 13)
-      forecast(ets(object,lambda = lambda, allow.multiplicative.trend=allow.multiplicative.trend, ...),
+      out <- forecast(ets(object,lambda = lambda, allow.multiplicative.trend=allow.multiplicative.trend, ...),
         h=h,level=level,fan=fan)
-    else
-      stlf(object,h=h,level=level,fan=fan,lambda = lambda,
+    else if(n > 2*obj.freq)
+      out <- stlf(object,h=h,level=level,fan=fan,lambda = lambda,
         allow.multiplicative.trend=allow.multiplicative.trend,...)
+    else
+      out <- forecast(ets(object, model="ZZN", lambda = lambda, allow.multiplicative.trend=allow.multiplicative.trend, ...),
+        h=h,level=level,fan=fan)
+
   }
   else
-    meanf(object,h=h,level=level,fan=fan,lambda = lambda, ...)
+    out <- meanf(object,h=h,level=level,fan=fan,lambda = lambda, ...)
+  out$series <- deparse(substitute(object))
+  return(out)
+}
+
+as.data.frame.mforecast <- function(x, ...)
+{
+  tmp <- lapply(x$forecast, as.data.frame)
+  series <- names(tmp)
+  times <- rownames(tmp[[1]])
+  h <- NROW(tmp[[1]])
+  output <- cbind(Time=times, Series=rep(series[1],h), tmp[[1]])
+  if(length(tmp)>1)
+  {
+    for(i in 2:length(tmp))
+      output <- rbind(output,
+            cbind(Time=times, Series=rep(series[i],h), tmp[[i]]))
+  }
+  rownames(output) <- NULL
+  return(output)
 }
 
 as.data.frame.forecast <- function(x,...)
@@ -72,6 +115,7 @@ as.data.frame.forecast <- function(x,...)
     nconf <- length(x$level)
     out <- matrix(x$mean, ncol=1)
     ists <- is.ts(x$mean)
+    fr.x <- frequency(x$mean)
     if(ists)
     {
         out <- ts(out)
@@ -84,18 +128,22 @@ as.data.frame.forecast <- function(x,...)
         x$lower <- as.matrix(x$lower)
         for (i in 1:nconf)
         {
-            out <- cbind(out, x$lower[, i], x$upper[, i])
+            out <- cbind(out, x$lower[, i,drop=FALSE], x$upper[, i,drop=FALSE])
             names <- c(names, paste("Lo", x$level[i]), paste("Hi", x$level[i]))
         }
     }
     colnames(out) <- names
-    rownames(out) <- time(x$mean)
+    tx <- time(x$mean)
+    if(max(abs(tx-round(tx))) < 1e-11)
+      nd <- 0
+    else
+      nd <- max(round(log10(fr.x)+1),2)
+    rownames(out) <- format(tx, nsmall=nd, digits=nd)
     # Rest of function borrowed from print.ts(), but with header() omitted
     if(!ists)
         return(as.data.frame(out))
 
     x <- as.ts(out)
-    fr.x <- frequency(x)
     calendar <- any(fr.x == c(4, 12)) && length(start(x)) ==  2L
     Tsp <- tsp(x)
     if (is.null(Tsp))
@@ -139,7 +187,6 @@ as.data.frame.forecast <- function(x,...)
             }
             else
             {
-                tx <- time(x)
                 attributes(x) <- NULL
                 names(x) <- tx
             }
@@ -161,7 +208,7 @@ as.data.frame.forecast <- function(x,...)
             else format(t2), sep=" ")
         }
         else
-            rownames(x) <- format(time(x))
+            rownames(x) <- format(time(x), nsmall=nd, digits=nd)
         attr(x, "class") <- attr(x, "tsp") <- attr(x, "na.action") <- NULL
     }
     return(as.data.frame(x))
@@ -190,7 +237,7 @@ summary.forecast <- function(object,...)
     }
 }
 
-plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.col, pi.lty,
+plotlmforecast <- function(object, PI, shaded, shadecols, col, fcol, pi.col, pi.lty,
   xlim=NULL, ylim, main, ylab, xlab, ...)
 {
   xvar <- attributes(terms(object$model))$term.labels
@@ -206,7 +253,7 @@ plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.c
     xlim=xlim,ylim=ylim,xlab=xlab,ylab=ylab,main=main,col=col,...)
   abline(object$model)
   nf <- length(object$mean)
-  if(plot.conf)
+  if(PI)
   {
     nint <- length(object$level)
     idx <- rev(order(object$level))
@@ -238,7 +285,7 @@ plotlmforecast <- function(object, plot.conf, shaded, shadecols, col, fcol, pi.c
   points(object$newdata[,xvar],object$mean,pch=19,col=fcol)
 }
 
-plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(length(x$mean)<5),
+plot.forecast <- function(x, include, PI=TRUE, showgap = TRUE, shaded=TRUE, shadebars=(length(x$mean)<5),
         shadecols=NULL, col=1, fcol=4, pi.col=1, pi.lty=2, ylim=NULL, main=NULL, xlab="",
         ylab="", type="l",  flty = 1, flwd = 2, ...)
 {
@@ -247,17 +294,17 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
   else
     xx=NULL
   if(is.null(x$lower) | is.null(x$upper) | is.null(x$level)){
-    plot.conf <- FALSE
+    PI <- FALSE
   }
   else if(!is.finite(max(x$upper))){
-    plot.conf <- FALSE
+    PI <- FALSE
   }
 
   if(!shaded)
     shadebars <- FALSE
   if(is.null(main))
     main <- paste("Forecasts from ",x$method,sep="")
-  if(plot.conf)
+  if(PI)
   {
     x$upper <- as.matrix(x$upper)
     x$lower <- as.matrix(x$lower)
@@ -265,9 +312,9 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
 
   if(is.element("lm",class(x$model)) & !is.element("ts",class(x$mean))) # Non time series linear model
   {
-    plotlmforecast(x, plot.conf=plot.conf, shaded=shaded, shadecols=shadecols, col=col, fcol=fcol, pi.col=pi.col, pi.lty=pi.lty,
+    plotlmforecast(x, PI=PI, shaded=shaded, shadecols=shadecols, col=col, fcol=fcol, pi.col=pi.col, pi.lty=pi.lty,
       ylim=ylim, main=main, xlab=xlab, ylab=ylab, ...)
-    if(plot.conf)
+    if(PI)
       return(invisible(list(mean=x$mean,lower=as.matrix(x$lower),upper=as.matrix(x$upper))))
     else
       return(invisible(list(mean=x$mean)))
@@ -294,6 +341,14 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     nx <- max(which(!is.na(xx)))
     xxx <- xx[1:nx]
     include <- min(include,nx)
+
+    if(!showgap){
+      lastObs <- x$x[length(x$x)]
+      lastTime <- time(x$x)[length(x$x)]
+      x$mean <- ts(c(lastObs, x$mean), start = lastTime, frequency = freq)
+      x$upper <- ts(rbind(lastObs, x$upper), start = lastTime, frequency = freq)
+      x$lower <- ts(rbind(lastObs, x$lower), start = lastTime, frequency = freq)
+    }
   }
   else
   {
@@ -301,13 +356,18 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     strt <- start(x$mean)
     nx <- include <- 1
     xx <- xxx <- ts(NA,frequency=freq,end=tsp(x$mean)[1]-1/freq)
+
+    if(!showgap){
+      warning("Removing the gap requires historical data, provide this via model$x. Defaulting showgap to TRUE.")
+    }
   }
+
   pred.mean <- x$mean
 
   if(is.null(ylim))
   {
     ylim <- range(c(xx[(n-include+1):n],pred.mean),na.rm=TRUE)
-    if(plot.conf)
+    if(PI)
       ylim <- range(ylim,x$lower,x$upper,na.rm=TRUE)
   }
   npred <- length(pred.mean)
@@ -319,7 +379,7 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
   }
   plot(ts(c(xxx[(nx-include+1):nx], rep(NA, npred)), end=tsp(xx)[2] + (nx-n)/freq + npred/freq, frequency=freq),
     xlab=xlab,ylim=ylim,ylab=ylab,main=main,col=col,type=type, ...)
-  if(plot.conf)
+  if(PI)
   {
     if(is.ts(x$upper)){
       xxx <- time(x$upper)
@@ -373,7 +433,7 @@ plot.forecast <- function(x, include, plot.conf=TRUE, shaded=TRUE, shadebars=(le
     lines(pred.mean, lty = flty, lwd=flwd, col = fcol)
   else
     points(pred.mean, col=fcol, pch=19)
-  if(plot.conf)
+  if(PI)
     invisible(list(mean=pred.mean,lower=x$lower,upper=x$upper))
   else
     invisible(list(mean=pred.mean))
@@ -384,13 +444,14 @@ predict.default <- function(object, ...)
     forecast(object, ...)
 }
 
-hfitted <- function(object, h=1, FUN=class(object), ...)
+hfitted <- function(object, h=1, FUN=NULL, ...)
 {
   if(h==1){
     return(fitted(object))
   }
   #Attempt to get model function
-  if(missing(FUN)){
+  if(is.null(FUN)){
+    FUN <- class(object)
     for(i in FUN){
       if(exists(i)){
         if(typeof(eval(parse(text = i)[[1]]))=="closure"){
@@ -448,8 +509,8 @@ forecast.forecast <- function(object, ...)
     object$mean <- ts(object$mean[1:h], start=tspf[1], frequency=tspf[3])
     if(!is.null(object$upper))
     {
-      object$upper <- ts(object$upper[1:h,], start=tspf[1], frequency=tspf[3])
-      object$lower <- ts(object$lower[1:h,], start=tspf[1], frequency=tspf[3])
+      object$upper <- ts(object$upper[1:h,,drop=FALSE], start=tspf[1], frequency=tspf[3])
+      object$lower <- ts(object$lower[1:h,,drop=FALSE], start=tspf[1], frequency=tspf[3])
     }
   }
   return(object)

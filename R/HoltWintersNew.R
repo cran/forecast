@@ -18,7 +18,7 @@ HoltWintersZZ  <- function (x,
 	seasonal <- match.arg(seasonal)
 	m <- frequency(x)
 	lenx <- length(x)
-	
+
 	if(!is.null(lambda)){
 	  x <- BoxCox(x,lambda)
 	}
@@ -143,10 +143,8 @@ HoltWintersZZ  <- function (x,
 	fitted <- ts(final.fit$fitted,frequency=m,start=tspx[1])
 	if(!is.null(lambda))
 	{
-	  fitted <- InvBoxCox(fitted,lambda)
-	  if(biasadj){
-	    fitted <- InvBoxCoxf(x = fitted, fvar = var(final.fit$residuals), lambda = lambda)
-	  }
+	  fitted <- InvBoxCox(fitted, lambda, biasadj, var(final.fit$residuals))
+	  attr(lambda, "biasadj") <- biasadj
 	}
 	states <- matrix(final.fit$level,ncol=1)
 	colnames(states) <- "l"
@@ -352,23 +350,25 @@ ses <- function (y, h = 10, level = c(80, 95), fan = FALSE, initial=c("optimal",
 
   fcast$method <- fcast$model$method <- "Simple exponential smoothing"
   fcast$model$call <- match.call()
+  fcast$series <- deparse(substitute(y))
+
   return(fcast)
 }
 
 holt <- function (y, h = 10, damped = FALSE, level = c(80, 95), fan = FALSE,
           initial=c("optimal","simple"), exponential=FALSE, alpha=NULL, beta=NULL,
-          lambda=NULL, biasadj=FALSE, x=y, ...)
+          phi=NULL, lambda=NULL, biasadj=FALSE, x=y, ...)
 {
   initial <- match.arg(initial)
   if(initial=="optimal" | damped)
   {
   	if(exponential)
-	    fcast <- forecast(ets(x, "MMN", alpha=alpha, beta=beta, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level, fan = fan, ...)
+	    fcast <- forecast(ets(x, "MMN", alpha=alpha, beta=beta, phi=phi, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level, fan = fan, ...)
 	  else
-	    fcast <- forecast(ets(x, "AAN", alpha=alpha, beta=beta, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level, fan = fan, ...)
-	}	  
+	    fcast <- forecast(ets(x, "AAN", alpha=alpha, beta=beta, phi=phi, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level, fan = fan, ...)
+	}
   else
-    fcast <- forecast(HoltWintersZZ(x, alpha=alpha, beta=beta, gamma=FALSE, exponential=exponential, lambda=lambda, biasadj=biasadj),
+    fcast <- forecast(HoltWintersZZ(x, alpha=alpha, beta=beta, gamma=FALSE, phi=phi, exponential=exponential, lambda=lambda, biasadj=biasadj),
     	h, level = level, fan = fan, ...)
   if (damped)
   {
@@ -382,12 +382,14 @@ holt <- function (y, h = 10, damped = FALSE, level = c(80, 95), fan = FALSE,
 	  fcast$method <- paste(fcast$method,"with exponential trend")
   fcast$model$method <- fcast$method
   fcast$model$call <- match.call()
+  fcast$series <- deparse(substitute(y))
+
   return(fcast)
 }
 
 hw <- function(y, h = 2 * frequency(x), seasonal = c("additive","multiplicative"), damped = FALSE,
     level = c(80, 95), fan = FALSE, initial=c("optimal","simple"), exponential=FALSE,
-    alpha=NULL, beta=NULL,gamma=NULL, lambda=NULL, biasadj=FALSE, x=y, ...)
+    alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, lambda=NULL, biasadj=FALSE, x=y, ...)
 {
   initial <- match.arg(initial)
   seasonal <- match.arg(seasonal)
@@ -396,14 +398,14 @@ hw <- function(y, h = 2 * frequency(x), seasonal = c("additive","multiplicative"
     if (seasonal == "additive" & exponential)
     	stop("Forbidden model combination")
     else if(seasonal=="additive" & !exponential)
-      fcast <- forecast(ets(x, "AAA", alpha=alpha, beta=beta, gamma=gamma, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level,  fan = fan, ...)
+      fcast <- forecast(ets(x, "AAA", alpha=alpha, beta=beta, gamma=gamma, phi=phi, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level,  fan = fan, ...)
     else if(seasonal!="additive" & exponential)
-      fcast <- forecast(ets(x, "MMM", alpha=alpha, beta=beta, gamma=gamma, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level,  fan = fan, ...)
+      fcast <- forecast(ets(x, "MMM", alpha=alpha, beta=beta, gamma=gamma, phi=phi, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level,  fan = fan, ...)
     else #if(seasonal!="additive" & !exponential)
-      fcast <- forecast(ets(x, "MAM", alpha=alpha, beta=beta, gamma=gamma, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level, fan = fan, ...)
+      fcast <- forecast(ets(x, "MAM", alpha=alpha, beta=beta, gamma=gamma, phi=phi, damped = damped, opt.crit="mse", lambda=lambda, biasadj=biasadj), h, level = level, fan = fan, ...)
   }
   else
-    fcast <- forecast(HoltWintersZZ(x, alpha=alpha, beta=beta, gamma=gamma, seasonal=seasonal,exponential=exponential, lambda=lambda, biasadj=biasadj),
+    fcast <- forecast(HoltWintersZZ(x, alpha=alpha, beta=beta, gamma=gamma, phi=phi, seasonal=seasonal,exponential=exponential, lambda=lambda, biasadj=biasadj),
     	h, level = level, fan = fan, ...)
   if (seasonal == "additive")
     fcast$method <- "Holt-Winters' additive method"
@@ -419,5 +421,7 @@ hw <- function(y, h = 2 * frequency(x), seasonal = c("additive","multiplicative"
   }
   fcast$model$method <- fcast$method
   fcast$model$call <- match.call()
+  fcast$series <- deparse(substitute(y))
+
   return(fcast)
 }

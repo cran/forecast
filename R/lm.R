@@ -27,12 +27,19 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
       }
     }
   }
-  
+
+  ## Fix formula's environment for correct `...` scoping.
+  attr(formula, ".Environment") <- environment()
+
   if(sum(c(tsvar, fnvar))>0){
     #Remove variables not needed in data (trend+season+functions)
-    vars <- vars[-c(tsvar, fnvar)]
+    rmvar <- c(tsvar, fnvar)
+    rmvar <- rmvar[rmvar!=attr(mt,"response")+1] #Never remove the reponse variable
+    if(any(rmvar!=0)){
+      vars <- vars[-rmvar]
+    }
   }
-  
+
   ## Grab any variables missing from data
   if(!missing(data)){
     #Check for any missing variables in data
@@ -52,26 +59,22 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
   } else{
     cn <- colnames(data)
   }
-  
+
   ## Get time series attributes from the data
   if(is.null(tsp(data))){
-    if(is.null(tsp(data[,1]))){#Check for complex ts data.frame
-      if((attr(mt,"intercept")+1)%in%fnvar){#Check unevaluated response variable
-        tspx <- tsp(eval(attr(mt,"variables")[[attr(mt,"intercept")+1]]))
-      }
+    if((attr(mt,"response")+1)%in%fnvar){#Check unevaluated response variable
+      tspx <- tsp(eval(attr(mt,"variables")[[attr(mt,"response")+1]]))
     }
-    else{
-      tspx <- tsp(data[,1])
-    }
+    tspx <- tsp(data[,1])#Check for complex ts data.frame
   }
   else{
     tspx <- tsp(data)
   }
-  if(!exists("tspx")){
+  if(is.null(tspx)){
     stop("Not time series data, use lm()")
   }
   tsdat <- match(c("trend", "season"), cn, 0L)
-  
+
   ## Create trend and season if missing from the data
   if(tsdat[1]==0){#&tsvar[1]!=0){#If "trend" is not in data, but is in formula
     trend <- 1:NROW(data)
@@ -87,7 +90,7 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
     data <- cbind(data,season)
   }
   colnames(data) <- cn
-  
+
   ## Subset the data according to subset argument
   if(!missing(subset)){
     if(!is.logical(subset))
@@ -110,27 +113,26 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...){
   if(tsdat[2]==0&tsvar[2]!=0){
     data$season <- factor(data$season) #fix for lost factor information, may not be needed?
   }
-  
+
   ## Fit the model and prepare model structure
   fit <- lm(formula,data=data,na.action=na.exclude,...)
   fit$residuals <- ts(residuals(fit))
   fit$fitted.values <- ts(fitted(fit))
   tsp(fit$residuals) <- tsp(fit$fitted.values) <- tsp(data[,1]) <- tspx
   fit$call <- cl
+  fit$method <- "Linear regression model"
   if(exists("dataname")){
     fit$call$data <- dataname
   }
   if(!is.null(lambda)){
+    attr(lambda, "biasadj") <- biasadj
     fit$lambda <- lambda
-    fit$fitted.values <- InvBoxCox(fit$fitted.values,lambda)
-    if(biasadj){
-      fit$fitted.values <- InvBoxCoxf(fit$fitted.values, fvar = var(fit$residuals), lambda = lambda)
-    }
+    fit$fitted.values <- InvBoxCox(fit$fitted.values, lambda, biasadj, var(fit$residuals))
   }
   return(fit)
 }
 
-forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, biasadj=FALSE, ts=TRUE, ...)
+forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, biasadj=NULL, ts=TRUE, ...)
 {
   if (fan)
     level <- seq(51, 99, by = 3)
@@ -225,6 +227,7 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
       reqvars <- reqvars[misvar | fnvar] #They are required
       fnvar <- fnvar[misvar | fnvar] #Update required function variables
       for (i in reqvars){
+        found <- FALSE
         subvars <- NULL
         for(j in 1:length(object$coefficients)){
           subvars[j] <- pmatch(i,names(object$coefficients)[j])
@@ -244,6 +247,7 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
             imat <- as.matrix(newdata[,fsub], ncol = length(fsub))
             colnames(imat) <- subvars
             tmpdata[[length(tmpdata)+1]] <- imat
+            found <- TRUE
           }
           else{
             #Attempt to evaluate it as a function
@@ -253,11 +257,17 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
         if(length(subvars)==1){ #Check if it is a function
           if(fnvar[match(i, reqvars)]){#Pre-evaluate function from data
             tmpdata[[length(tmpdata)+1]] <- eval(parse(text=subvars)[[1]], newdata)
+            found <- TRUE
           }
         }
-        names(tmpdata)[length(tmpdata)] <- paste0("solvedFN___",match(i, reqvars))
-        subvarloc <- match(i,lapply(attr(object$terms,"predvars"),deparse))
-        attr(object$terms,"predvars")[[subvarloc]] <- attr(object$terms,"variables")[[subvarloc]] <- parse(text=paste0("solvedFN___",match(i, reqvars)))[[1]]
+        if(found){
+          names(tmpdata)[length(tmpdata)] <- paste0("solvedFN___",match(i, reqvars))
+          subvarloc <- match(i,lapply(attr(object$terms,"predvars"),deparse))
+          attr(object$terms,"predvars")[[subvarloc]] <- attr(object$terms,"variables")[[subvarloc]] <- parse(text=paste0("solvedFN___",match(i, reqvars)))[[1]]
+        }
+        else{
+          warning(paste0("Could not find required variable ", i, " in newdata. Specify newdata as a named data.frame"))
+        }
       }
     }
     if(rm1){
@@ -309,8 +319,11 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
     stop("Variables not found in newdata")
 
   object$terms <- oldterms
+  if(is.null(object$series)){ # Model produced via lm(), add series attribute
+    object$series <- deparse(attr(oldterms, "variables")[[1 + attr(oldterms, "response")]])
+  }
   fcast <- list(model=object,mean=out[[1]]$fit[,1],lower=out[[1]]$fit[,2],upper=out[[1]]$fit[,3],
-                level=level,x=object$x)
+                level=level,x=object$x,series=object$series)
   fcast$method <- "Linear regression model"
   fcast$newdata <- oldnewdata
   fcast$residuals <- residuals(object)
@@ -344,10 +357,7 @@ forecast.lm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda
   if(!is.null(lambda))
   {
     fcast$x <- InvBoxCox(fcast$x,lambda)
-    fcast$mean <- InvBoxCox(fcast$mean,lambda)
-    if(biasadj){
-      fcast$mean <- InvBoxCoxf(fcast, lambda = lambda)
-    }
+    fcast$mean <- InvBoxCox(fcast$mean,lambda, biasadj, fcast)
     fcast$lower <- InvBoxCox(fcast$lower,lambda)
     fcast$upper <- InvBoxCox(fcast$upper,lambda)
   }

@@ -1,36 +1,35 @@
-forecast.tbats <- function(object, h, level=c(80,95), fan=FALSE, biasadj=FALSE, ...)
+forecast.tbats <- function(object, h, level=c(80,95), fan=FALSE, biasadj=NULL, ...)
 {
+  # Check if forecast.tbats called incorrectly
+  if(identical(class(object),"bats"))
+    return(forecast.bats(object, h, level, fan, biasadj, ...))
 
-	# Check if forecast.tbats called incorrectly
-	if(identical(class(object),"bats"))
-		return(forecast.bats(object, h, level, fan, biasadj, ...))
+  #Set up the variables
+  if(any(class(object$y) == "ts"))
+		ts.frequency <- frequency(object$y)
+	else
+		ts.frequency <- ifelse(!is.null(object$seasonal.periods), max(object$seasonal.periods), 1)
 
-	#Set up variables
   if(missing(h))
   {
-    if(is.null(object$seasonal.periods))
-      h <- 10
+  	if(is.null(object$seasonal.periods))
+      h <- ifelse(ts.frequency == 1, 10, 2*ts.frequency)
     else
       h <- 2 * max(object$seasonal.periods)
   }
-	else if(h<=0) {
+	else if(h <= 0)
 		stop("Forecast horizon out of bounds")
-	}
-	if(fan) {
+
+	if(fan)
 		level <- seq(51,99,by=3)
-	} else {
+	else
+	{
 		if(min(level) > 0 & max(level) < 1)
 			level <- 100*level
 		else if(min(level) < 0 | max(level) > 99.99)
 			stop("Confidence limit out of range")
 	}
 
-
-	if(any(class(object$y) == "ts")) {
-		ts.frequency <- frequency(object$y)
-	} else {
-		ts.frequency <- ifelse(!is.null(object$seasonal.periods), max(object$seasonal.periods), 1)
-	}
 	if(!is.null(object$k.vector)) {
 		tau <- 2*sum(object$k.vector)
 	} else {
@@ -104,10 +103,7 @@ forecast.tbats <- function(object, h, level=c(80,95), fan=FALSE, biasadj=FALSE, 
 	#Inv Box Cox transform if required
 	if(!is.null(object$lambda))
 	{
-	  y.forecast <- InvBoxCox(y.forecast,object$lambda)
-	  if(biasadj){
-	    y.forecast <- InvBoxCoxf(x = list(level = level, mean = y.forecast, upper = upper.bounds, lower = lower.bounds), lambda = object$lambda)
-	  }
+	  y.forecast <- InvBoxCox(y.forecast, object$lambda, biasadj, list(level = level, upper = upper.bounds, lower = lower.bounds))
 		lower.bounds  <-  InvBoxCox(lower.bounds,object$lambda)
 		if(object$lambda < 1) {
 			lower.bounds<-pmax(lower.bounds, 0)
@@ -125,8 +121,17 @@ forecast.tbats <- function(object, h, level=c(80,95), fan=FALSE, biasadj=FALSE, 
 	x <- msts(object$y, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=start.time)
 	fitted.values <- msts(object$fitted.values, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=start.time)
 	y.forecast <- msts(y.forecast, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=fcast.start.time)
-
-	forecast.object <- list(model=object, mean=y.forecast, level=level, x=x, upper=upper.bounds, lower=lower.bounds, fitted=fitted.values, method=makeTextTBATS(object), residuals=object$errors)
+  upper.bounds <- msts(upper.bounds, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=fcast.start.time)
+  lower.bounds <- msts(lower.bounds, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=fcast.start.time)
+  colnames(upper.bounds) <- colnames(lower.bounds) <- paste0(level, "%")
+  
+  forecast.object <- list(model=object, mean=y.forecast, level=level, x=x, series=object$series,
+	                        upper=upper.bounds, lower=lower.bounds, fitted=fitted.values,
+	                        method=makeTextTBATS(object), residuals=object$errors)
+	if(is.null(object$series)){
+	  forecast.object$series <- deparse(object$call$y)
+	}
+	
 	class(forecast.object) <- "forecast"
 	return(forecast.object)
 }

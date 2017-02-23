@@ -3,11 +3,13 @@
 
 bats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL,
   seasonal.periods=NULL, use.arma.errors=TRUE, use.parallel=length(y)>1000, num.cores=2,
-  bc.lower=0, bc.upper=1, model=NULL, ...)
+  bc.lower=0, bc.upper=1, biasadj = FALSE, model=NULL, ...)
 {
   if (any(class(y) %in% c("data.frame", "list", "matrix", "mts")))
     stop("y should be a univariate time series")
 
+  seriesname <- deparse(substitute(y))
+  
   origy <- y
 
   # Get seasonal periods
@@ -142,7 +144,7 @@ bats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL,
       num.cores <- detectCores(all.tests = FALSE, logical = TRUE)
     }
     clus <- makeCluster(num.cores)
-    models.list <- clusterApplyLB(clus, c(1:nrow(control.array)), parFilterSpecifics, y=y, control.array=control.array, seasonal.periods=seasonal.periods, use.arma.errors=use.arma.errors, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, ...)
+    models.list <- clusterApplyLB(clus, c(1:nrow(control.array)), parFilterSpecifics, y=y, control.array=control.array, seasonal.periods=seasonal.periods, use.arma.errors=use.arma.errors, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj, ...)
     stopCluster(clus)
     ##Choose the best model
     ####Get the AICs
@@ -159,7 +161,7 @@ bats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL,
         for(damping in use.damped.trend) {
           current.model <- filterSpecifics(y, box.cox=box.cox, trend=trend, damping=damping,
                 seasonal.periods=seasonal.periods, use.arma.errors=use.arma.errors,
-                init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, ...)
+                init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj, ...)
           if(!is.null(best.aic)) {
             if(current.model$AIC < best.aic) {
               best.aic <- current.model$AIC
@@ -180,20 +182,21 @@ bats <- function(y, use.box.cox=NULL, use.trend=NULL, use.damped.trend=NULL,
 
   attributes(best.model$fitted.values) <- attributes(best.model$errors) <- attributes(origy)
   best.model$y <- origy
+  best.model$series <- seriesname
 
   return(best.model)
 }
 
 filterSpecifics<-function(y, box.cox, trend, damping, seasonal.periods, use.arma.errors,
-  force.seasonality=FALSE, init.box.cox=NULL, bc.lower=0, bc.upper=1, ...) {
+  force.seasonality=FALSE, init.box.cox=NULL, bc.lower=0, bc.upper=1, biasadj=FALSE, ...) {
 	if((trend == FALSE) & (damping == TRUE)) {
 		return(list(AIC=Inf))
 	}
 
 
-	first.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper)
+	first.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj)
 	if((!is.null(seasonal.periods)) & (!force.seasonality)) {
-		non.seasonal.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=NULL, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper)
+		non.seasonal.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=NULL, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj)
 		if(first.model$AIC > non.seasonal.model$AIC) {
 			seasonal.periods <- NULL
 			first.model <- non.seasonal.model
@@ -216,7 +219,7 @@ filterSpecifics<-function(y, box.cox, trend, damping, seasonal.periods, use.arma
 			}
 			starting.params <- first.model$parameters
 			#printCASE(box.cox, trend, damping, seasonal.periods, ar.coefs, ma.coefs, p, q)
-			second.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, ar.coefs=ar.coefs, ma.coefs=ma.coefs, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper)
+			second.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, ar.coefs=ar.coefs, ma.coefs=ma.coefs, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj)
 			if(second.model$AIC < first.model$AIC) {
 				return(second.model)
 			} else {
@@ -230,7 +233,7 @@ filterSpecifics<-function(y, box.cox, trend, damping, seasonal.periods, use.arma
 	}
 }
 
-parFilterSpecifics<-function(control.number, control.array, y, seasonal.periods, use.arma.errors, force.seasonality=FALSE, init.box.cox=NULL, bc.lower=0, bc.upper=1, ...) {
+parFilterSpecifics<-function(control.number, control.array, y, seasonal.periods, use.arma.errors, force.seasonality=FALSE, init.box.cox=NULL, bc.lower=0, bc.upper=1, biasadj=FALSE, ...) {
 	box.cox <- control.array[control.number, 1]
 	trend <- control.array[control.number, 2]
 	damping <- control.array[control.number, 3]
@@ -241,9 +244,9 @@ parFilterSpecifics<-function(control.number, control.array, y, seasonal.periods,
 	}
 
 
-	first.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper)
+	first.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj)
 	if((!is.null(seasonal.periods)) & (!force.seasonality)) {
-		non.seasonal.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=NULL, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper)
+		non.seasonal.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=NULL, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj)
 		if(first.model$AIC > non.seasonal.model$AIC) {
 			seasonal.periods <- NULL
 			first.model <- non.seasonal.model
@@ -266,7 +269,7 @@ parFilterSpecifics<-function(control.number, control.array, y, seasonal.periods,
 			}
 			starting.params <- first.model$parameters
 			#printCASE(box.cox, trend, damping, seasonal.periods, ar.coefs, ma.coefs, p, q)
-			second.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, ar.coefs=ar.coefs, ma.coefs=ma.coefs, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper)
+			second.model <- fitSpecificBATS(y, use.box.cox=box.cox, use.beta=trend, use.damping=damping, seasonal.periods=seasonal.periods, ar.coefs=ar.coefs, ma.coefs=ma.coefs, init.box.cox=init.box.cox, bc.lower=bc.lower, bc.upper=bc.upper, biasadj=biasadj)
 			if(second.model$AIC < first.model$AIC) {
 				return(second.model)
 			} else {
@@ -334,9 +337,6 @@ print.bats <- function(x,...) {
 	cat("\nAIC: ")
 	cat(x$AIC)
 	cat("\n")
-}
-residuals.bats <- function(object, ...) {
-	object$errors
 }
 
 plot.bats <- function (x, main="Decomposition by BATS model", ...)

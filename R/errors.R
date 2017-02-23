@@ -87,7 +87,7 @@ testaccuracy <- function(f,x,test,d,D)
   {
     fpe <- (c(ff[2:n])/c(xx[1:(n-1)]) - 1)[test-1]
     ape <- (c(xx[2:n])/c(xx[1:(n-1)]) - 1)[test-1]
-    theil <- sqrt(sum((fpe - ape)^2)/sum(ape^2))
+    theil <- sqrt(sum((fpe - ape)^2, na.rm=TRUE)/sum(ape^2, na.rm=TRUE))
     if(length(error) > 1)
       r1 <- acf(error,plot=FALSE,lag.max=2,na.action=na.pass)$acf[2,1,1]
     else
@@ -249,27 +249,21 @@ accuracy <- function(f,x,test=NULL,d=NULL,D=NULL)
   return(out)
 }
 
-# Compute accuracy for a VAR model (from the vars package)
+# Compute accuracy for an mforecast object 
 accuracy.mforecast <- function(object, x, test=NULL, d, D)
 {
-  fc <- object
-  class(fc) <- "forecast"
-  vnames <- names(object$mean)
+  out <- NULL
   nox <- missing(x)
-  for(i in 1:length(object$mean))
+  i <- 1
+  for(fcast in object$forecast)
   {
-    fc$mean <- object$mean[[i]]
-    fc$x <- object$x[,i]
-    fc$fitted <- object$fitted[,i]
     if(nox)
-      out1 <- accuracy(fc, test=test, d=d, D=D)
+      out1 <- accuracy(fcast, test=test, d=d, D=D)
     else
-      out1 <- accuracy(fc, x[,i], test, d, D)
-    rownames(out1) <- paste(vnames[i],rownames(out1))
-    if(i==1)
-      out <- out1
-    else
-      out <- rbind(out, out1)
+      out1 <- accuracy(fcast, x[,i], test, d, D)
+    rownames(out1) <- paste(fcast$series,rownames(out1))
+    out <- rbind(out, out1)
+    i <- i + 1
   }
   return(out)
 }

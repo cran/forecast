@@ -3,16 +3,16 @@
 \alias{holt}
 \alias{hw}
 \title{Exponential smoothing forecasts}
-\usage{ses(y, h=10, level=c(80,95), fan=FALSE, 
-    initial=c("optimal","simple"), alpha=NULL, 
+\usage{ses(y, h=10, level=c(80,95), fan=FALSE,
+    initial=c("optimal","simple"), alpha=NULL,
     lambda=NULL, biasadj=FALSE, x=y, ...)
-holt(y, h=10, damped=FALSE, level=c(80,95), fan=FALSE, 
+holt(y, h=10, damped=FALSE, level=c(80,95), fan=FALSE,
     initial=c("optimal","simple"), exponential=FALSE,
-    alpha=NULL, beta=NULL, lambda=NULL, biasadj=FALSE, x=y, ...)
-hw(y, h=2*frequency(x), seasonal=c("additive","multiplicative"), 
-    damped=FALSE, level=c(80,95), fan=FALSE, 
+    alpha=NULL, beta=NULL, phi=NULL, lambda=NULL, biasadj=FALSE, x=y, ...)
+hw(y, h=2*frequency(x), seasonal=c("additive","multiplicative"),
+    damped=FALSE, level=c(80,95), fan=FALSE,
     initial=c("optimal","simple"), exponential=FALSE,
-    alpha=NULL, beta=NULL, gamma=NULL, 
+    alpha=NULL, beta=NULL, gamma=NULL, phi=NULL,
     lambda=NULL, biasadj=FALSE, x=y, ...)
 }
 
@@ -28,6 +28,7 @@ hw(y, h=2*frequency(x), seasonal=c("additive","multiplicative"),
 \item{alpha}{Value of smoothing parameter for the level. If \code{NULL}, it will be estimated.}
 \item{beta}{Value of smoothing parameter for the trend. If \code{NULL}, it will be estimated.}
 \item{gamma}{Value of smoothing parameter for the seasonal component. If \code{NULL}, it will be estimated.}
+\item{phi}{Value of damping parameter if \code{damped=TRUE}. If \code{NULL}, it will be estimated.}
 \item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise, data transformed before model is estimated. When \code{lambda=TRUE}, \code{additive.only} is set to FALSE.}
 \item{biasadj}{Use adjusted back-transformed mean for Box-Cox transformations. If TRUE, point forecasts and fitted values are mean forecast. Otherwise, these points can be considered the median of the forecast densities.}
 \item{x}{Deprecated. Included for backwards compatibility.}
@@ -56,7 +57,7 @@ An object of class \code{"forecast"} is a list containing at least the following
 \item{upper}{Upper limits for prediction intervals}
 \item{level}{The confidence values associated with the prediction intervals}
 \item{x}{The original time series (either \code{object} itself or the time series used to create the model stored as \code{object}).}
-\item{residuals}{Residuals from the fitted model. That is x minus fitted values.}
+\item{residuals}{Residuals from the fitted model.}
 \item{fitted}{Fitted values (one-step forecasts)}
 }
 

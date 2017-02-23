@@ -49,7 +49,6 @@ splinef <- function(y, h=10, level=c(80,95), fan=FALSE, lambda=NULL, biasadj=FAL
         x <- ts(x)
     n <- length(x)
     freq <- frequency(x)
-    xname <- deparse(substitute(y))
 
 	if(!is.null(lambda))
 	{
@@ -133,10 +132,7 @@ splinef <- function(y, h=10, level=c(80,95), fan=FALSE, lambda=NULL, biasadj=FAL
 
 	if(!is.null(lambda))
 	{
-	  Yhat <- InvBoxCox(Yhat,lambda)
-	  if(biasadj){
-	    Yhat <- InvBoxCoxf(x = list(level = level, mean = Yhat, upper = upper, lower = lower), lambda = lambda)
-	  }
+	  Yhat <- InvBoxCox(Yhat, lambda, biasadj, list(level = level, upper = upper, lower = lower))
 		upper <- InvBoxCox(upper,lambda)
 		lower <- InvBoxCox(lower,lambda)
 		yfit <- InvBoxCox(yfit,lambda)
@@ -145,14 +141,15 @@ splinef <- function(y, h=10, level=c(80,95), fan=FALSE, lambda=NULL, biasadj=FAL
 	}
 
     return(structure(list(method="Cubic Smoothing Spline",level=level,x=x,
+            series=deparse(substitute(y)),
             mean=ts(Yhat,frequency=freq,start=tsp(x)[2]+1/freq),
             upper=ts(upper,start=tsp(x)[2]+1/freq,frequency=freq),
             lower=ts(lower,start=tsp(x)[2]+1/freq,frequency=freq),
             model=list(beta=beta.est*n^3,call=match.call()),
             fitted =ts(sfits,start=start(x),frequency=freq), residuals = res,
-			standardizedresiduals=ts(e,start=start(x),frequency=freq),
+			      standardizedresiduals=ts(e,start=start(x),frequency=freq),
             onestepf = ts(yfit,start=start(x),frequency=freq)),
-			lambda=lambda,
+			      lambda=lambda,
             class=c("splineforecast","forecast")))
 }
 
