@@ -1,3 +1,5 @@
+#' @rdname forecast.bats
+#' @export
 forecast.tbats <- function(object, h, level=c(80,95), fan=FALSE, biasadj=NULL, ...)
 {
   # Check if forecast.tbats called incorrectly
@@ -124,50 +126,51 @@ forecast.tbats <- function(object, h, level=c(80,95), fan=FALSE, biasadj=NULL, .
   upper.bounds <- msts(upper.bounds, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=fcast.start.time)
   lower.bounds <- msts(lower.bounds, seasonal.periods=(if(!is.null(object$seasonal.periods)) { object$seasonal.periods} else { ts.frequency}), ts.frequency=ts.frequency, start=fcast.start.time)
   colnames(upper.bounds) <- colnames(lower.bounds) <- paste0(level, "%")
-  
+
   forecast.object <- list(model=object, mean=y.forecast, level=level, x=x, series=object$series,
 	                        upper=upper.bounds, lower=lower.bounds, fitted=fitted.values,
-	                        method=makeTextTBATS(object), residuals=object$errors)
+	                        method=as.character(object), residuals=object$errors)
 	if(is.null(object$series)){
 	  forecast.object$series <- deparse(object$call$y)
 	}
-	
+
 	class(forecast.object) <- "forecast"
 	return(forecast.object)
 }
 
 
-makeTextTBATS <- function(object) {
+#' @export
+as.character.tbats <- function(x, ...) {
 	name <- "TBATS("
-	if(!is.null(object$lambda)) {
-		name <- paste(name, round(object$lambda, digits=3), sep="")
+	if(!is.null(x$lambda)) {
+		name <- paste(name, round(x$lambda, digits=3), sep="")
 	} else {
 		name <- paste(name, "1", sep="")
 	}
 	name <- paste(name, ", {", sep="")
-	if(!is.null(object$ar.coefficients)) {
-		name <- paste(name, length(object$ar.coefficients), sep="")
+	if(!is.null(x$ar.coefficients)) {
+		name <- paste(name, length(x$ar.coefficients), sep="")
 	} else {
 		name <- paste(name, "0", sep="")
 	}
 	name <- paste(name, ",", sep="")
-	if(!is.null(object$ma.coefficients)) {
-		name <- paste(name, length(object$ma.coefficients), sep="")
+	if(!is.null(x$ma.coefficients)) {
+		name <- paste(name, length(x$ma.coefficients), sep="")
 	} else {
 		name <- paste(name, "0", sep="")
 	}
 	name <- paste(name, "}, ", sep="")
-	if(!is.null(object$damping.parameter)) {
-		name <- paste(name, round(object$damping.parameter, digits=3), ",",sep="")
+	if(!is.null(x$damping.parameter)) {
+		name <- paste(name, round(x$damping.parameter, digits=3), ",",sep="")
 	} else {
 		name <- paste(name, "-,", sep="")
 	}
 
-	if(!is.null(object$seasonal.periods)) {
+	if(!is.null(x$seasonal.periods)) {
 		name <- paste(name, " {", sep="")
-    M <- length(object$seasonal.periods)
+    M <- length(x$seasonal.periods)
 		for(i in 1:M) {
-			name <- paste(name, "<", object$seasonal.periods[i], ",", object$k.vector[i], ">", sep="")
+			name <- paste(name, "<", round(x$seasonal.periods[i],2), ",", x$k.vector[i], ">", sep="")
 			if(i < M) {
 				name <- paste(name, ", ", sep="")
 			} else {

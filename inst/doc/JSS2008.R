@@ -64,7 +64,7 @@ arimanames <- c(as.character(mod1),
   as.character(mod2),
   as.character(mod3),
   as.character(mod4))
-arimanames <- 
+arimanames <-
     gsub("\\[([0-9]*)\\]", "$_{\\1}$", arimanames)
 
 ## ----arimafcastsummary, echo=TRUE, message=FALSE, warning=FALSE, as.is=TRUE----

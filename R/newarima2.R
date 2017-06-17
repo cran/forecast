@@ -1,9 +1,99 @@
+#' Fit best ARIMA model to univariate time series
+#'
+#' Returns best ARIMA model according to either AIC, AICc or BIC value. The
+#' function conducts a search over possible model within the order constraints
+#' provided.
+#'
+#' The default arguments are designed for rapid estimation of models for many time series.
+#' If you are analysing just one time series, and can afford to take some more time, it
+#' is recommended that you set \code{stepwise=FALSE} and \code{approximation=FALSE}.
+#' 
+#' The number of seasonal differences is sometimes poorly chosen. If your data shows strong
+#' seasonality, try setting \code{D=1} rather than relying on the automatic selection of \code{D}.
+#' 
+#' Non-stepwise selection can be slow, especially for seasonal data. The stepwise
+#' algorithm outlined in Hyndman and Khandakar (2008) is used except that the default
+#' method for selecting seasonal differences is now the OCSB test rather than
+#' the Canova-Hansen test. There are also some other minor variations to the
+#' algorithm described in Hyndman and Khandakar (2008).
+#' 
+#'
+#' @param y a univariate time series
+#' @param d Order of first-differencing. If missing, will choose a value based
+#' on KPSS test.
+#' @param D Order of seasonal-differencing. If missing, will choose a value
+#' based on OCSB test.
+#' @param max.p Maximum value of p
+#' @param max.q Maximum value of q
+#' @param max.P Maximum value of P
+#' @param max.Q Maximum value of Q
+#' @param max.order Maximum value of p+q+P+Q if model selection is not
+#' stepwise.
+#' @param max.d Maximum number of non-seasonal differences
+#' @param max.D Maximum number of seasonal differences
+#' @param start.p Starting value of p in stepwise procedure.
+#' @param start.q Starting value of q in stepwise procedure.
+#' @param start.P Starting value of P in stepwise procedure.
+#' @param start.Q Starting value of Q in stepwise procedure.
+#' @param stationary If \code{TRUE}, restricts search to stationary models.
+#' @param seasonal If \code{FALSE}, restricts search to non-seasonal models.
+#' @param ic Information criterion to be used in model selection.
+#' @param stepwise If \code{TRUE}, will do stepwise selection (faster).
+#' Otherwise, it searches over all models. Non-stepwise selection can be very
+#' slow, especially for seasonal models.
+#' @param trace If \code{TRUE}, the list of ARIMA models considered will be
+#' reported.
+#' @param approximation If \code{TRUE}, estimation is via conditional sums of
+#' squares andthe information criteria used for model selection are
+#' approximated. The final model is still computed using maximum likelihood
+#' estimation. Approximation should be used for long time series or a high
+#' seasonal period to avoid excessive computation times.
+#' @param truncate An integer value indicating how many observations to use in
+#' model selection. The last \code{truncate} values of the series are used to
+#' select a model when \code{truncate} is not \code{NULL} and
+#' \code{approximation=TRUE}. All observations are used if either
+#' \code{truncate=NULL} or \code{approximation=FALSE}.
+#' @param xreg Optionally, a vector or matrix of external regressors, which
+#' must have the same number of rows as \code{y}.
+#' @param test Type of unit root test to use. See \code{\link{ndiffs}} for
+#' details.
+#' @param seasonal.test This determines which seasonal unit root test is used.
+#' See \code{\link{nsdiffs}} for details.
+#' @param allowdrift If \code{TRUE}, models with drift terms are considered.
+#' @param allowmean If \code{TRUE}, models with a non-zero mean are considered.
+#' @param lambda Box-Cox transformation parameter. Ignored if NULL. Otherwise,
+#' data transformed before model is estimated.
+#' @param biasadj Use adjusted back-transformed mean for Box-Cox
+#' transformations. If TRUE, point forecasts and fitted values are mean
+#' forecast. Otherwise, these points can be considered the median of the
+#' forecast densities.
+#' @param parallel If \code{TRUE} and \code{stepwise = FALSE}, then the
+#' specification search is done in parallel. This can give a significant
+#' speedup on mutlicore machines.
+#' @param num.cores Allows the user to specify the amount of parallel processes
+#' to be used if \code{parallel = TRUE} and \code{stepwise = FALSE}. If
+#' \code{NULL}, then the number of logical cores is automatically detected and
+#' all available cores are used.
+#' @param x Deprecated. Included for backwards compatibility.
+#' @param ... Additional arguments to be passed to \code{\link[stats]{arima}}.
+#' @return Same as for \code{\link{Arima}}
+#' @author Rob J Hyndman
+#' @seealso \code{\link{Arima}}
+#' @references Hyndman, R.J. and Khandakar, Y. (2008) "Automatic time series
+#' forecasting: The forecast package for R", \emph{Journal of Statistical
+#' Software}, \bold{26}(3).
+#' @keywords ts
+#' @examples
+#' fit <- auto.arima(WWWusage)
+#' plot(forecast(fit,h=20))
+#'
+#' @export
 auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
    max.P=2, max.Q=2, max.order=5, max.d=2, max.D=1,
    start.p=2, start.q=2, start.P=1, start.Q=1,
    stationary=FALSE, seasonal=TRUE, ic=c("aicc","aic","bic"),
    stepwise=TRUE, trace=FALSE,
-   approximation=(length(x)>100 | frequency(x)>12),
+   approximation=(length(x)>150 | frequency(x)>12),
    truncate=NULL, xreg=NULL,
    test=c("kpss","adf","pp"), seasonal.test=c("ocsb","ch"),
    allowdrift=TRUE,allowmean=TRUE,lambda=NULL, biasadj=FALSE,
@@ -64,7 +154,6 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
   max.Q <- min(max.Q, floor(serieslength/3/m))
 
   orig.x <- x
-  origxreg <- xreg
 
   if(!is.null(lambda))
   {
@@ -76,18 +165,21 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
   if(!is.null(xreg))
   {
     nmxreg <- deparse(substitute(xreg))
-    xreg <- as.matrix(xreg)
-    if(ncol(xreg)==1 & length(nmxreg) > 1)
+    xregg <- as.matrix(xreg)
+    if(ncol(xregg)==1 & length(nmxreg) > 1)
       nmxreg <- "xreg"
-    if (is.null(colnames(xreg)))
-      colnames(xreg) <- if (ncol(xreg) == 1) nmxreg
-    else paste(nmxreg, 1:ncol(xreg), sep = "")
-    j <- !is.na(x) & !is.na(rowSums(xreg))
+    if (is.null(colnames(xregg)))
+      colnames(xregg) <- if (ncol(xregg) == 1) nmxreg
+    else paste(nmxreg, 1:ncol(xregg), sep = "")
+    j <- !is.na(x) & !is.na(rowSums(xregg))
     xx <- x
-    xx[j] <- residuals(lm(x ~ xreg))
+    xx[j] <- residuals(lm(x ~ xregg))
   }
   else
+  {
     xx <- x
+    xregg <- NULL
+  }
   if(stationary)
     d <- D <- 0
   if(m == 1)
@@ -96,9 +188,9 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
   {
     D <- nsdiffs(xx, m=m, test=seasonal.test, max.D=max.D)
     # Make sure xreg is not null after differencing
-    if(D > 0 & !is.null(xreg))
+    if(D > 0 & !is.null(xregg))
     {
-      diffxreg <- diff(xreg, differences=D, lag=m)
+      diffxreg <- diff(xregg, differences=D, lag=m)
       if(any(apply(diffxreg, 2, is.constant)))
         D <- D-1
     }
@@ -107,18 +199,18 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
     dx <- diff(xx,differences=D,lag=m)
   else
     dx <- xx
-  if(!is.null(xreg))
+  if(!is.null(xregg))
   {
     if(D > 0)
-      diffxreg <- diff(xreg, differences=D, lag=m)
+      diffxreg <- diff(xregg, differences=D, lag=m)
     else
-      diffxreg <- xreg
+      diffxreg <- xregg
   }
   if(is.na(d))
   {
     d <- ndiffs(dx,test=test, max.d=max.d)
     # Make sure xreg is not null after differencing
-    if(d > 0 & !is.null(xreg))
+    if(d > 0 & !is.null(xregg))
     {
       diffxreg <- diff(diffxreg, differences=d, lag=1)
       if(any(apply(diffxreg, 2, is.constant)))
@@ -227,6 +319,9 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
   Q <- start.Q <- min(start.Q, max.Q)
 
   results <- matrix(NA,nrow=100,ncol=8)
+
+  if(approximation & trace)
+    cat("\n Fitting models using approximations to speed things up...\n")
 
   bestfit <- myarima(x,order=c(p,d,q),seasonal=c(P,D,Q),constant=constant,ic,trace,approximation,offset=offset,xreg=xreg,...)
   results[1,] <- c(p,d,q,P,D,Q,constant,bestfit$ic)
@@ -438,26 +533,23 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
   # Refit using ML if approximation used for IC
   if(approximation & !is.null(bestfit$arma))
   {
-    newbestfit <- myarima(x,order=bestfit$arma[c(1,6,2)],
-              seasonal=bestfit$arma[c(3,7,4)],constant=constant,ic,trace=FALSE,
-              approximation=FALSE,xreg=xreg,...)
-    tryagain <- (newbestfit$ic == Inf | newbestfit$code > 0)
-    if(length(tryagain)==0L)
-      tryagain <- TRUE
-    if(tryagain)
+    if(trace)
+      cat("\n\n Now re-fitting the best model(s) without approximations...\n")
+    icorder <- order(results[,8])
+    nmodels <- sum(!is.na(results[,8]))
+    for(i in 1:nmodels)
     {
-      # Final model is lousy. Better try again without approximation
-      bestfit <- auto.arima(orig.x, d=d, D=D, max.p=max.p, max.q=max.q,
-                    max.P=max.P, max.Q=max.Q, max.order=max.order, max.d=max.d, max.D=max.D,
-                    start.p=start.p, start.q=start.q, start.P=1, start.Q=1,
-                    stationary=stationary, seasonal=seasonal, ic=ic,
-                    stepwise=TRUE, trace=trace, approximation=FALSE, xreg=origxreg,
-                    allowdrift=allowdrift,allowmean=allowmean,lambda=lambda, biasadj=biasadj,
-                    parallel=FALSE,...)
-      bestfit$ic <- switch(ic,bic=bestfit$bic,aic=bestfit$aic,aicc=bestfit$aicc)
+      k <- icorder[i]
+      fit <- myarima(x, order=c(results[k,1],d,results[k,3]),
+                     seasonal=c(results[k,4],D,results[k,6]),
+                     constant=results[k,7]==1,
+                     ic, trace, approximation=FALSE, xreg=xreg, ...)
+      if(fit$ic < Inf)
+      {
+        bestfit <- fit
+        break;
+      }
     }
-    else
-      bestfit <- newbestfit
   }
 
   # Nothing fitted
@@ -597,8 +689,8 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
       else if(!constant & (order[2]+seasonal[2] == 0))
         cat(" with zero mean    ")
       else
-        cat("         ")
-      cat(" :",Inf,"*")
+        cat("                   ")
+      cat(" :",Inf)
     }
     return(list(ic=Inf))
   }
@@ -618,9 +710,20 @@ newmodel <- function(p,d,q,P,D,Q,constant,results)
 arima.string <- function(object, padding=FALSE)
 {
   order <- object$arma[c(1,6,2,3,7,4,5)]
+  m <- order[7]
   result <- paste("ARIMA(",order[1],",",order[2],",",order[3],")",sep="")
-  if(order[7]>1 & sum(order[4:6]) > 0)
-    result <- paste(result,"(",order[4],",",order[5],",",order[6],")[",order[7],"]",sep="")
+  if(m > 1 & sum(order[4:6]) > 0)
+    result <- paste(result,"(",order[4],",",order[5],",",order[6],")[",m,"]",sep="")
+  if(padding & m > 1 & sum(order[4:6]) == 0)
+  {
+    result <- paste(result, "         ", sep='')
+    if(m <= 9)
+      result <- paste(result, " ", sep='')
+    else if(m <= 99)
+      result <- paste(result, "  ", sep='')
+    else
+      result <- paste(result, "   ", sep='')
+  }
   if(!is.null(object$xreg))
   {
     if(NCOL(object$xreg)==1 & is.element("drift",names(object$coef)))
@@ -643,6 +746,7 @@ arima.string <- function(object, padding=FALSE)
   return(result)
 }
 
+#' @export
 summary.Arima <- function(object,...)
 {
   print(object)
@@ -653,6 +757,12 @@ summary.Arima <- function(object,...)
 
 
 # Number of seasonal differences
+#' @rdname ndiffs
+#'
+#' @examples
+#' nsdiffs(log(AirPassengers))
+#'
+#' @export
 nsdiffs <- function(x, m=frequency(x), test=c("ocsb", "ch"), max.D=1)
 {
 
@@ -804,6 +914,15 @@ checkarima <- function(object)
   return(test)
 }
 
+
+
+#' Is an object constant?
+#'
+#' Returns true if the object's numerical values do not vary.
+#'
+#'
+#' @param x object to be tested
+#' @export
 is.constant <- function(x)
 {
   x <- as.numeric(x)

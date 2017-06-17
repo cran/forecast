@@ -1,3 +1,95 @@
+#' Exponential smoothing state space model
+#'
+#' Returns ets model applied to \code{y}.
+#'
+#' Based on the classification of methods as described in Hyndman et al (2008).
+#'
+#' The methodology is fully automatic. The only required argument for ets is
+#' the time series. The model is chosen automatically if not specified. This
+#' methodology performed extremely well on the M3-competition data. (See
+#' Hyndman, et al, 2002, below.)
+#'
+#' @aliases print.ets summary.ets as.character.ets coef.ets tsdiag.ets
+#'
+#' @param y a numeric vector or time series of class \code{ts}
+#' @param model Usually a three-character string identifying method using the
+#' framework terminology of Hyndman et al. (2002) and Hyndman et al. (2008).
+#' The first letter denotes the error type ("A", "M" or "Z"); the second letter
+#' denotes the trend type ("N","A","M" or "Z"); and the third letter denotes
+#' the season type ("N","A","M" or "Z"). In all cases, "N"=none, "A"=additive,
+#' "M"=multiplicative and "Z"=automatically selected. So, for example, "ANN" is
+#' simple exponential smoothing with additive errors, "MAM" is multiplicative
+#' Holt-Winters' method with multiplicative errors, and so on.
+#'
+#' It is also possible for the model to be of class \code{"ets"}, and equal to
+#' the output from a previous call to \code{ets}. In this case, the same model
+#' is fitted to \code{y} without re-estimating any smoothing parameters. See
+#' also the \code{use.initial.values} argument.
+#' @param damped If TRUE, use a damped trend (either additive or
+#' multiplicative). If NULL, both damped and non-damped trends will be tried
+#' and the best model (according to the information criterion \code{ic})
+#' returned.
+#' @param alpha Value of alpha. If NULL, it is estimated.
+#' @param beta Value of beta. If NULL, it is estimated.
+#' @param gamma Value of gamma. If NULL, it is estimated.
+#' @param phi Value of phi. If NULL, it is estimated.
+#' @param additive.only If TRUE, will only consider additive models. Default is
+#' FALSE.
+#' @param lambda Box-Cox transformation parameter. Ignored if NULL. Otherwise,
+#' data transformed before model is estimated. When \code{lambda} is specified,
+#' \code{additive.only} is set to \code{TRUE}.
+#' @param biasadj Use adjusted back-transformed mean for Box-Cox
+#' transformations. If TRUE, point forecasts and fitted values are mean
+#' forecast. Otherwise, these points can be considered the median of the
+#' forecast densities.
+#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi)
+#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi)
+#' @param opt.crit Optimization criterion. One of "mse" (Mean Square Error),
+#' "amse" (Average MSE over first \code{nmse} forecast horizons), "sigma"
+#' (Standard deviation of residuals), "mae" (Mean of absolute residuals), or
+#' "lik" (Log-likelihood, the default).
+#' @param nmse Number of steps for average multistep MSE (1<=\code{nmse}<=30).
+#' @param bounds Type of parameter space to impose: \code{"usual" } indicates
+#' all parameters must lie between specified lower and upper bounds;
+#' \code{"admissible"} indicates parameters must lie in the admissible space;
+#' \code{"both"} (default) takes the intersection of these regions.
+#' @param ic Information criterion to be used in model selection.
+#' @param restrict If \code{TRUE} (default), the models with infinite variance
+#' will not be allowed.
+#' @param allow.multiplicative.trend If \code{TRUE}, models with multiplicative
+#' trend are allowed when searching for a model. Otherwise, the model space
+#' excludes them. This argument is ignored if a multiplicative trend model is
+#' explicitly requested (e.g., using \code{model="MMN"}).
+#' @param use.initial.values If \code{TRUE} and \code{model} is of class
+#' \code{"ets"}, then the initial values in the model are also not
+#' re-estimated.
+#' @param ... Other undocumented arguments.
+#' @return An object of class "\code{ets}".
+#'
+#' The generic accessor functions \code{fitted.values} and \code{residuals}
+#' extract useful features of the value returned by \code{ets} and associated
+#' functions.
+#' @author Rob J Hyndman
+#' @seealso \code{\link[stats]{HoltWinters}}, \code{\link{rwf}},
+#' \code{\link{Arima}}.
+#' @references Hyndman, R.J., Koehler, A.B., Snyder, R.D., and Grose, S. (2002)
+#' "A state space framework for automatic forecasting using exponential
+#' smoothing methods", \emph{International J. Forecasting}, \bold{18}(3),
+#' 439--454.
+#'
+#' Hyndman, R.J., Akram, Md., and Archibald, B. (2008) "The admissible
+#' parameter space for exponential smoothing models". \emph{Annals of
+#' Statistical Mathematics}, \bold{60}(2), 407--426.
+#'
+#' Hyndman, R.J., Koehler, A.B., Ord, J.K., and Snyder, R.D. (2008)
+#' \emph{Forecasting with exponential smoothing: the state space approach},
+#' Springer-Verlag. \url{http://www.exponentialsmoothing.net}.
+#' @keywords ts
+#' @examples
+#' fit <- ets(USAccDeaths)
+#' plot(forecast(fit))
+#'
+#' @export
 ets <- function(y, model="ZZZ", damped=NULL,
     alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, additive.only=FALSE, lambda=NULL, biasadj=FALSE,
     lower=c(rep(0.0001,3), 0.8), upper=c(rep(0.9999,3),0.98),
@@ -9,7 +101,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
   opt.crit <- match.arg(opt.crit)
   bounds <- match.arg(bounds)
   ic <- match.arg(ic)
-  
+
   seriesname <- deparse(substitute(y))
 
   if(any(class(y) %in% c("data.frame","list","matrix","mts")))
@@ -45,7 +137,8 @@ ets <- function(y, model="ZZZ", damped=NULL,
   # If model is an ets object, re-fit model to new data
   if(class(model)=="ets")
   {
-    alpha <- model$par["alpha"]
+    # Prevent alpha being zero (to avoid divide by zero in the C code)
+    alpha <- max(model$par["alpha"], 1e-10)
     beta <- model$par["beta"]
     if(is.na(beta))
       beta <- NULL
@@ -104,6 +197,9 @@ ets <- function(y, model="ZZZ", damped=NULL,
     else
     {
       model <- modelcomponents
+      if(missing(use.initial.values)){
+        message("Model is being refit with current smoothing parameters but initial states are being re-estimated.\nSet 'use.initial.values=TRUE' if you want to re-use existing initial values.")
+      }
     }
   }
 
@@ -163,14 +259,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
   }
 
   n <- length(y)
-  # Return non-optimized SES if 4 or  fewer observations
-  if(n <= 4) 
-  {
-    fit <- HoltWintersZZ(orig.y, beta=FALSE, gamma=FALSE, lambda=lambda, biasadj=biasadj)
-    fit$call <- match.call()
-    return(fit)
-  }
-  # Otherwise proceed to check we have enough data to fit a model
+  # Check we have enough data to fit a model
   npars <- 2L # alpha + l0
   if(trendtype=="A" | trendtype=="M")
     npars <- npars + 2L # beta + b0
@@ -178,8 +267,79 @@ ets <- function(y, model="ZZZ", damped=NULL,
     npars <- npars + m # gamma + s
   if(!is.null(damped))
     npars <- npars + as.numeric(damped)
-  if(n <= npars+1)
-    stop("Sorry, but I need more data!")
+
+  # Produce something non-optimized for tiny data sets
+  if(n <= npars+4L)
+  {
+    if(!is.null(damped))
+        if(damped)
+          warning("Not enough data to use damping")
+    if(seasontype=="A" | seasontype=="M")
+    {
+      fit <- try(HoltWintersZZ(orig.y,
+        alpha=alpha, beta=beta, gamma=gamma, phi=phi,
+        exponential=(trendtype=="M"),
+        seasonal=ifelse(seasontype!="A","multiplicative","additive"),
+        lambda=lambda, biasadj=biasadj), silent=TRUE)
+      if(!("try-error" %in% class(fit)))
+      {
+        fit$call <- match.call()
+        fit$method <- as.character(fit)
+        fit$series <- deparse(substitute(y))
+        return(fit)
+      }
+      else
+        warning("Seasonal component could not be estimated")
+    }
+    if(trendtype=="A" | trendtype=="M")
+    {
+      fit <- try(HoltWintersZZ(orig.y,
+        alpha=alpha, beta=beta, gamma=FALSE, phi=phi,
+        exponential=(trendtype=="M"),
+        lambda=lambda, biasadj=biasadj), silent=TRUE)
+      if(!("try-error" %in% class(fit)))
+      {
+        fit$call <- match.call()
+        fit$method <- as.character(fit)
+        fit$series <- deparse(substitute(y))
+        return(fit)
+      }
+      else
+        warning("Trend component could not be estimated")
+    }
+    if(trendtype=="N" & seasontype=="N")
+    {
+      fit <- try(HoltWintersZZ(orig.y,
+        alpha=alpha, beta=FALSE, gamma=FALSE,
+        lambda=lambda, biasadj=biasadj), silent=TRUE)
+      if(!("try-error" %in% class(fit)))
+      {
+        fit$call <- match.call()
+        fit$method <- as.character(fit)
+        fit$series <- deparse(substitute(y))
+        return(fit)
+      }
+    }
+    # Try holt and ses and return best
+    fit1 <- try(HoltWintersZZ(orig.y,
+        alpha=alpha, beta=beta, gamma=FALSE, phi=phi,
+        exponential=(trendtype=="M"),
+        lambda=lambda, biasadj=biasadj), silent=TRUE)
+    fit2 <- try(HoltWintersZZ(orig.y,
+        alpha=alpha, beta=FALSE, gamma=FALSE, phi=phi,
+        exponential=(trendtype=="M"),
+        lambda=lambda, biasadj=biasadj), silent=TRUE)
+    if("try-error" %in% class(fit1))
+      fit <- fit2
+    else if(fit1$sigma2 < fit2$sigma2)
+      fit <- fit1
+    else
+      fit <- fit2
+    fit$call <- match.call()
+    fit$method <- as.character(fit)
+    fit$series <- deparse(substitute(y))
+    return(fit)
+  }
 
   # Fit model (assuming only one nonseasonal model)
   if(errortype=="Z")
@@ -252,13 +412,23 @@ ets <- function(y, model="ZZZ", damped=NULL,
     model$fitted <- InvBoxCox(model$fitted,lambda, biasadj, var(model$residuals))
     attr(lambda, "biasadj") <- biasadj
   }
-  
+
   model$lambda <- lambda
   #model$call$data <- dataname
 
   return(structure(model,class="ets"))
 }
 
+#' @export
+as.character.ets <- function(x, ...)
+{
+  paste("ETS(",
+        x$components[1],",",
+        x$components[2],
+        ifelse(x$components[4],"d",""),",",
+        x$components[3],")",
+    sep="")
+}
 
 # myRequire <- function(libName) {
 
@@ -461,6 +631,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     gamma <- fit.par["gamma"]
   if(!is.na(fit.par["phi"]))
     phi <- fit.par["phi"]
+
   e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,nmse)
 
   np <- np + 1
@@ -831,10 +1002,7 @@ lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,low
     return(mean(abs(e$e)))
 }
 
-
-
-
-
+#' @export
 print.ets <- function(x,...)
 {
   cat(paste(x$method, "\n\n"))
@@ -980,6 +1148,36 @@ admissible <- function(alpha,beta,gamma,phi,m)
 }
 
 ### PLOT COMPONENTS
+
+
+#' Plot components from ETS model
+#'
+#' Produces a plot of the level, slope and seasonal components from an ETS
+#' model.
+#'
+#' \code{autoplot} will produce an equivelant plot as a ggplot object.
+#'
+#' @param x Object of class \dQuote{ets}.
+#' @param object Object of class \dQuote{ets}. Used for ggplot graphics (S3
+#' method consistency).
+#' @param range.bars Logical indicating if each plot should have a bar at its
+#' right side representing relative size. If NULL, automatic selection takes
+#' place.
+#' @param ... Other plotting parameters to affect the plot.
+#' @return None. Function produces a plot
+#' @author Rob J Hyndman & Mitchell O'Hara-Wild
+#' @seealso \code{\link{ets}}
+#' @keywords hplot
+#' @examples
+#'
+#' fit <- ets(USAccDeaths)
+#' plot(fit)
+#' plot(fit,plot.type="single",ylab="",col=1:3)
+#'
+#' library(ggplot2)
+#' autoplot(fit)
+#'
+#' @export
 plot.ets <- function(x,...)
 {
   if(!is.null(x$lambda))
@@ -1009,6 +1207,7 @@ plot.ets <- function(x,...)
   }
 }
 
+#' @export
 summary.ets <- function(object,...)
 {
   print(object)
@@ -1016,11 +1215,14 @@ summary.ets <- function(object,...)
   print(accuracy(object))
 }
 
+#' @export
 coef.ets <- function(object,...)
 {
   object$par
 }
 
+#' @rdname fitted.Arima
+#' @export
 fitted.ets <- function(object, h=1, ...){
   if(h==1){
     return(object$fitted)
@@ -1030,16 +1232,26 @@ fitted.ets <- function(object, h=1, ...){
   }
 }
 
+#' @export
 logLik.ets <- function(object,...)
 {
   structure(object$loglik,df=length(object$par)+1,class="logLik")
 }
 
+#' @export
 nobs.ets <- function(object, ...)
 {
   length(object$x)
 }
 
+
+
+#' Is an object a particular model type?
+#'
+#' Returns true if the model object is of a particular type
+#'
+#' @param x object to be tested
+#' @export
 is.ets <- function(x){
   inherits(x, "ets")
 }

@@ -1,44 +1,92 @@
-checkresiduals <- function(object, lag, df=NULL, test, ...)
-{  
+#' Check that residuals from a time series model look like white noise
+#' 
+#' If \code{plot=TRUE}, produces a time plot of the residuals, the
+#' corresponding ACF, and a histogram. If the degrees of freedom for the model
+#' can be determined and \code{test} is not \code{FALSE}, the output from
+#' either a Ljung-Box test or Breusch-Godfrey test is printed.
+#' 
+#' 
+#' @param object Either a time series model, a forecast object, or a time
+#' series (assumed to be residuals).
+#' @param lag Number of lags to use in the Ljung-Box or Breusch-Godfrey test.
+#' If missing, it is set to \code{max(10,df+3)} for non-seasonal data, and
+#' \code{max(2m, df+3)} for seasonal data, where \code{df} is the degrees of
+#' freedom of the model, and \code{m} is the seasonal period of the data.
+#' @param df Number of degrees of freedom for fitted model, required for the
+#' Ljung-Box or Breusch-Godfrey test. Ignored if the degrees of freedom can be
+#' extracted from \code{object}.
+#' @param test Test to use for serial correlation. By default, if \code{object}
+#' is of class \code{lm}, then \code{test="BG"}. Otherwise, \code{test="LB"}.
+#' Setting \code{test=FALSE} will prevent the test results being printed.
+#' @param plot Logical. If \code{TRUE}, will produce the plot.
+#' @param ... Other arguments are passed to \code{\link{ggtsdisplay}}.
+#' @return None
+#' @author Rob J Hyndman
+#' @seealso \code{\link{ggtsdisplay}}, \code{\link[stats]{Box.test}},
+#' \code{\link[lmtest]{bgtest}}
+#' @examples
+#' 
+#' fit <- ets(WWWusage)
+#' checkresiduals(fit)
+#' 
+#' @export
+checkresiduals <- function(object, lag, df=NULL, test, plot=TRUE, ...)
+{
+  showtest <- TRUE
   if(missing(test))
   {
     if(is.element("lm", class(object)))
       test <- "BG"
     else
       test <- "LB"
+    showtest <- TRUE
   }
-  else 
+  else if(test != FALSE)
+  {
     test <- match.arg(test, c("LB","BG"))
+    showtest <- TRUE
+  }
+  else
+    showtest <- FALSE
+
 
   # Extract residuals
   if(is.element("ts",class(object)) | is.element("numeric",class(object)) )
+  {
     residuals <- object
+    object <- list(method="Missing")
+  }
   else
     residuals <- residuals(object)
 
   if(length(residuals) == 0L)
     stop("No residuals found")
 
-  # Produce plots
   if(!is.null(object$method))
-  {
-    main <- paste("Residuals from", object$method)
     method <- object$method
-  }
   else
   {
-    main <- "Residuals"
-    method <- "Missing"
+    method <- try(as.character(object), silent=TRUE)
+    if("try-error" %in% class(method))
+      method <- "Missing"
   }
-  suppressWarnings(ggtsdisplay(residuals, plot.type="histogram", main=main, ...))
+  if(method=="Missing")
+    main <- "Residuals"
+  else
+    main <- paste("Residuals from", method)
+
+  if(plot)
+  {
+    suppressWarnings(ggtsdisplay(residuals, plot.type="histogram", main=main, ...))
+  }
 
   # Check if we have the model
   if(is.element("forecast",class(object)))
     object <- object$model
 
-  if(is.null(object))
-    return()
-  
+  if(is.null(object) | !showtest)
+    return(invisible())
+
   # Seasonality of data
   freq <- frequency(residuals)
 
@@ -61,23 +109,27 @@ checkresiduals <- function(object, lag, df=NULL, test, ...)
     df <- 1
   else
     df <- NULL
-
   if(missing(lag))
+  {
     lag <- max(df+3, ifelse(freq>1, 2*freq, 10))
-  
+    lag <- min(lag, length(residuals)-1L)
+  }
 
   if(!is.null(df))
   {
     if(test=="BG")
     {
       # Do Breusch-Godfrey test
-      print(lmtest::bgtest(object, order=lag))
+      BGtest <- lmtest::bgtest(object, order=lag)
+      BGtest$data.name <- main
+      print(BGtest)
     }
     else
     {
       # Do Ljung-Box test
-      LBtest <- Box.test(residuals, fitdf=df, lag=lag, type="Ljung")
+      LBtest <- Box.test(zoo::na.approx(residuals), fitdf=df, lag=lag, type="Ljung")
       LBtest$method <- "Ljung-Box test"
+      LBtest$data.name <- main
       names(LBtest$statistic) <- "Q*"
       print(LBtest)
       cat(paste("Model df: ",df,".   Total lags used: ",lag,"\n\n",sep=""))
