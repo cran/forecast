@@ -124,7 +124,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
   if(!is.null(lambda))
   {
     y <- BoxCox(y,lambda)
-    additive.only=TRUE
+    additive.only <- TRUE
   }
 
   if(nmse < 1 | nmse > 30)
@@ -170,7 +170,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
 
       # Compute states, fitted values and residuals
       tsp.y <- tsp(y)
-      model$states=ts(e$states,frequency=tsp.y[3],start=tsp.y[1]-1/tsp.y[3])
+      model$states <- ts(e$states,frequency=tsp.y[3],start=tsp.y[1]-1/tsp.y[3])
       colnames(model$states)[1] <- "l"
       if(trendtype!="N")
         colnames(model$states)[2] <- "b"
@@ -280,7 +280,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
         alpha=alpha, beta=beta, gamma=gamma, phi=phi,
         exponential=(trendtype=="M"),
         seasonal=ifelse(seasontype!="A","multiplicative","additive"),
-        lambda=lambda, biasadj=biasadj), silent=TRUE)
+        lambda=lambda, biasadj=biasadj, warnings=FALSE), silent=TRUE)
       if(!("try-error" %in% class(fit)))
       {
         fit$call <- match.call()
@@ -296,7 +296,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
       fit <- try(HoltWintersZZ(orig.y,
         alpha=alpha, beta=beta, gamma=FALSE, phi=phi,
         exponential=(trendtype=="M"),
-        lambda=lambda, biasadj=biasadj), silent=TRUE)
+        lambda=lambda, biasadj=biasadj, warnings=FALSE), silent=TRUE)
       if(!("try-error" %in% class(fit)))
       {
         fit$call <- match.call()
@@ -311,7 +311,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
     {
       fit <- try(HoltWintersZZ(orig.y,
         alpha=alpha, beta=FALSE, gamma=FALSE,
-        lambda=lambda, biasadj=biasadj), silent=TRUE)
+        lambda=lambda, biasadj=biasadj, warnings=FALSE), silent=TRUE)
       if(!("try-error" %in% class(fit)))
       {
         fit$call <- match.call()
@@ -324,11 +324,11 @@ ets <- function(y, model="ZZZ", damped=NULL,
     fit1 <- try(HoltWintersZZ(orig.y,
         alpha=alpha, beta=beta, gamma=FALSE, phi=phi,
         exponential=(trendtype=="M"),
-        lambda=lambda, biasadj=biasadj), silent=TRUE)
+        lambda=lambda, biasadj=biasadj, warnings=FALSE), silent=TRUE)
     fit2 <- try(HoltWintersZZ(orig.y,
         alpha=alpha, beta=FALSE, gamma=FALSE, phi=phi,
         exponential=(trendtype=="M"),
-        lambda=lambda, biasadj=biasadj), silent=TRUE)
+        lambda=lambda, biasadj=biasadj, warnings=FALSE), silent=TRUE)
     if("try-error" %in% class(fit1))
       fit <- fit2
     else if(fit1$sigma2 < fit2$sigma2)
@@ -643,7 +643,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   mse <- e$amse[1]
   amse <- mean(e$amse)
 
-  states=ts(e$states,frequency=tsp.y[3],start=tsp.y[1]-1/tsp.y[3])
+  states <- ts(e$states,frequency=tsp.y[3],start=tsp.y[1]-1/tsp.y[3])
   colnames(states)[1] <- "l"
   if(trendtype!="N")
     colnames(states)[2] <- "b"
@@ -730,11 +730,11 @@ etsTargetFunctionInit <- function(par,y,nstate,errortype,trendtype,seasontype,da
 
 
   if(!damped)
-    phi <- 1;
+    phi <- 1
   if(trendtype == "N")
-    beta <- 0;
+    beta <- 0
   if(seasontype == "N")
-    gamma <- 0;
+    gamma <- 0
 
 #  cat("alpha: ", alpha)
 #  cat(" beta: ", beta)
@@ -768,7 +768,9 @@ initparam <- function(alpha,beta,gamma,phi,trendtype,seasontype,damped,lower,upp
   # Select alpha
   if(is.null(alpha))
   {
-    alpha <- lower[1] + 0.5*(upper[1]-lower[1])/m
+    alpha <- max(lower[1] + 0.5*(upper[1]-lower[1])/m, lower[2]+2e-3)
+    if(alpha > 1 | alpha < 0)
+      alpha <- lower[1] + 2e-3
     par <- c(alpha=alpha)
   }
   else
@@ -780,6 +782,8 @@ initparam <- function(alpha,beta,gamma,phi,trendtype,seasontype,damped,lower,upp
     # Ensure beta < alpha
     upper[2] <- min(upper[2], alpha)
     beta <- lower[2] + 0.1*(upper[2]-lower[2])
+    if(beta < 0 | beta > alpha)
+      beta <- alpha - 1e-3
     par <- c(par,beta=beta)
   }
 
@@ -789,6 +793,8 @@ initparam <- function(alpha,beta,gamma,phi,trendtype,seasontype,damped,lower,upp
     # Ensure gamma < 1-alpha
     upper[3] <- min(upper[3], 1-alpha)
     gamma <- lower[3] + 0.05*(upper[3]-lower[3])
+    if(gamma < 0 | gamma > 1-alpha)
+      gamma <- 1-alpha-1e-3
     par <- c(par,gamma=gamma)
   }
 
@@ -796,6 +802,8 @@ initparam <- function(alpha,beta,gamma,phi,trendtype,seasontype,damped,lower,upp
   if(damped & is.null(phi))
   {
     phi <- lower[4] + .99*(upper[4]-lower[4])
+    if(phi < 0 | phi > 1)
+      phi <- upper[4] - 1e-3
     par <- c(par,phi=phi)
   }
 
@@ -1068,13 +1076,13 @@ pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,a
   x <- numeric(p*(n+1))
   x[1:p] <- init.state
   e <- numeric(n)
-  lik <- 0;
+  lik <- 0
   if(!damped)
-    phi <- 1;
+    phi <- 1
   if(trendtype == "N")
-    beta <- 0;
+    beta <- 0
   if(seasontype == "N")
-    gamma <- 0;
+    gamma <- 0
 
   amse <- numeric(nmse)
 
@@ -1155,7 +1163,7 @@ admissible <- function(alpha,beta,gamma,phi,m)
 #' Produces a plot of the level, slope and seasonal components from an ETS
 #' model.
 #'
-#' \code{autoplot} will produce an equivelant plot as a ggplot object.
+#' \code{autoplot} will produce an equivalent plot as a ggplot object.
 #'
 #' @param x Object of class \dQuote{ets}.
 #' @param object Object of class \dQuote{ets}. Used for ggplot graphics (S3

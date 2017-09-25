@@ -7,16 +7,16 @@
 #' The default arguments are designed for rapid estimation of models for many time series.
 #' If you are analysing just one time series, and can afford to take some more time, it
 #' is recommended that you set \code{stepwise=FALSE} and \code{approximation=FALSE}.
-#' 
+#'
 #' The number of seasonal differences is sometimes poorly chosen. If your data shows strong
 #' seasonality, try setting \code{D=1} rather than relying on the automatic selection of \code{D}.
-#' 
+#'
 #' Non-stepwise selection can be slow, especially for seasonal data. The stepwise
 #' algorithm outlined in Hyndman and Khandakar (2008) is used except that the default
 #' method for selecting seasonal differences is now the OCSB test rather than
 #' the Canova-Hansen test. There are also some other minor variations to the
 #' algorithm described in Hyndman and Khandakar (2008).
-#' 
+#'
 #'
 #' @param y a univariate time series
 #' @param d Order of first-differencing. If missing, will choose a value based
@@ -44,7 +44,7 @@
 #' @param trace If \code{TRUE}, the list of ARIMA models considered will be
 #' reported.
 #' @param approximation If \code{TRUE}, estimation is via conditional sums of
-#' squares andthe information criteria used for model selection are
+#' squares and the information criteria used for model selection are
 #' approximated. The final model is still computed using maximum likelihood
 #' estimation. Approximation should be used for long time series or a high
 #' seasonal period to avoid excessive computation times.
@@ -161,9 +161,10 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
     attr(lambda, "biasadj") <- biasadj
   }
 
-  # Choose order of differencing
+  # Check xreg and do regression if necessary
   if(!is.null(xreg))
   {
+    # Make sure it is a matrix with column names
     nmxreg <- deparse(substitute(xreg))
     xregg <- as.matrix(xreg)
     if(ncol(xregg)==1 & length(nmxreg) > 1)
@@ -171,6 +172,20 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
     if (is.null(colnames(xregg)))
       colnames(xregg) <- if (ncol(xregg) == 1) nmxreg
     else paste(nmxreg, 1:ncol(xregg), sep = "")
+
+    # Check that xreg is not rank deficient
+    # First check if any columns are constant
+    constant_columns <- apply(xregg, 2, is.constant)
+    if(any(constant_columns)) # Remove first one
+      xregg <- xregg[,-which(constant_columns)[1]]
+
+    # Now check if it is rank deficient
+    sv <- svd(na.omit(cbind(rep(1,NROW(xregg)), xregg)))$d
+    if(min(sv)/sum(sv) < .Machine$double.eps)
+      stop("xreg is rank deficient")
+
+    # Finally find residuals from regression in order
+    # to estimate appropriate level of differencing
     j <- !is.na(x) & !is.na(rowSums(xregg))
     xx <- x
     xx[j] <- residuals(lm(x ~ xregg))
@@ -180,6 +195,8 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
     xx <- x
     xregg <- NULL
   }
+
+  # Choose order of differencing
   if(stationary)
     d <- D <- 0
   if(m == 1)
@@ -547,7 +564,7 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
       if(fit$ic < Inf)
       {
         bestfit <- fit
-        break;
+        break
       }
     }
   }

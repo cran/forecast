@@ -446,12 +446,12 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
   else
       pred <- predict(object, n.ahead=h)
 
-  # Fix time series characteristics if there are missing values at end of series.
+  # Fix time series characteristics if there are missing values at end of series, or if tsp is missing from pred
   if(!is.null(x))
   {
     tspx <- tsp(x)
     nx <- max(which(!is.na(x)))
-    if(nx != length(x))
+    if(nx != length(x) | is.null(tsp(pred$pred)) | is.null(tsp(pred$se)))
     {
       tspx[2] <- time(x)[nx]
       start.f <- tspx[2]+1/tspx[3]
@@ -492,7 +492,7 @@ forecast.Arima <- function (object, h=ifelse(object$arma[5] > 1, 2 * object$arma
     	warning("Upper prediction intervals are not finite.")
     }
   }
-  colnames(lower)=colnames(upper)=paste(level, "%", sep="")
+  colnames(lower) <- colnames(upper) <- paste(level, "%", sep="")
   lower <- ts(lower)
   upper <- ts(upper)
   tsp(lower) <- tsp(upper) <- tsp(pred$pred)
@@ -777,8 +777,10 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
 
   origx <- y
   if(!is.null(lambda)){
-    x <- BoxCox(x,lambda)
-    attr(lambda, "biasadj") <- biasadj
+    x <- BoxCox(x, lambda)
+
+    if(is.null(attr(lambda, "biasadj")))
+      attr(lambda, "biasadj") <- biasadj
   }
 
   if (!is.null(xreg))
@@ -867,8 +869,8 @@ arima2 <- function (x, model, xreg, method)
   sigma2 <- model$sigma2
   if(use.drift)
   {
-    driftmod <- lm(model$xreg[,"drift"] ~ I(time(model$x)))
-    newxreg <- driftmod$coeff[1] + driftmod$coeff[2]*time(x)
+    driftmod <- lm(model$xreg[,"drift"] ~ I(time(as.ts(model$x))))
+    newxreg <- driftmod$coeff[1] + driftmod$coeff[2]*time(as.ts(x))
     if(!is.null(xreg)) {
       origColNames <- colnames(xreg)
       xreg <- cbind(newxreg,xreg)
@@ -918,7 +920,7 @@ arima2 <- function (x, model, xreg, method)
 #' @export
 print.ARIMA <- function (x, digits=max(3, getOption("digits") - 3), se=TRUE, ...){
     cat("Series:",x$series,"\n")
-    cat(arima.string(x, padding=TRUE),"\n")
+    cat(arima.string(x, padding=FALSE),"\n")
     if(!is.null(x$lambda))
         cat("Box Cox transformation: lambda=",x$lambda,"\n")
 

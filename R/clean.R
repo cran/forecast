@@ -20,8 +20,7 @@
 #' @param lambda a numeric value suggesting Box-cox transformation
 #' @return Time series
 #' @author Rob J Hyndman
-#' @seealso \code{\link[forecast]{na.interp}},
-#' \code{\link[forecast]{tsoutliers}}
+#' @seealso \code{\link[forecast]{tsoutliers}}
 #' @keywords ts
 #' @examples
 #' 
@@ -39,7 +38,7 @@ na.interp <- function(x, lambda=NULL)
   # Convert to ts
   if(is.null(tsp(x)))
     x <- ts(x)
-  if(!is.null(dim(x)))
+  if(length(dim(x)) > 1)
     stop("The time series is not univariate.")
 
   #Transform if requested
@@ -93,7 +92,7 @@ na.interp <- function(x, lambda=NULL)
 
 #' Identify and replace outliers and missing values in a time series
 #' 
-#' Uses supsmu for non-seasonal series and a periodic stl decompostion with
+#' Uses supsmu for non-seasonal series and a periodic stl decomposition with
 #' seasonal series to identify outliers. To estimate missing values and outlier
 #' replacements, linear interpolation is used on the (possibly seasonally
 #' adjusted) series
@@ -127,7 +126,7 @@ tsclean <- function(x, replace.missing=TRUE, lambda = NULL)
 
 #' Identify and replace outliers in a time series
 #' 
-#' Uses supsmu for non-seasonal series and a periodic stl decompostion with
+#' Uses supsmu for non-seasonal series and a periodic stl decomposition with
 #' seasonal series to identify outliers and estimate their replacements.
 #' 
 #' 

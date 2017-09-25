@@ -59,10 +59,11 @@ extract useful features of the value returned by \code{nnetar}.
 
 \item{model}{A list containing information about the fitted model}
 \item{method}{The name of the forecasting method as a character string}
-\item{x}{The original time series.} \item{xreg}{The external regressors used
-in fitting (if given).} \item{residuals}{Residuals from the fitted model.
-That is x minus fitted values.} \item{fitted}{Fitted values (one-step
-forecasts)} \item{...}{Other arguments}
+\item{x}{The original time series.} 
+\item{xreg}{The external regressors used in fitting (if given).} 
+\item{residuals}{Residuals from the fitted model. That is x minus fitted values.} 
+\item{fitted}{Fitted values (one-step forecasts)} 
+\item{...}{Other arguments}
 }
 \description{
 Feed-forward neural networks with a single hidden layer and lagged inputs
@@ -72,8 +73,9 @@ for forecasting univariate time series.
 A feed-forward neural network is fitted with lagged values of \code{y} as
 inputs and a single hidden layer with \code{size} nodes. The inputs are for
 lags 1 to \code{p}, and lags \code{m} to \code{mP} where
-\code{m=frequency(y)}. If there are missing values in \code{y} or
-\code{xreg}), the corresponding rows (and any others which depend on them as
+\code{m=frequency(y)}. If \code{xreg} is provided, its columns are also
+used as inputs. If there are missing values in \code{y} or
+\code{xreg}, the corresponding rows (and any others which depend on them as
 lags) are omitted from the fit. A total of \code{repeats} networks are
 fitted, each with random starting weights. These are then averaged when
 computing forecasts. The network is trained for one-step forecasting.
