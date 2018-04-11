@@ -17,8 +17,10 @@
 #' \code{forecastfunction} is applied successively to the time series
 #' \eqn{y_1,\dots,y_t}{y[1:t]}, for \eqn{t=1,\dots,T-h}, making predictions
 #' \eqn{\hat{y}_{t+h|t}}{f[t+h]}. The errors are given by \eqn{e_{t+h} =
-#' y_{t+h}-\hat{y}_{t+h|t}}{e[t+h] = y[t+h]-f[t+h]}. These are returned as a
-#' vector, \eqn{e_1,\dots,e_T}{e[1:T]}. The first few errors may be missing as
+#' y_{t+h}-\hat{y}_{t+h|t}}{e[t+h] = y[t+h]-f[t+h]}. If h=1, these are returned as a
+#' vector, \eqn{e_1,\dots,e_T}{e[1:T]}. For h>1, they are returned as a matrix with
+#' the hth column containing errors for forecast horizon h.
+#'  The first few errors may be missing as
 #' it may not be possible to apply \code{forecastfunction} to very short time
 #' series.
 #'
@@ -29,33 +31,49 @@
 #' @param h Forecast horizon
 #' @param window Length of the rolling window, if NULL, a rolling window will not be used.
 #' @param ... Other arguments are passed to \code{forecastfunction}.
-#' @return Numerical time series object containing the forecast errors.
+#' @return Numerical time series object containing the forecast errors as a vector (if h=1)
+#' and a matrix otherwise. The time index corresponds to the last period of the training
+#' data. The columns correspond to the forecast horizons.
 #' @author Rob J Hyndman
 #' @seealso \link{CV}, \link{CVar}, \link{residuals.Arima}, \url{https://robjhyndman.com/hyndsight/tscv/}.
-#' 
+#'
 #' @keywords ts
 #' @examples
 #'
 #' #Fit an AR(2) model to each rolling origin subset
 #' far2 <- function(x, h){forecast(Arima(x, order=c(2,0,0)), h=h)}
 #' e <- tsCV(lynx, far2, h=1)
-#' 
+#'
 #' #Fit the same model with a rolling window of length 30
 #' e <- tsCV(lynx, far2, h=1, window=30)
 #'
 #' @export
-tsCV <- function(y, forecastfunction, h=1, window=NULL, ...)
-{
+tsCV <- function(y, forecastfunction, h=1, window=NULL, ...) {
   y <- as.ts(y)
   n <- length(y)
-  e <- y*NA
-  for(i in seq_len(n-h))
+  e <- ts(matrix(NA_real_, nrow = n, ncol = h))
+  tsp(e) <- tsp(y)
+  for (i in seq_len(n-1))
   {
-    fc <- try(suppressWarnings(forecastfunction(subset(y, start=ifelse(is.null(window),1,ifelse(i-window >= 0, i-window + 1, stop("small window"))), end=i), h=h, ...)), silent=TRUE)
-    if(!is.element("try-error", class(fc)))
-      e[i+h] <- y[i+h] - fc$mean[h]
+    fc <- try(suppressWarnings(
+      forecastfunction(subset(
+        y,
+        start = ifelse(is.null(window), 1L,
+          ifelse(i - window >= 0L, i - window + 1L, stop("small window"))
+        ),
+        end = i
+      ), h = h, ...)
+    ), silent = TRUE)
+    if (!is.element("try-error", class(fc))) {
+      e[i, ] <- y[i + (1:h)] - fc$mean
+    }
   }
-  return(e)
+  if (h == 1) {
+    return(e[, 1L])
+  } else {
+    colnames(e) <- paste("h=",1:h,sep="")
+    return(e)
+  }
 }
 
 ## Cross-validation for AR models
@@ -67,7 +85,12 @@ tsCV <- function(y, forecastfunction, h=1, window=NULL, ...)
 #'
 #' \code{CVar} computes the errors obtained by applying an autoregressive
 #' modelling function to subsets of the time series \code{y} using k-fold
-#' cross-validation as described in Bergmeir, Hyndman and Koo (2015).
+#' cross-validation as described in Bergmeir, Hyndman and Koo (2015). It also
+#' applies a Ljung-Box test to the residuals. If this test is significant
+#' (see returned pvalue), there is serial correlation in the residuals and the
+#' model can be considered to be underfitting the data. In this case, the
+#' cross-validated errors can underestimate the generalization error and should
+#' not be used.
 #'
 #' @aliases print.CVar
 #'
@@ -76,14 +99,16 @@ tsCV <- function(y, forecastfunction, h=1, window=NULL, ...)
 #' @param FUN Function to fit an autoregressive model. Currently, it only works
 #' with the \code{\link{nnetar}} function.
 #' @param cvtrace Provide progress information.
+#' @param blocked choose folds randomly or as blocks?
+#' @param LBlags lags for the Ljung-Box test, defaults to 24, for yearly series can be set to 20
 #' @param ... Other arguments are passed to \code{FUN}.
 #' @return A list containing information about the model and accuracy for each
 #' fold, plus other summary information computed across folds.
 #' @author Gabriel Caceres and Rob J Hyndman
 #' @seealso \link{CV}, \link{tsCV}.
-#' @references Bergmeir, C., Hyndman, R.J., Koo, B. (2015) A note on the
-#' validity of cross-validation for evaluating time series prediction. Monash
-#' working paper 10/15.
+#' @references Bergmeir, C., Hyndman, R.J., Koo, B. (2018) A note on the
+#' validity of cross-validation for evaluating time series prediction. 
+#' \emph{Computational Statistics & Data Analysis}, \bold{120}, 70-83.
 #' \url{https://robjhyndman.com/publications/cv-time-series/}.
 #' @keywords ts
 #' @examples
@@ -92,51 +117,75 @@ tsCV <- function(y, forecastfunction, h=1, window=NULL, ...)
 #' print(modelcv)
 #' print(modelcv$fold1)
 #'
+#' library(ggplot2)
+#' autoplot(lynx, series="Data") +
+#'   autolayer(modelcv$testfit, series="Fits") +
+#'   autolayer(modelcv$residuals, series="Residuals")
+#' ggAcf(modelcv$residuals)
+#'
 #' @export
-CVar <- function(y, k=10, FUN=nnetar, cvtrace=FALSE, ...){
+CVar <- function(y, k=10, FUN=nnetar, cvtrace=FALSE, blocked=FALSE, LBlags=24, ...) {
   nx <- length(y)
   ## n-folds at most equal number of points
   k <- min(as.integer(k), nx)
-  if(k <= 1L)
+  if (k <= 1L) {
     stop("k must be at least 2")
+  }
   # Set up folds
   ind <- seq_len(nx)
-  fold <- sample(rep(1:k, length.out=nx))
+  fold <- if (blocked) {
+    sort(rep(1:k, length.out = nx))
+  } else {
+    sample(rep(1:k, length.out = nx))
+  }
 
-  cvacc <- matrix(NA_real_, nrow=k, ncol=7)
+  cvacc <- matrix(NA_real_, nrow = k, ncol = 7)
   out <- list()
+  alltestfit <- rep(NA, length.out = nx)
   for (i in 1:k)
   {
     out[[paste0("fold", i)]] <- list()
-    testset <- ind[fold==i]
-    trainset <- ind[fold!=i]
-    trainmodel <- FUN(y, subset=trainset, ...)
-    testmodel <- FUN(y, model=trainmodel, xreg=trainmodel$xreg)
+    testset <- ind[fold == i]
+    trainset <- ind[fold != i]
+    trainmodel <- FUN(y, subset = trainset, ...)
+    testmodel <- FUN(y, model = trainmodel, xreg = trainmodel$xreg)
     testfit <- fitted(testmodel)
-    acc <- accuracy(y, testfit, test=testset)
+    acc <- accuracy(y, testfit, test = testset)
     cvacc[i, ] <- acc
     out[[paste0("fold", i)]]$model <- trainmodel
     out[[paste0("fold", i)]]$accuracy <- acc
-    if (isTRUE(cvtrace)){
+
+    out[[paste0("fold", i)]]$testfit <- testfit
+    out[[paste0("fold", i)]]$testset <- testset
+
+    alltestfit[testset] <- testfit[testset]
+
+    if (isTRUE(cvtrace)) {
       cat("Fold", i, "\n")
       print(acc)
       cat("\n")
     }
   }
+
+  out$testfit <- ts(alltestfit)
+  tsp(out$testfit) <- tsp(y)
+
+  out$residuals <- out$testfit - y
+  out$LBpvalue <- Box.test(out$residuals, type = "Ljung", lag = LBlags)$p.value
+
   out$k <- k
-  ## calculate mean acuracy accross all folds
-  CVmean <- matrix(apply(cvacc, 2, FUN=mean, na.rm=TRUE), dimnames=list(colnames(acc), "Mean"))
+  ## calculate mean accuracy accross all folds
+  CVmean <- matrix(apply(cvacc, 2, FUN = mean, na.rm = TRUE), dimnames = list(colnames(acc), "Mean"))
   ## calculate accuracy sd accross all folds --- include?
-  CVsd <- matrix(apply(cvacc, 2, FUN=sd, na.rm=TRUE), dimnames=list(colnames(acc), "SD"))
-  out$CVsummary <- cbind(CVmean,CVsd)
+  CVsd <- matrix(apply(cvacc, 2, FUN = sd, na.rm = TRUE), dimnames = list(colnames(acc), "SD"))
+  out$CVsummary <- cbind(CVmean, CVsd)
   out$series <- deparse(substitute(y))
   out$call <- match.call()
-  return(structure(out, class=c("CVar", class(trainmodel))))
+  return(structure(out, class = c("CVar", class(trainmodel))))
 }
 
 #' @export
-print.CVar <- function(x, ...)
-{
+print.CVar <- function(x, ...) {
   cat("Series:", x$series, "\n")
   cat("Call:   ")
   print(x$call)
@@ -144,8 +193,14 @@ print.CVar <- function(x, ...)
   ## Add note about any NA/NaN in folds?
   ##
   ## Print number of folds
-  cat("\n", x$k, "-fold cross-validation\n", sep="")
+  cat("\n", x$k, "-fold cross-validation\n", sep = "")
   ## Print mean & sd accuracy() results
   print(x$CVsummary)
+
+  cat("\n")
+  cat("p-value of Ljung-Box test of residuals is ", x$LBpvalue, "\n")
+  cat("if this value is significant (<0.05),\n")
+  cat("the result of the cross-validation should not be used\n")
+  cat("as the model is underfitting the data.\n")
   invisible(x)
 }

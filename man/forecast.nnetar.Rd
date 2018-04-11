@@ -28,8 +28,10 @@ suitable for fan plots.}
 
 \item{xreg}{Future values of external regressor variables.}
 
-\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise,
-forecasts back-transformed via an inverse Box-Cox transformation.}
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+then a transformation is automatically selected using \code{BoxCox.lambda}.
+The transformation is ignored if NULL. Otherwise,
+data transformed before model is estimated.}
 
 \item{bootstrap}{If \code{TRUE}, then prediction intervals computed using
 simulations with resampled residuals rather than normally distributed
@@ -55,17 +57,17 @@ The generic accessor functions \code{fitted.values} and \code{residuals}
 extract useful features of the value returned by \code{forecast.nnetar}.
 
 An object of class "\code{forecast}" is a list containing at least the
-following elements: 
-  \item{model}{A list containing information about the fitted model} 
-  \item{method}{The name of the forecasting method as a character string} 
+following elements:
+  \item{model}{A list containing information about the fitted model}
+  \item{method}{The name of the forecasting method as a character string}
   \item{mean}{Point forecasts as a time series}
-  \item{lower}{Lower limits for prediction intervals} 
-  \item{upper}{Upper limits for prediction intervals} 
-  \item{level}{The confidence values associated with the prediction intervals} 
-  \item{x}{The original time series (either \code{object} itself or the time series 
-           used to create the model stored as \code{object}).} 
-  \item{xreg}{The external regressors used in fitting (if given).} 
-  \item{residuals}{Residuals from the fitted model. That is x minus fitted values.} 
+  \item{lower}{Lower limits for prediction intervals}
+  \item{upper}{Upper limits for prediction intervals}
+  \item{level}{The confidence values associated with the prediction intervals}
+  \item{x}{The original time series (either \code{object} itself or the time series
+           used to create the model stored as \code{object}).}
+  \item{xreg}{The external regressors used in fitting (if given).}
+  \item{residuals}{Residuals from the fitted model. That is x minus fitted values.}
   \item{fitted}{Fitted values (one-step forecasts)}
   \item{...}{Other arguments}
 }

@@ -9,14 +9,18 @@ na.interp(x, lambda = NULL)
 \arguments{
 \item{x}{time series}
 
-\item{lambda}{a numeric value suggesting Box-cox transformation}
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+then a transformation is automatically selected using \code{BoxCox.lambda}.
+The transformation is ignored if NULL. Otherwise,
+data transformed before model is estimated.}
 }
 \value{
 Time series
 }
 \description{
-Uses linear interpolation for non-seasonal series and a periodic stl
-decomposition with seasonal series to replace missing values.
+Uses linear interpolation for non-seasonal series. For seasonal series, a 
+robust STL decomposition is used. A linear interpolation is applied to the 
+seasonally adjusted data, and then the seasonal component is added back.
 }
 \details{
 A more general and flexible approach is available using \code{na.approx} in

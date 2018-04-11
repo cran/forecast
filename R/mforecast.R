@@ -1,27 +1,27 @@
 #' @rdname is.forecast
 #' @export
-is.mforecast <- function(x){
+is.mforecast <- function(x) {
   inherits(x, "mforecast")
 }
 
-mlmsplit <- function(x, index=NULL){
-  if(is.null(index)){
+mlmsplit <- function(x, index=NULL) {
+  if (is.null(index)) {
     stop("Must select lm using index=integer(1)")
   }
   mfit <- match(c("coefficients", "residuals", "effects", "fitted.values"), names(x), 0L)
-  for (j in mfit){
-    x[[j]] <- x[[j]][,index]
+  for (j in mfit) {
+    x[[j]] <- x[[j]][, index]
   }
   class(x) <- "lm"
-  y<-attr(x$terms,"response")
+  y <- attr(x$terms, "response")
 
   yName <- colnames(x$model[[y]])[index]
-  x$model[[y]] <- x$model[[y]][,index]
+  x$model[[y]] <- x$model[[y]][, index]
   colnames(x$model)[y] <- yName
-  attr(x$model, "terms") <- terms(reformulate(attr(x$terms, "term.labels"), response=yName), data=x$model)
+  attr(x$model, "terms") <- terms(reformulate(attr(x$terms, "term.labels"), response = yName), data = x$model)
 
-  if(!is.null(tsp(x$data[,1]))){
-    tspx <- tsp(x$data[,1]) #Consolidate ts attributes for forecast.lm
+  if (!is.null(tsp(x$data[, 1]))) {
+    tspx <- tsp(x$data[, 1]) # Consolidate ts attributes for forecast.lm
     x$data <- lapply(x$model, function(x) ts(x, start = tspx[1], end = tspx[2], frequency = tspx[3]))
     class(x$data) <- "data.frame"
     row.names(x$data) <- 1:max(sapply(x$data, NROW))
@@ -53,17 +53,13 @@ mlmsplit <- function(x, index=NULL){
 #' for fan plots.
 #' @param h Number of periods for forecasting. Ignored if \code{newdata}
 #' present.
-#' @param lambda Box-Cox transformation parameter. Ignored if \code{NULL}.
-#' Otherwise, forecasts back-transformed via an inverse Box-Cox transformation.
-#' @param biasadj Use adjusted back-transformed mean for Box-Cox
-#' transformations. If TRUE, point forecasts and fitted values are mean
-#' forecast. Otherwise, these points can be considered the median of the
-#' forecast densities.
 #' @param ts If \code{TRUE}, the forecasts will be treated as time series
 #' provided the original data is a time series; the \code{newdata} will be
 #' interpreted as related to the subsequent time periods. If \code{FALSE}, any
 #' time series attributes of the original data will be ignored.
 #' @param ... Other arguments passed to \code{\link[forecast]{forecast.lm}()}.
+#' @inheritParams forecast
+#' 
 #' @return An object of class "\code{mforecast}".
 #'
 #' The function \code{summary} is used to obtain and print a summary of the
@@ -98,20 +94,19 @@ mlmsplit <- function(x, index=NULL){
 #' fcast <- forecast(fit, newdata=data.frame(carmpg=30))
 #'
 #' @export
-forecast.mlm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambda=object$lambda, biasadj=NULL, ts=TRUE, ...)
-{
-  out <- list(model=object,forecast=vector("list", NCOL(object$coefficients)))
+forecast.mlm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambda=object$lambda, biasadj=NULL, ts=TRUE, ...) {
+  out <- list(model = object, forecast = vector("list", NCOL(object$coefficients)))
 
   cl <- match.call()
   cl[[1]] <- quote(forecast.lm)
-  cl$object <- quote(mlmsplit(object,index=i))
-  for(i in seq_along(out$forecast)){
+  cl$object <- quote(mlmsplit(object, index = i))
+  for (i in seq_along(out$forecast)) {
     out$forecast[[i]] <- eval(cl)
     out$forecast[[i]]$series <- colnames(object$coefficients)[i]
   }
   out$method <- rep("Multiple linear regression model", length(out$forecast))
   names(out$forecast) <- names(out$method) <- colnames(object$coefficients)
-  return(structure(out,class="mforecast"))
+  return(structure(out, class = "mforecast"))
 }
 
 #' Forecasting time series
@@ -134,13 +129,13 @@ forecast.mlm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambd
 #' @param robust If TRUE, the function is robust to missing values and outliers
 #' in \code{object}. This argument is only valid when \code{object} is of class
 #' \code{mts}.
-#' @param lambda Box-Cox transformation parameter.
 #' @param find.frequency If TRUE, the function determines the appropriate
 #' period, if the data is of unknown period.
 #' @param allow.multiplicative.trend If TRUE, then ETS models with
 #' multiplicative trends are allowed. Otherwise, only additive or no trend ETS
 #' models are permitted.
 #' @param ... Additional arguments affecting the forecasts produced.
+#' @inheritParams forecast
 #' @return An object of class "\code{mforecast}".
 #'
 #' The function \code{summary} is used to obtain and print a summary of the
@@ -167,27 +162,25 @@ forecast.mlm <- function(object, newdata, h=10, level=c(80,95), fan=FALSE, lambd
 #' are \code{\link{forecast.mlm}}, \code{forecast.varest}.
 #'
 #' @export
-forecast.mts <- function(object, h=ifelse(frequency(object)>1, 2*frequency(object), 10),
-                         level=c(80,95), fan=FALSE, robust=FALSE, lambda = NULL, find.frequency = FALSE,
-                         allow.multiplicative.trend=FALSE, ...){
-
+forecast.mts <- function(object, h=ifelse(frequency(object) > 1, 2 * frequency(object), 10),
+                         level=c(80, 95), fan=FALSE, robust=FALSE, lambda = NULL, biasadj = FALSE, find.frequency = FALSE,
+                         allow.multiplicative.trend=FALSE, ...) {
   out <- list(forecast = vector("list", NCOL(object)))
   cl <- match.call()
   cl[[1]] <- quote(forecast.ts)
-  cl$object <- quote(object[,i])
-  for(i in 1:NCOL(object)){
+  cl$object <- quote(object[, i])
+  for (i in 1:NCOL(object)) {
     out$forecast[[i]] <- eval(cl)
     out$forecast[[i]]$series <- colnames(object)[i]
   }
   out$method <- vapply(out$forecast, function(x) x$method, character(1))
   names(out$forecast) <- names(out$method) <- colnames(object)
-  return(structure(out,class="mforecast"))
+  return(structure(out, class = "mforecast"))
 }
 
 #' @export
-print.mforecast <- function(x, ...)
-{
-  lapply(x$forecast, function(x){
+print.mforecast <- function(x, ...) {
+  lapply(x$forecast, function(x) {
     cat(paste0(x$series, "\n"))
     print(x)
     cat("\n")
@@ -220,9 +213,9 @@ print.mforecast <- function(x, ...)
 #' @param \dots additional arguments to each individual \code{plot}.
 #' @author Mitchell O'Hara-Wild
 #' @seealso \code{\link[forecast]{plot.forecast}}, \code{\link[stats]{plot.ts}}
-#' @references Hyndman and Athanasopoulos (2014) \emph{Forecasting: principles
-#' and practice}, OTexts: Melbourne, Australia.
-#' \url{http://www.otexts.org/fpp/}
+#' @references Hyndman and Athanasopoulos (2018) \emph{Forecasting: principles
+#' and practice}, 2nd edition, OTexts: Melbourne, Australia.
+#' \url{https://OTexts.org/fpp2/}
 #' @keywords ts
 #' @examples
 #' library(ggplot2)
@@ -241,30 +234,28 @@ print.mforecast <- function(x, ...)
 #' autoplot(fcast, xlab=rep("Year",2))
 #'
 #' @export
-plot.mforecast <- function(x, main=paste("Forecasts from",unique(x$method)),xlab="time",...)
-{
-  oldpar <- par(mfrow=c(length(x$forecast),1),mar=c(0,5.1,0,2.1),oma=c(6,0,5,0))
+plot.mforecast <- function(x, main=paste("Forecasts from", unique(x$method)), xlab="time", ...) {
+  oldpar <- par(mfrow = c(length(x$forecast), 1), mar = c(0, 5.1, 0, 2.1), oma = c(6, 0, 5, 0))
   on.exit(par(oldpar))
-  for(fcast in x$forecast)
+  for (fcast in x$forecast)
   {
-    plot(fcast,main="",xaxt="n",ylab=fcast$series,...)
+    plot(fcast, main = "", xaxt = "n", ylab = fcast$series, ...)
   }
   axis(1)
-  mtext(xlab,outer=TRUE,side=1,line=3)
-  title(main=main,outer=TRUE)
+  mtext(xlab, outer = TRUE, side = 1, line = 3)
+  title(main = main, outer = TRUE)
 }
 
 #' @export
-summary.mforecast <- function(object, ...){
-  cat(paste("\nForecast method:",unique(object$method)))
+summary.mforecast <- function(object, ...) {
+  cat(paste("\nForecast method:", unique(object$method)))
   cat(paste("\n\nModel Information:\n"))
   print(object$model)
   cat("\nError measures:\n")
   print(accuracy(object))
-  if(is.null(object$forecast))
+  if (is.null(object$forecast)) {
     cat("\n No forecasts\n")
-  else
-  {
+  } else {
     cat("\nForecasts:\n")
     print(object)
   }

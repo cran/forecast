@@ -8,13 +8,15 @@
 \title{Naive and Random Walk Forecasts}
 \usage{
 rwf(y, h = 10, drift = FALSE, level = c(80, 95), fan = FALSE,
-  lambda = NULL, biasadj = FALSE, x = y)
+  lambda = NULL, biasadj = FALSE, bootstrap = FALSE, npaths = 5000,
+  x = y)
 
 naive(y, h = 10, level = c(80, 95), fan = FALSE, lambda = NULL,
-  biasadj = FALSE, x = y)
+  biasadj = FALSE, bootstrap = FALSE, npaths = 5000, x = y)
 
 snaive(y, h = 2 * frequency(x), level = c(80, 95), fan = FALSE,
-  lambda = NULL, biasadj = FALSE, x = y)
+  lambda = NULL, biasadj = FALSE, bootstrap = FALSE, npaths = 5000,
+  x = y)
 }
 \arguments{
 \item{y}{a numeric vector or time series of class \code{ts}}
@@ -28,13 +30,20 @@ snaive(y, h = 2 * frequency(x), level = c(80, 95), fan = FALSE,
 \item{fan}{If TRUE, level is set to seq(51,99,by=3). This is suitable for
 fan plots.}
 
-\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise,
-forecasts back-transformed via an inverse Box-Cox transformation.}
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+then a transformation is automatically selected using \code{BoxCox.lambda}.
+The transformation is ignored if NULL. Otherwise,
+data transformed before model is estimated.}
 
 \item{biasadj}{Use adjusted back-transformed mean for Box-Cox
-transformations. If TRUE, point forecasts and fitted values are mean
-forecast. Otherwise, these points can be considered the median of the
-forecast densities.}
+transformations. If transformed data is used to produce forecasts and fitted values,
+a regular back transformation will result in median forecasts. If biasadj is TRUE,
+an adjustment will be made to produce mean forecasts and fitted values.}
+
+\item{bootstrap}{If TRUE, use a bootstrap method to compute prediction intervals.
+Otherwise, assume a normal distribution.}
+
+\item{npaths}{Number of bootstrapped sample paths to use if \code{bootstrap==TRUE}.}
 
 \item{x}{Deprecated. Included for backwards compatibility.}
 }
@@ -74,7 +83,8 @@ The random walk with drift model is \deqn{Y_t=c + Y_{t-1} + Z_t}{Y[t]=c +
 Y[t-1] + Z[t]} where \eqn{Z_t}{Z[t]} is a normal iid error. Forecasts are
 given by \deqn{Y_n(h)=ch+Y_n}{Y[n+h]=ch+Y[n]}. If there is no drift (as in
 \code{naive}), the drift parameter c=0. Forecast standard errors allow for
-uncertainty in estimating the drift parameter.
+uncertainty in estimating the drift parameter (unlike the corresponding
+forecasts obtained by fitting an ARIMA model directly).
 
 The seasonal naive model is \deqn{Y_t= Y_{t-m} + Z_t}{Y[t]=Y[t-m] + Z[t]}
 where \eqn{Z_t}{Z[t]} is a normal iid error.

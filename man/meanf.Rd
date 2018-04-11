@@ -5,7 +5,7 @@
 \title{Mean Forecast}
 \usage{
 meanf(y, h = 10, level = c(80, 95), fan = FALSE, lambda = NULL,
-  biasadj = FALSE, x = y)
+  biasadj = FALSE, bootstrap = FALSE, npaths = 5000, x = y)
 }
 \arguments{
 \item{y}{a numeric vector or time series of class \code{ts}}
@@ -17,13 +17,20 @@ meanf(y, h = 10, level = c(80, 95), fan = FALSE, lambda = NULL,
 \item{fan}{If TRUE, level is set to seq(51,99,by=3). This is suitable for
 fan plots.}
 
-\item{lambda}{Box-Cox transformation parameter. Ignored if NULL. Otherwise,
-forecasts back-transformed via an inverse Box-Cox transformation.}
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+then a transformation is automatically selected using \code{BoxCox.lambda}.
+The transformation is ignored if NULL. Otherwise,
+data transformed before model is estimated.}
 
 \item{biasadj}{Use adjusted back-transformed mean for Box-Cox
-transformations. If TRUE, point forecasts and fitted values are mean
-forecast. Otherwise, these points can be considered the median of the
-forecast densities.}
+transformations. If transformed data is used to produce forecasts and fitted values,
+a regular back transformation will result in median forecasts. If biasadj is TRUE,
+an adjustment will be made to produce mean forecasts and fitted values.}
+
+\item{bootstrap}{If TRUE, use a bootstrap method to compute prediction intervals.
+Otherwise, assume a normal distribution.}
+
+\item{npaths}{Number of bootstrapped sample paths to use if \code{bootstrap==TRUE}.}
 
 \item{x}{Deprecated. Included for backwards compatibility.}
 }

@@ -29,7 +29,10 @@ weights. These are then averaged when producing forecasts.}
 \item{xreg}{Optionally, a vector or matrix of external regressors, which
 must have the same number of rows as \code{y}. Must be numeric.}
 
-\item{lambda}{Box-Cox transformation parameter.}
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+then a transformation is automatically selected using \code{BoxCox.lambda}.
+The transformation is ignored if NULL. Otherwise,
+data transformed before model is estimated.}
 
 \item{model}{Output from a previous call to \code{nnetar}. If model is
 passed, this same model is fitted to \code{y} without re-estimating any
@@ -59,10 +62,10 @@ extract useful features of the value returned by \code{nnetar}.
 
 \item{model}{A list containing information about the fitted model}
 \item{method}{The name of the forecasting method as a character string}
-\item{x}{The original time series.} 
-\item{xreg}{The external regressors used in fitting (if given).} 
-\item{residuals}{Residuals from the fitted model. That is x minus fitted values.} 
-\item{fitted}{Fitted values (one-step forecasts)} 
+\item{x}{The original time series.}
+\item{xreg}{The external regressors used in fitting (if given).}
+\item{residuals}{Residuals from the fitted model. That is x minus fitted values.}
+\item{fitted}{Fitted values (one-step forecasts)}
 \item{...}{Other arguments}
 }
 \description{
@@ -107,6 +110,6 @@ fit2 <- nnetar(window(lynx,start=1921), model=fit)
 
 }
 \author{
-Rob J Hyndman
+Rob J Hyndman and Gabriel Caceres
 }
 \keyword{ts}
