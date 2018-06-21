@@ -398,7 +398,7 @@ stlm <- function(y, s.window=13, robust=FALSE, method=c("ets", "arima"), modelfu
     }
     else if (inherits(model$model, "Arima")) {
       modelfunction <- function(x, ...) {
-        return(Arima(x, model = model$model, ...))
+        return(Arima(x, model = model$model, xreg=xreg, ...))
       }
     }
     else if (!is.null(model$modelfunction)) {
@@ -480,7 +480,7 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
   {
     mp <- seasonal.periods[i]
     n <- NROW(object$stl)
-    colname <- paste0("Seasonal", mp)
+    colname <- paste0("Seasonal", round(mp, 2))
     seascomp[, i] <- rep(object$stl[n - rev(seq_len(mp)) + 1, colname], trunc(1 + (h - 1) / mp))[seq_len(h)]
   }
   lastseas <- rowSums(seascomp)

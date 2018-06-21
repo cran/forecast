@@ -1,21 +1,12 @@
-#' Create a ggplot layer appropriate to a particular data type
-#'
-#' \code{autolayer} uses ggplot2 to draw a particular layer for an object of a
-#' particular class in a single command. This defines the S3 generic that other
-#' classes and packages can extend.
-#'
-#'
-#' @param object an object, whose class will determine the behaviour of
-#' autoplot
-#' @param ... other arguments passed to specific methods
-#' @return a ggplot layer
-#' @seealso \code{\link[ggplot2]{autoplot}}, \code{\link[ggplot2]{ggplot}},
-#' \code{\link[ggplot2]{fortify}}
-#'
+#' @inherit ggplot2::autolayer
 #' @export
-autolayer <- function(object, ...) {
+autolayer <- function(object, ...){
   UseMethod("autolayer")
 }
+
+#' @importFrom ggplot2 autoplot
+#' @export
+ggplot2::autoplot
 
 ggAddExtras <- function(xlab=NA, ylab=NA, main=NA) {
   dots <- eval.parent(quote(list(...)))
@@ -524,7 +515,7 @@ autoplot.ets <- function(object, range.bars = NULL, ...) {
       p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
     }
 
-    p <- p + ggAddExtras(xlab = NULL, ylab = "", main = paste("Decomposition by", object$method, "method"))
+    p <- p + ggAddExtras(xlab = NULL, ylab = "", main = paste("Components of", object$method, "method"))
     return(p)
   }
 }
@@ -570,7 +561,7 @@ autoplot.bats <- function(object, range.bars = FALSE, ...) {
     p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
   }
 
-  p <- p + ggAddExtras(xlab = NULL, ylab = "", main = paste("Decomposition by", object$method, "method"))
+  p <- p + ggAddExtras(xlab = NULL, ylab = "", main = paste("Components of", object$method, "method"))
   return(p)
 }
 

@@ -7,8 +7,7 @@
 autolayer(object, ...)
 }
 \arguments{
-\item{object}{an object, whose class will determine the behaviour of
-autoplot}
+\item{object}{an object, whose class will determine the behaviour of autolayer}
 
 \item{...}{other arguments passed to specific methods}
 }
@@ -17,10 +16,9 @@ a ggplot layer
 }
 \description{
 \code{autolayer} uses ggplot2 to draw a particular layer for an object of a
-particular class in a single command. This defines the S3 generic that other
-classes and packages can extend.
+particular class in a single command. This defines the S3 generic that
+other classes and packages can extend.
 }
 \seealso{
-\code{\link[ggplot2]{autoplot}}, \code{\link[ggplot2]{ggplot}},
-\code{\link[ggplot2]{fortify}}
+\code{\link[=autoplot]{autoplot()}}, \code{\link[=ggplot]{ggplot()}} and \code{\link[=fortify]{fortify()}}
 }
