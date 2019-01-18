@@ -229,14 +229,14 @@ SD.test <- function(wts, s=frequency(wts)) {
 #' @param fan If \code{TRUE}, level is set to \code{seq(51,99,by=3)}. This is
 #' suitable for fan plots.
 #' @param xreg Future values of an regression variables (for class \code{Arima}
-#' objects only).
+#' objects only). A numerical vector or matrix of external regressors; it should not be a data frame.
 #' @param bootstrap If \code{TRUE}, then prediction intervals computed using
 #' simulation with resampled errors.
 #' @param npaths Number of sample paths used in computing simulated prediction
 #' intervals when \code{bootstrap=TRUE}.
 #' @param ... Other arguments.
 #' @inheritParams forecast
-#' 
+#'
 #' @return An object of class "\code{forecast}".
 #'
 #' The function \code{summary} is used to obtain and print a summary of the
@@ -292,6 +292,8 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
   usexreg <- (!is.null(xreg) | use.drift | is.element("xreg", names(object))) # | use.constant)
 
   if (!is.null(xreg)) {
+    if("data.frame" %in% class(xreg))
+      stop("xreg should be a numeric matrix or a numeric vector")
     origxreg <- xreg <- as.matrix(xreg)
     h <- nrow(xreg)
   }
@@ -310,11 +312,13 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
   }
   level <- sort(level)
   if (use.drift) {
-    n <- length(x)
+    missing <- is.na(x)
+    firstnonmiss <- head(which(!missing),1)
+    n <- length(x) - firstnonmiss + 1
     if (!is.null(xreg)) {
-      xreg <- cbind((1:h) + n, xreg)
+      xreg <- cbind(drift = (1:h) + n, xreg)
     } else {
-      xreg <- as.matrix((1:h) + n)
+      xreg <- `colnames<-`(as.matrix((1:h) + n), "drift")
     }
   }
 
@@ -333,6 +337,9 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
     object$call$xreg <- getxreg(object)
     if (NCOL(xreg) != NCOL(object$call$xreg)) {
       stop("Number of regressors does not match fitted model")
+    }
+    if(!identical(colnames(xreg), colnames(object$call$xreg))){
+      warning("xreg contains different column names from the xreg used in training. Please check that the regressors are in the same order.")
     }
     pred <- predict(object, n.ahead = h, newxreg = xreg)
   }
@@ -396,9 +403,9 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
   else {
     object$call$y
   }
-  fits <- fitted(object)
+  fits <- fitted.Arima(object)
   if (!is.null(lambda) & is.null(object$constant)) { # Back-transform point forecasts and prediction intervals
-    pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, var(residuals(object), na.rm = TRUE))
+    pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, var(residuals.Arima(object), na.rm = TRUE))
     if (!bootstrap) { # Bootstrapped intervals already back-transformed
       lower <- InvBoxCox(lower, lambda)
       upper <- InvBoxCox(upper, lambda)
@@ -408,7 +415,7 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
     list(
       method = method, model = object, level = level,
       mean = pred$pred, lower = lower, upper = upper, x = x, series = seriesname,
-      fitted = fits, residuals = residuals(object)
+      fitted = fits, residuals = residuals.Arima(object)
     ),
     class = "forecast"
   ))
@@ -447,8 +454,8 @@ forecast.ar <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NULL,
   colnames(lower) <- colnames(upper) <- paste(level, "%", sep = "")
   method <- paste("AR(", object$order, ")", sep = "")
   f <- frequency(x)
-  res <- residuals(object)
-  fits <- fitted(object)
+  res <- residuals.ar(object)
+  fits <- fitted.ar(object)
 
   if (!is.null(lambda)) {
     pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, list(level = level, upper = upper, lower = lower))
@@ -515,7 +522,7 @@ getxreg <- function(z) {
 #' @export
 arima.errors <- function(object) {
   message("Deprecated, use residuals.Arima(object, type='regression') instead")
-  residuals(object, type = "regression")
+  residuals.Arima(object, type = "regression")
 }
 
 # Return one-step fits
@@ -594,8 +601,8 @@ fitted.Arima <- function(object, h = 1, ...) {
 #' components order and period, but a specification of just a numeric vector of
 #' length 3 will be turned into a suitable list with the specification as the
 #' order.
-#' @param xreg Optionally, a vector or matrix of external regressors, which
-#' must have the same number of rows as y.
+#' @param xreg Optionally, a numerical vector or matrix of external regressors, which
+#' must have the same number of rows as y. It should not be a data frame.
 #' @param include.mean Should the ARIMA model include a mean term? The default
 #' is \code{TRUE} for undifferenced series, \code{FALSE} for differenced ones
 #' (where a mean would not affect the fit nor predictions).
@@ -673,6 +680,8 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   }
 
   if (!is.null(xreg)) {
+    if("data.frame" %in% class(xreg))
+      stop("xreg should be a numeric matrix or a numeric vector")
     nmxreg <- deparse(substitute(xreg))
     xreg <- as.matrix(xreg)
     if (ncol(xreg) == 1 & length(nmxreg) > 1) {
@@ -686,8 +695,12 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   if (!is.list(seasonal)) {
     if (frequency(x) <= 1) {
       seasonal <- list(order = c(0, 0, 0), period = NA)
+      if(length(x) <= order[2L])
+        stop("Not enough data to fit the model")
     } else {
       seasonal <- list(order = seasonal, period = frequency(x))
+      if(length(x) <= order[2L] + seasonal$order[2L] * seasonal$period)
+        stop("Not enough data to fit the model")
     }
   }
 
@@ -727,7 +740,11 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
 
   # Calculate aicc & bic based on tmp$aic
   npar <- length(tmp$coef) + 1
-  nstar <- length(tmp$residuals) - tmp$arma[6] - tmp$arma[7] * tmp$arma[5]
+  missing <- is.na(tmp$residuals)
+  firstnonmiss <- head(which(!missing),1)
+  lastnonmiss <- tail(which(!missing),1)
+  n <- lastnonmiss - firstnonmiss + 1
+  nstar <- n - tmp$arma[6] - tmp$arma[7] * tmp$arma[5]
   tmp$aicc <- tmp$aic + 2 * npar * (nstar / (nstar - npar - 1) - 1)
   tmp$bic <- tmp$aic + npar * (log(nstar) - 2)
   tmp$series <- series
@@ -741,7 +758,7 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
     tmp$sigma2 <- sum(tmp$residuals ^ 2, na.rm = TRUE) / (nstar - npar + 1)
   }
   out <- structure(tmp, class = c("ARIMA", "Arima"))
-  out$fitted <- fitted(out)
+  out$fitted <- fitted.Arima(out)
   out$series <- series
   return(out)
 }
@@ -853,7 +870,11 @@ print.ARIMA <- function(x, digits=max(3, getOption("digits") - 3), se=TRUE, ...)
     )
     # npar <- length(x$coef) + 1
     npar <- length(x$coef[x$mask]) + 1
-    nstar <- length(x$residuals) - x$arma[6] - x$arma[7] * x$arma[5]
+    missing <- is.na(x$residuals)
+    firstnonmiss <- head(which(!missing),1)
+    lastnonmiss <- tail(which(!missing),1)
+    n <- lastnonmiss - firstnonmiss + 1
+    nstar <- n - x$arma[6] - x$arma[7] * x$arma[5]
     bic <- x$aic + npar * (log(nstar) - 2)
     aicc <- x$aic + 2 * npar * (nstar / (nstar - npar - 1) - 1)
     cat("AIC=", format(round(x$aic, 2L)), sep = "")

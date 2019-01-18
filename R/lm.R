@@ -152,10 +152,14 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
 
   ## Fit the model and prepare model structure
   fit <- lm(formula, data = data, na.action = na.exclude, ...)
+  
   fit$data <- data
+  responsevar <- deparse(formula[[2]])
   fit$residuals <- ts(residuals(fit))
+  fit$x <- fit$residuals
+  fit$x[!is.na(fit$x)] <- model.frame(fit)[, responsevar]
   fit$fitted.values <- ts(fitted(fit))
-  tsp(fit$residuals) <- tsp(fit$fitted.values) <- tsp(data[, 1]) <- tspx
+  tsp(fit$residuals) <- tsp(fit$x) <- tsp(fit$fitted.values) <- tsp(data[, 1]) <- tspx
   fit$call <- cl
   fit$method <- "Linear regression model"
   if (exists("dataname")) {
@@ -170,7 +174,10 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
   return(fit)
 }
 
-
+#' @export
+fitted.tslm <- function(object, ...){
+  object$fitted.values
+}
 
 #' Forecast a linear model with possible time series components
 #'
@@ -408,10 +415,14 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
   # responsevar <- gsub("`","",responsevar)
   # object$x <- model.frame(object$model)[,responsevar]
 
+  # Remove missing values from residuals
+  predict_object <- object
+  predict_object$residuals <- na.omit(as.numeric(object$residuals))
+  
   out <- list()
   nl <- length(level)
   for (i in 1:nl)
-    out[[i]] <- predict(object, newdata = newdata, se.fit = TRUE, interval = "prediction", level = level[i] / 100, ...)
+    out[[i]] <- predict(predict_object, newdata = newdata, se.fit = TRUE, interval = "prediction", level = level[i] / 100, ...)
 
   if (nrow(newdata) != length(out[[1]]$fit[, 1])) {
     stop("Variables not found in newdata")

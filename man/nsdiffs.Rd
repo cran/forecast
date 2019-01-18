@@ -5,7 +5,7 @@
 \title{Number of differences required for a seasonally stationary series}
 \usage{
 nsdiffs(x, alpha = 0.05, m = frequency(x), test = c("seas", "ocsb",
-  "hegy", "ch"), max.D = 1)
+  "hegy", "ch"), max.D = 1, ...)
 }
 \arguments{
 \item{x}{A univariate time series}
@@ -17,6 +17,8 @@ nsdiffs(x, alpha = 0.05, m = frequency(x), test = c("seas", "ocsb",
 \item{test}{Type of unit root test to use}
 
 \item{max.D}{Maximum number of seasonal differences allowed}
+
+\item{...}{Additional arguments to be passed on to the unit root test}
 }
 \value{
 An integer indicating the number of differences required for stationarity.
@@ -34,7 +36,8 @@ seasonal differences required for time series \code{x} to be made stationary
 Several different tests are available:
 \itemize{
 \item If \code{test="seas"} (default), a measure of seasonal strength is used, where differencing is
-selected if the seasonal strength (Wang, Smith & Hyndman, 2006) exceeds 0.64 (based on M3 auto.arima performance).
+selected if the seasonal strength (Wang, Smith & Hyndman, 2006) exceeds 0.64
+(based on minimizing MASE when forecasting using auto.arima on M3 and M4 data).
 \item If \code{test="ch"}, the Canova-Hansen (1995) test is used
 (with null hypothesis of deterministic seasonality)
 \item If \code{test="hegy"}, the Hylleberg, Engle, Granger & Yoo (1990) test is used.

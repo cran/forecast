@@ -1,5 +1,5 @@
 Package: forecast
-Version: 8.4
+Version: 8.5
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -7,8 +7,9 @@ Description: Methods and tools for displaying and analysing
 Depends: R (>= 3.0.2),
 Imports: colorspace, fracdiff, ggplot2 (>= 2.2.1), graphics, lmtest,
         magrittr, nnet, parallel, Rcpp (>= 0.11.0), stats, timeDate,
-        tseries, urca, uroot, zoo
-Suggests: expsmooth, knitr, rmarkdown, rticles, testthat
+        tseries, urca, zoo
+Suggests: expsmooth, uroot, knitr, rmarkdown, rticles, testthat,
+        methods
 LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.2.35)
 LazyData: yes
 ByteCompile: TRUE
@@ -18,7 +19,7 @@ Authors@R: c(
   person("Christoph", "Bergmeir", role="aut", comment = c(ORCID = "0000-0002-3665-9021")),
   person("Gabriel", "Caceres", role="aut"),
   person("Leanne", "Chhay", role='aut'),
-  person("Mitchell", "O'Hara-Wild", role="aut"),
+  person("Mitchell", "O'Hara-Wild", role="aut", comment=c(ORCID = "0000-0001-6729-7695")),
   person("Fotios", "Petropoulos", role='aut', comment=c(ORCID = "0000-0003-3039-4955")),
   person("Slava", "Razbash", role="aut"),
   person("Earo", "Wang", role="aut"),
@@ -35,15 +36,16 @@ License: GPL-3
 URL: http://pkg.robjhyndman.com/forecast,
         https://github.com/robjhyndman/forecast
 VignetteBuilder: knitr
-RoxygenNote: 6.0.1.9000
+Encoding: UTF-8
+RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2018-06-21 04:53:37 UTC; mitchell
+Packaged: 2019-01-16 04:32:27 UTC; hyndman
 Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut],
   Christoph Bergmeir [aut] (<https://orcid.org/0000-0002-3665-9021>),
   Gabriel Caceres [aut],
   Leanne Chhay [aut],
-  Mitchell O'Hara-Wild [aut],
+  Mitchell O'Hara-Wild [aut] (<https://orcid.org/0000-0001-6729-7695>),
   Fotios Petropoulos [aut] (<https://orcid.org/0000-0003-3039-4955>),
   Slava Razbash [aut],
   Earo Wang [aut],
@@ -56,4 +58,4 @@ Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2018-06-21 13:59:21 UTC
+Date/Publication: 2019-01-18 10:50:03 UTC

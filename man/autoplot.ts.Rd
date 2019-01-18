@@ -16,9 +16,12 @@
 
 \method{autolayer}{ts}(object, colour = TRUE, series = NULL, ...)
 
-\method{autoplot}{ts}(object, series = NULL, ...)
+\method{autoplot}{ts}(object, series = NULL, xlab = "Time",
+  ylab = deparse(substitute(object)), main = NULL, ...)
 
-\method{autoplot}{mts}(object, colour = TRUE, facets = FALSE, ...)
+\method{autoplot}{mts}(object, colour = TRUE, facets = FALSE,
+  xlab = "Time", ylab = deparse(substitute(object)), main = NULL,
+  ...)
 
 \method{autoplot}{msts}(object, series = NULL, ...)
 
@@ -33,6 +36,12 @@
 with the functionality of \link{geom_forecast}.}
 
 \item{...}{Other plotting parameters to affect the plot.}
+
+\item{xlab}{X-axis label.}
+
+\item{ylab}{Y-axis label.}
+
+\item{main}{Main title.}
 
 \item{facets}{If TRUE, multiple time series will be faceted (and unless
 specified, colour is set to FALSE). If FALSE, each series will be assigned a

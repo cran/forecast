@@ -88,7 +88,8 @@ if (require(testthat)) {
     expect_true(length(forecast(winennet, h = 2, xreg = matrix(2, 2, 3))$mean) == 2L)
     ## Test if h matches xreg
     expect_true(length(forecast(winennet, h = 5, xreg = matrix(2, 2, 3))$mean) == 2L)
-    expect_true(identical(forecast(winennet2, xreg = matrix(2, 2, 3))$mean, forecast(winennet, xreg = matrix(2, 2, 3))$mean))
+    expect_warning(forecast(winennet2, xreg = matrix(2, 2, 3))$mean, "different column names") %>% 
+      expect_identical(forecast(winennet, xreg = matrix(2, 2, 3))$mean)
     ## Test that P is ignored if m=1
     expect_warning(wwwnnet <- modelAR(WWWusage, FUN = avnnet2, predict.FUN = predict.avnnet2, scale.inputs = TRUE, xreg = 1:length(WWWusage), p = 2, P = 4, size = 3, repeats = 10))
     ## Test passing arguments to nnet
@@ -105,7 +106,7 @@ if (require(testthat)) {
     airna <- airmiles
     airna[12] <- NA
     expect_warning(airnnet <- modelAR(airna, FUN = avnnet2, predict.FUN = predict.avnnet2, scale.inputs = TRUE, p = 1, size = 0, skip = TRUE, Wts = c(0, 1), maxit = 0, repeats = 5))
-    expect_true(identical(airnnet$fitted[-c(1, 12, 13)], airna[-c(11, 12, length(airna))]))
+    expect_equal(airnnet$fitted[-c(1, 12, 13)], airna[-c(11, 12, length(airna))])
     ## Test model argument
     expect_silent({
       set.seed(123)

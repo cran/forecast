@@ -113,7 +113,7 @@ meanf <- function(y, h=10, level=c(80, 95), fan=FALSE, lambda=NULL, biasadj=FALS
 
   out <- list(
     method = "Mean", level = level, x = x, series = deparse(substitute(y)), mean = f, lower = lower, upper = upper,
-    model = list(mu = f[1], mu.se = s / sqrt(length(x)), sd = s, bootstrap = bootstrap), lambda = lambda, fitted = fits, residuals = res
+    model = structure(list(mu = f[1], mu.se = s / sqrt(length(x)), sd = s, bootstrap = bootstrap), class = "meanf"), lambda = lambda, fitted = fits, residuals = res
   )
   out$model$call <- match.call()
 
@@ -214,7 +214,7 @@ InvBoxCox <- function(x, lambda, biasadj=FALSE, fvar=NULL) {
       }
       level <- mean(c(level, 1))
       # Note: Use BoxCox transformed upper and lower values
-      fvar <- ((fvar$upper - fvar$lower) / stats::qnorm(level) / 2) ^ 2
+      fvar <- as.numeric((fvar$upper - fvar$lower) / stats::qnorm(level) / 2) ^ 2
     }
     if (NCOL(fvar) > 1) {
       fvar <- diag(fvar)

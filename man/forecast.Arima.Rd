@@ -15,7 +15,8 @@
   biasadj = NULL, ...)
 
 \method{forecast}{ar}(object, h = 10, level = c(80, 95), fan = FALSE,
-  lambda = NULL, bootstrap = FALSE, npaths = 5000, biasadj = FALSE, ...)
+  lambda = NULL, bootstrap = FALSE, npaths = 5000, biasadj = FALSE,
+  ...)
 }
 \arguments{
 \item{object}{An object of class "\code{Arima}", "\code{ar}" or
@@ -46,7 +47,7 @@ an adjustment will be made to produce mean forecasts and fitted values.}
 \item{...}{Other arguments.}
 
 \item{xreg}{Future values of an regression variables (for class \code{Arima}
-objects only).}
+objects only). A numerical vector or matrix of external regressors; it should not be a data frame.}
 
 \item{bootstrap}{If \code{TRUE}, then prediction intervals computed using
 simulation with resampled errors.}

@@ -8,11 +8,13 @@ auto.arima(y, d = NA, D = NA, max.p = 5, max.q = 5, max.P = 2,
   max.Q = 2, max.order = 5, max.d = 2, max.D = 1, start.p = 2,
   start.q = 2, start.P = 1, start.Q = 1, stationary = FALSE,
   seasonal = TRUE, ic = c("aicc", "aic", "bic"), stepwise = TRUE,
-  trace = FALSE, approximation = (length(x) > 150 | frequency(x) > 12),
-  truncate = NULL, xreg = NULL, test = c("kpss", "adf", "pp"),
-  seasonal.test = c("seas", "ocsb", "hegy", "ch"), allowdrift = TRUE,
-  allowmean = TRUE, lambda = NULL, biasadj = FALSE, parallel = FALSE,
-  num.cores = 2, x = y, ...)
+  nmodels = 94, trace = FALSE, approximation = (length(x) > 150 |
+  frequency(x) > 12), method = NULL, truncate = NULL, xreg = NULL,
+  test = c("kpss", "adf", "pp"), test.args = list(),
+  seasonal.test = c("seas", "ocsb", "hegy", "ch"),
+  seasonal.test.args = list(), allowdrift = TRUE, allowmean = TRUE,
+  lambda = NULL, biasadj = FALSE, parallel = FALSE, num.cores = 2,
+  x = y, ...)
 }
 \arguments{
 \item{y}{a univariate time series}
@@ -21,7 +23,7 @@ auto.arima(y, d = NA, D = NA, max.p = 5, max.q = 5, max.P = 2,
 on KPSS test.}
 
 \item{D}{Order of seasonal-differencing. If missing, will choose a value
-based on OCSB test.}
+based on \code{season.test}.}
 
 \item{max.p}{Maximum value of p}
 
@@ -56,6 +58,8 @@ stepwise.}
 Otherwise, it searches over all models. Non-stepwise selection can be very
 slow, especially for seasonal models.}
 
+\item{nmodels}{Maximum number of models considered in the stepwise search.}
+
 \item{trace}{If \code{TRUE}, the list of ARIMA models considered will be
 reported.}
 
@@ -65,19 +69,31 @@ approximated. The final model is still computed using maximum likelihood
 estimation. Approximation should be used for long time series or a high
 seasonal period to avoid excessive computation times.}
 
+\item{method}{fitting method: maximum likelihood or minimize
+    conditional sum-of-squares.  The default (unless there are missing
+    values) is to use conditional-sum-of-squares to find starting
+    values, then maximum likelihood.  Can be abbreviated.}
+
 \item{truncate}{An integer value indicating how many observations to use in
 model selection. The last \code{truncate} values of the series are used to
 select a model when \code{truncate} is not \code{NULL} and
 \code{approximation=TRUE}. All observations are used if either
 \code{truncate=NULL} or \code{approximation=FALSE}.}
 
-\item{xreg}{Optionally, a vector or matrix of external regressors, which
-must have the same number of rows as \code{y}.}
+\item{xreg}{Optionally, a numerical vector or matrix of external regressors, which
+must have the same number of rows as \code{y}. (It should not be a data frame.)}
 
 \item{test}{Type of unit root test to use. See \code{\link{ndiffs}} for
 details.}
 
-\item{seasonal.test}{This determines which seasonal unit root test is used.
+\item{test.args}{Additional arguments to be passed to the unit root test.}
+
+\item{seasonal.test}{This determines which method is used to select the number of seasonal differences.
+The default method is to use a measure of seasonal strength computed from an STL decomposition.
+Other possibilities involve seasonal unit root tests.}
+
+\item{seasonal.test.args}{Additional arguments to be passed to the seasonal
+unit root test.
 See \code{\link{nsdiffs}} for details.}
 
 \item{allowdrift}{If \code{TRUE}, models with drift terms are considered.}
@@ -123,8 +139,8 @@ is recommended that you set \code{stepwise=FALSE} and \code{approximation=FALSE}
 Non-stepwise selection can be slow, especially for seasonal data. The stepwise
 algorithm outlined in Hyndman & Khandakar (2008) is used except that the default
 method for selecting seasonal differences is now based on an estimate of seasonal
-strength (Wang, Smith & Hyndman, 2006) rather than the Canova-Hansen test. 
-There are also some other minor variations to the algorithm described in 
+strength (Wang, Smith & Hyndman, 2006) rather than the Canova-Hansen test.
+There are also some other minor variations to the algorithm described in
 Hyndman and Khandakar (2008).
 }
 \examples{

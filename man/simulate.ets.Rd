@@ -4,6 +4,7 @@
 \alias{simulate.ets}
 \alias{simulate.Arima}
 \alias{simulate.ar}
+\alias{simulate.lagwalk}
 \alias{simulate.fracdiff}
 \alias{simulate.nnetar}
 \alias{simulate.modelAR}
@@ -19,6 +20,10 @@
 \method{simulate}{ar}(object, nsim = object$n.used, seed = NULL,
   future = TRUE, bootstrap = FALSE, innov = NULL, ...)
 
+\method{simulate}{lagwalk}(object, nsim = length(object$x),
+  seed = NULL, future = TRUE, bootstrap = FALSE, innov = NULL,
+  lambda = object$lambda, ...)
+
 \method{simulate}{fracdiff}(object, nsim = object$n, seed = NULL,
   future = TRUE, bootstrap = FALSE, innov = NULL, ...)
 
@@ -26,9 +31,9 @@
   xreg = NULL, future = TRUE, bootstrap = FALSE, innov = NULL,
   lambda = object$lambda, ...)
 
-\method{simulate}{modelAR}(object, nsim = length(object$x), seed = NULL,
-  xreg = NULL, future = TRUE, bootstrap = FALSE, innov = NULL,
-  lambda = object$lambda, ...)
+\method{simulate}{modelAR}(object, nsim = length(object$x),
+  seed = NULL, xreg = NULL, future = TRUE, bootstrap = FALSE,
+  innov = NULL, lambda = object$lambda, ...)
 }
 \arguments{
 \item{object}{An object of class "\code{ets}", "\code{Arima}", "\code{ar}"

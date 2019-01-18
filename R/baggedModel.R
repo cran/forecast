@@ -22,7 +22,7 @@
 #'
 #' @param y A numeric vector or time series of class \code{ts}.
 #' @param bootstrapped_series bootstrapped versions of y.
-#' @param fn the forecast function to use. Default is \code{\link{ets}}
+#' @param fn the forecast function to use. Default is \code{\link{ets}}.
 #' @param \dots Other arguments passed to the forecast function.
 #' @return Returns an object of class "\code{baggedModel}".
 #'
@@ -30,7 +30,7 @@
 #' results.
 #'
 #' \item{models}{A list containing the fitted ensemble models.}
-#' \item{method}{The name of the forecasting method as a character string}
+#' \item{method}{The function for producing a forecastable model.}
 #' \item{y}{The original time series.}
 #' \item{bootstrapped_series}{The bootstrapped series.}
 #' \item{modelargs}{The arguments passed through to \code{fn}.}
@@ -48,9 +48,12 @@
 #' plot(fcast)
 #'
 #' @export
-baggedModel <- function(y, bootstrapped_series=bld.mbb.bootstrap(y, 100), fn=c("ets", "auto.arima"), ...) {
+baggedModel <- function(y, bootstrapped_series=bld.mbb.bootstrap(y, 100), fn=ets, ...) {
   # Add package info in case forecast not loaded
-  fn <- utils::getFromNamespace(match.arg(fn), "forecast")
+  if(!is.function(fn)){
+    warning(paste0("Using character specification for `fn` is deprecated. Please use `fn = ", match.arg(fn,c("ets", "auto.arima")), "`."))
+    fn <- utils::getFromNamespace(match.arg(fn,c("ets", "auto.arima")), "forecast")
+  }
 
   mod_boot <- lapply(bootstrapped_series, function(x) {
     mod <- fn(x, ...)
@@ -81,7 +84,7 @@ baggedModel <- function(y, bootstrapped_series=bld.mbb.bootstrap(y, 100), fn=c("
 #' @rdname baggedModel
 #' @export
 baggedETS <- function(y, bootstrapped_series=bld.mbb.bootstrap(y, 100), ...) {
-  out <- baggedModel(y, bootstrapped_series, fn = "ets", ...)
+  out <- baggedModel(y, bootstrapped_series, fn = ets, ...)
   class(out) <- c("baggedETS", class(out))
   out
 }
@@ -138,7 +141,7 @@ baggedETS <- function(y, bootstrapped_series=bld.mbb.bootstrap(y, 100), ...) {
 #' accuracy(fcast2)}
 #'
 #' @export
-forecast.baggedModel <- function(object, h=ifelse(frequency(object$x) > 1, 2 * frequency(object$x), 10), ...) {
+forecast.baggedModel <- function(object, h=ifelse(frequency(object$y) > 1, 2 * frequency(object$y), 10), ...) {
   out <- list(
     model = object, series = object$series, x = object$y, method = object$method, fitted = object$fitted,
     residuals = object$residuals

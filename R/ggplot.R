@@ -11,7 +11,7 @@ ggplot2::autoplot
 ggAddExtras <- function(xlab=NA, ylab=NA, main=NA) {
   dots <- eval.parent(quote(list(...)))
   extras <- list()
-  if ("xlab" %in% names(dots) || is.null(xlab) || !is.na(xlab)) {
+  if ("xlab" %in% names(dots) || is.null(xlab) || !is.na(xlab <- paste0(xlab, collapse = "\n"))) {
     if ("xlab" %in% names(dots)) {
       extras[[length(extras) + 1]] <- ggplot2::xlab(dots$xlab)
     }
@@ -19,7 +19,7 @@ ggAddExtras <- function(xlab=NA, ylab=NA, main=NA) {
       extras[[length(extras) + 1]] <- ggplot2::xlab(xlab)
     }
   }
-  if ("ylab" %in% names(dots) || is.null(ylab) || !is.na(ylab)) {
+  if ("ylab" %in% names(dots) || is.null(ylab) || !is.na(ylab <- paste0(ylab, collapse = "\n"))) {
     if ("ylab" %in% names(dots)) {
       extras[[length(extras) + 1]] <- ggplot2::ylab(dots$ylab)
     }
@@ -27,7 +27,7 @@ ggAddExtras <- function(xlab=NA, ylab=NA, main=NA) {
       extras[[length(extras) + 1]] <- ggplot2::ylab(ylab)
     }
   }
-  if ("main" %in% names(dots) || is.null(main) || !is.na(main)) {
+  if ("main" %in% names(dots) || is.null(main) || !is.na(main <- paste0(main, collapse = "\n"))) {
     if ("main" %in% names(dots)) {
       extras[[length(extras) + 1]] <- ggplot2::ggtitle(dots$main)
     }
@@ -107,15 +107,20 @@ autoplot.acf <- function(object, ci=0.95, ...) {
     if (!inherits(object, "acf")) {
       stop("autoplot.acf requires a acf object, use object=object")
     }
-
-    data <- data.frame(Lag = object$lag, ACF = object$acf)
-    if (data$Lag[1] == 0 && object$type == "correlation") {
-      data <- data[-1, ]
+    
+    acf <- `dimnames<-`(object$acf, list(NULL, object$snames, object$snames))
+    lag <- `dimnames<-`(object$lag, list(NULL, object$snames, object$snames))
+    
+    data <- as.data.frame.table(acf)[-1]
+    data$lag <- as.numeric(lag)
+    
+    if (object$type == "correlation") {
+      data <- data[data$lag != 0, ]
     }
 
     # Initialise ggplot object
     p <- ggplot2::ggplot(
-      ggplot2::aes_(x = ~Lag, xend = ~Lag, y = 0, yend = ~ACF),
+      ggplot2::aes_(x = ~lag, xend = ~lag, y = 0, yend = ~Freq),
       data = data
     )
     p <- p + ggplot2::geom_hline(yintercept = 0)
@@ -127,24 +132,31 @@ autoplot.acf <- function(object, ci=0.95, ...) {
     ci <- qnorm((1 + ci) / 2) / sqrt(object$n.used)
     p <- p + ggplot2::geom_hline(yintercept = c(-ci, ci), colour = "blue", linetype = "dashed")
 
+    # Add facets if needed
+    if(any(dim(object$acf)[2:3] != c(1,1))){
+      p <- p + ggplot2::facet_grid(
+        as.formula(paste0(colnames(data)[1:2], collapse = "~"))
+      )
+    }
+    
     # Prepare graph labels
     if (!is.null(object$ccf)) {
       ylab <- "CCF"
       ticktype <- "ccf"
       main <- paste("Series:", object$snames)
-      nlags <- round(length(data$Lag) / 2)
+      nlags <- round(dim(object$lag)[1] / 2)
     }
     else if (object$type == "partial") {
       ylab <- "PACF"
       ticktype <- "acf"
       main <- paste("Series:", object$series)
-      nlags <- length(data$Lag)
+      nlags <- dim(object$lag)[1]
     }
     else if (object$type == "correlation") {
       ylab <- "ACF"
       ticktype <- "acf"
       main <- paste("Series:", object$series)
-      nlags <- length(data$Lag)
+      nlags <- dim(object$lag)[1]
     }
     else {
       ylab <- NULL
@@ -1749,6 +1761,7 @@ autolayer.mforecast <- function(object, series = NULL, PI = TRUE, ...) {
 #' \dQuote{\code{data.frame}}.
 #' @param data Not used (required for \link{fortify} method)
 #' @param ... Other plotting parameters to affect the plot.
+#' @inheritParams plot.forecast
 #' @return None. Function produces a ggplot graph.
 #' @author Mitchell O'Hara-Wild
 #' @seealso \code{\link[stats]{plot.ts}}, \code{\link[ggplot2]{fortify}}
@@ -1762,7 +1775,8 @@ autolayer.mforecast <- function(object, series = NULL, PI = TRUE, ...) {
 #' autoplot(lungDeaths, facets=TRUE)
 #'
 #' @export
-autoplot.ts <- function(object, series=NULL, ...) {
+autoplot.ts <- function(object, series=NULL, xlab = "Time", ylab = deparse(substitute(object)), 
+                        main = NULL,  ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")", call. = FALSE)
   }
@@ -1783,14 +1797,14 @@ autoplot.ts <- function(object, series=NULL, ...) {
 
     # Add data
     if (!is.null(series)) {
-      p <- p + ggplot2::geom_line(ggplot2::aes_(group = ~series, colour = ~series), na.rm = TRUE)
+      p <- p + ggplot2::geom_line(ggplot2::aes_(group = ~series, colour = ~series), na.rm = TRUE, ...)
     }
     else {
-      p <- p + ggplot2::geom_line(na.rm = TRUE)
+      p <- p + ggplot2::geom_line(na.rm = TRUE, ...)
     }
 
     # Add labels
-    p <- p + ggAddExtras(xlab = "Time", ylab = deparse(substitute(object)))
+    p <- p + ggAddExtras(xlab = xlab, ylab = ylab, main = main)
 
     # Make x axis contain only whole numbers (e.g., years)
     p <- p + ggplot2::scale_x_continuous(breaks = ggtsbreaks)
@@ -1800,7 +1814,8 @@ autoplot.ts <- function(object, series=NULL, ...) {
 
 #' @rdname autoplot.ts
 #' @export
-autoplot.mts <- function(object, colour=TRUE, facets=FALSE, ...) {
+autoplot.mts <- function(object, colour=TRUE, facets=FALSE, xlab = "Time", ylab = deparse(substitute(object)), 
+                         main = NULL, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")", call. = FALSE)
   }
@@ -1809,7 +1824,7 @@ autoplot.mts <- function(object, colour=TRUE, facets=FALSE, ...) {
       stop("autoplot.mts requires a mts object, use x=object")
     }
     if (NCOL(object) <= 1) {
-      return(autoplot.ts(object))
+      return(autoplot.ts(object, ...))
     }
 
     cn <- colnames(object)
@@ -1828,11 +1843,11 @@ autoplot.mts <- function(object, colour=TRUE, facets=FALSE, ...) {
       mapping$colour <- quote(series)
     }
     p <- ggplot2::ggplot(mapping, data = data)
-    p <- p + ggplot2::geom_line(na.rm = TRUE)
+    p <- p + ggplot2::geom_line(na.rm = TRUE, ...)
     if (facets) {
       p <- p + ggplot2::facet_grid(series~., scales = "free_y")
     }
-    p <- p + ggAddExtras(xlab = "Time", ylab = deparse(substitute(object)))
+    p <- p + ggAddExtras(xlab = xlab, ylab = ylab, main = main)
     return(p)
   }
 }
@@ -2072,7 +2087,7 @@ GeomForecastPoint <- ggplot2::ggproto(
 
 
 blendHex <- function(mixcol, seqcol, alpha=1) {
-  requireNamespace("colorspace")
+  requireNamespace("methods")
   if (is.na(seqcol)) {
     return(mixcol)
   }
@@ -2080,13 +2095,13 @@ blendHex <- function(mixcol, seqcol, alpha=1) {
   # transform to hue/lightness/saturation colorspace
   seqcol <- grDevices::col2rgb(seqcol, alpha = TRUE)
   mixcol <- grDevices::col2rgb(mixcol, alpha = TRUE)
-  seqcolHLS <- suppressWarnings(colorspace::coerce(colorspace::RGB(R = seqcol[1, ] / 255, G = seqcol[2, ] / 255, B = seqcol[3, ] / 255), structure(NULL, class = "HLS")))
-  mixcolHLS <- suppressWarnings(colorspace::coerce(colorspace::RGB(R = mixcol[1, ] / 255, G = mixcol[2, ] / 255, B = mixcol[3, ] / 255), structure(NULL, class = "HLS")))
+  seqcolHLS <- suppressWarnings(methods::coerce(colorspace::RGB(R = seqcol[1, ] / 255, G = seqcol[2, ] / 255, B = seqcol[3, ] / 255), structure(NULL, class = "HLS")))
+  mixcolHLS <- suppressWarnings(methods::coerce(colorspace::RGB(R = mixcol[1, ] / 255, G = mixcol[2, ] / 255, B = mixcol[3, ] / 255), structure(NULL, class = "HLS")))
 
   # copy luminence
   mixcolHLS@coords[, "L"] <- seqcolHLS@coords[, "L"]
   mixcolHLS@coords[, "S"] <- alpha * mixcolHLS@coords[, "S"] + (1 - alpha) * seqcolHLS@coords[, "S"]
-  mixcolHex <- suppressWarnings(colorspace::coerce(mixcolHLS, structure(NULL, class = "RGB")))
+  mixcolHex <- suppressWarnings(methods::coerce(mixcolHLS, structure(NULL, class = "RGB")))
   mixcolHex <- colorspace::hex(mixcolHex)
   mixcolHex <- ggplot2::alpha(mixcolHex, mixcol[4, ] / 255)
   return(mixcolHex)

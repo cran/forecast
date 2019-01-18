@@ -20,6 +20,7 @@
 #' @param test Type of unit root test to use
 #' @param type Specification of the deterministic component in the regression
 #' @param max.d Maximum number of non-seasonal differences allowed
+#' @param ... Additional arguments to be passed on to the unit root test
 #' @return An integer indicating the number of differences required for stationarity.
 #' @author Rob J Hyndman, Slava Razbash & Mitchell O'Hara-Wild
 #' @seealso \code{\link{auto.arima}} and \code{\link{ndiffs}}
@@ -48,7 +49,7 @@
 #'
 #' @importFrom urca ur.kpss ur.df ur.pp
 #' @export
-ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "trend"), max.d=2)
+ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "trend"), max.d=2, ...)
 {
   test <- match.arg(test)
   type <- match(match.arg(type), c("level","trend"))
@@ -71,12 +72,29 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "tren
     approx(urca_test@cval[1,], as.numeric(sub("pct", "", colnames(urca_test@cval)))/100, xout=urca_test@teststat[1], rule=2)$y
   }
   
-  dodiff <- suppressWarnings(switch(test,
-                                    kpss = urca_pval(ur.kpss(x, type=c("mu","tau")[type], use.lag=trunc(3*sqrt(length(x))/13))) < alpha,
-                                    adf = urca_pval(ur.df(x, type=c("drift","trend")[type])) > alpha,
-                                    pp = urca_pval(ur.pp(x, type="Z-tau", model=c("constant","trend")[type])) > alpha,
-                                    stop("This shouldn't happen"))
-  )
+  kpss_wrap <- function(..., use.lag = trunc(3*sqrt(length(x))/13)){
+    ur.kpss(..., use.lag = use.lag)
+  }
+  
+  runTests <- function(x, test, alpha){
+    tryCatch(
+      {suppressWarnings(
+        diff <- switch(test,
+                       kpss = urca_pval(kpss_wrap(x, type=c("mu","tau")[type], ...)) < alpha,
+                       adf = urca_pval(ur.df(x, type=c("drift","trend")[type], ...)) > alpha,
+                       pp = urca_pval(ur.pp(x, type="Z-tau", model=c("constant","trend")[type], ...)) > alpha,
+                       stop("This shouldn't happen"))
+      )
+      diff
+      },
+      error = function(e){
+        warning("The chosen test encountered an error, so no differencing is selected. Check the time series data.")
+        FALSE
+      }
+    )
+  }
+  
+  dodiff <- runTests(x, test, alpha)
   
   if(is.na(dodiff))
   {
@@ -88,12 +106,7 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "tren
     x <- diff(x)
     if(is.constant(x))
       return(d)
-    dodiff <- suppressWarnings(switch(test,
-                                      kpss = urca_pval(ur.kpss(x, type=c("mu","tau")[type], use.lag=trunc(3*sqrt(length(x))/13))) < alpha,
-                                      adf = urca_pval(ur.df(x, type=c("drift","trend")[type])) > alpha,
-                                      pp = urca_pval(ur.pp(x, type="Z-tau", model=c("constant","trend")[type])) > alpha,
-                                      stop("This shouldn't happen"))
-    )
+    dodiff <- runTests(x, test, alpha)
     if(is.na(dodiff))
       return(d-1)
   }
@@ -113,7 +126,8 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "tren
 #' 
 #' Several different tests are available:
 #' * If \code{test="seas"} (default), a measure of seasonal strength is used, where differencing is
-#' selected if the seasonal strength (Wang, Smith & Hyndman, 2006) exceeds 0.64 (based on M3 auto.arima performance).
+#' selected if the seasonal strength (Wang, Smith & Hyndman, 2006) exceeds 0.64 
+#' (based on minimizing MASE when forecasting using auto.arima on M3 and M4 data).
 #' * If \code{test="ch"}, the Canova-Hansen (1995) test is used 
 #' (with null hypothesis of deterministic seasonality) 
 #' * If \code{test="hegy"}, the Hylleberg, Engle, Granger & Yoo (1990) test is used.
@@ -122,6 +136,7 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "tren
 #' 
 #' @md
 #' 
+#' @inheritParams ndiffs
 #' @param x A univariate time series
 #' @param alpha Level of the test, possible values range from 0.01 to 0.1.
 #' @param test Type of unit root test to use
@@ -154,9 +169,8 @@ ndiffs <- function(x,alpha=0.05,test=c("kpss","adf","pp"), type=c("level", "tren
 #' @examples
 #' nsdiffs(AirPassengers)
 #'
-#' @importFrom uroot hegy.test ch.test
 #' @export
-nsdiffs <- function(x, alpha = 0.05, m=frequency(x), test=c("seas", "ocsb", "hegy", "ch"), max.D=1)
+nsdiffs <- function(x, alpha = 0.05, m=frequency(x), test=c("seas", "ocsb", "hegy", "ch"), max.D=1, ...)
 {
   test <- match.arg(test)
   D <- 0
@@ -172,6 +186,11 @@ nsdiffs <- function(x, alpha = 0.05, m=frequency(x), test=c("seas", "ocsb", "heg
   if(test == "ocsb" && alpha != 0.05){
     warning("Significance levels other than 5% are not currently supported by test='ocsb', defaulting to alpha = 0.05.")
     alpha <- 0.05
+  }
+  if(test %in% c("hegy", "ch")){
+    if(!requireNamespace("uroot", quietly = TRUE)){
+      stop(paste0("Using a ", test, ' test requires the uroot package. Please install it using `install.packages("uroot")`'))
+    }
   }
   
   if(is.constant(x))
@@ -195,10 +214,10 @@ nsdiffs <- function(x, alpha = 0.05, m=frequency(x), test=c("seas", "ocsb", "heg
     tryCatch(
       {suppressWarnings(
         diff <- switch(test,
-               seas = seas.heuristic(x) > 0.64, # Threshold chosen based on seasonal M3 auto.arima accuracy.
-               ocsb = with(ocsb.test(x, maxlag = 3, lag.method = "AIC"), statistics>critical),
-               hegy = tail(hegy.test(x, deterministic = c(1,1,0), maxlag = 3, lag.method = "AIC")$pvalues, 2)[-2] > alpha,
-               ch = ch.test(x, type = "trig")$pvalues["joint"] < alpha)
+               seas = seas.heuristic(x, ...) > 0.64, # Threshold chosen based on seasonal M3 auto.arima accuracy.
+               ocsb = with(ocsb.test(x, maxlag = 3, lag.method = "AIC", ...), statistics>critical),
+               hegy = tail(uroot::hegy.test(x, deterministic = c(1,1,0), maxlag = 3, lag.method = "AIC", ...)$pvalues, 2)[-2] > alpha,
+               ch = uroot::ch.test(x, type = "trig", ...)$pvalues["joint"] < alpha)
         )
         stopifnot(diff %in% c(0,1))
         diff
@@ -212,10 +231,15 @@ nsdiffs <- function(x, alpha = 0.05, m=frequency(x), test=c("seas", "ocsb", "heg
   
   dodiff <- runTests(x, test, alpha)
   
+  if(dodiff && frequency(x) %% 1 != 0){
+    warning("The time series frequency has been rounded to support seasonal differencing.", call. = FALSE)
+    x <- ts(x, frequency = round(frequency(x)))
+  }
+  
   while(dodiff==1 && D < max.D)
   {
     D <- D + 1
-    x <- diff(x, lag=m)
+    x <- diff(x, lag=frequency(x))
     if(is.constant(x))
       return(D)
     dodiff <- runTests(x, test, alpha)
