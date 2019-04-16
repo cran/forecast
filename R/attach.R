@@ -41,15 +41,29 @@ register_s3_method <- function(pkg, generic, class, fun = NULL) {
   )
 }
 
+#' @importFrom utils methods
 .onLoad <- function(...) {
-  ns <- getNamespace("ggplot2")
-  if (exists("autolayer", ns)) {
-    autolayer <<- ns$autolayer
+  if (tryCatch(exists("autolayer", getNamespace("ggplot2")), error = function(e) FALSE)) {
+    autolayer <<- getNamespace("ggplot2")$autolayer
     register_s3_method("ggplot2", "autolayer", "ts")
     register_s3_method("ggplot2", "autolayer", "mts")
     register_s3_method("ggplot2", "autolayer", "msts")
     register_s3_method("ggplot2", "autolayer", "forecast")
     register_s3_method("ggplot2", "autolayer", "mforecast")
+  }
+  if (tryCatch(exists("forecast", getNamespace("fablelite")), error = function(e) FALSE)) {
+    methods <- strsplit(methods("forecast"), ".", fixed = TRUE)
+    forecast <<- getNamespace("fablelite")$forecast
+    for(method in methods){
+      register_s3_method("fablelite", method[1], method[2])
+    }
+  }
+  if (tryCatch(exists("accuracy", getNamespace("fablelite")), error = function(e) FALSE)) {
+    methods <- strsplit(methods("accuracy"), ".", fixed = TRUE)
+    accuracy <<- getNamespace("fablelite")$accuracy
+    for(method in methods){
+      register_s3_method("fablelite", method[1], method[2])
+    }
   }
   invisible()
 }

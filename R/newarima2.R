@@ -18,7 +18,7 @@
 #' @inheritParams stats::arima
 #' @param y a univariate time series
 #' @param d Order of first-differencing. If missing, will choose a value based
-#' on KPSS test.
+#' on \code{test}.
 #' @param D Order of seasonal-differencing. If missing, will choose a value
 #' based on \code{season.test}.
 #' @param max.p Maximum value of p
@@ -125,7 +125,7 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
   missing <- is.na(x)
   firstnonmiss <- head(which(!missing),1)
   lastnonmiss <- tail(which(!missing),1)
-  serieslength <- lastnonmiss - firstnonmiss + 1
+  serieslength <- sum(!missing[firstnonmiss:lastnonmiss])
 
   # Trim initial missing values
   x <- subset(x, start=firstnonmiss)
@@ -184,20 +184,11 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
 
   # Check xreg and do regression if necessary
   if (!is.null(xreg)) {
-    # Make sure it is a matrix with column names
-    if("data.frame" %in% class(xreg))
-      stop("xreg should be a numeric matrix or vector")
-    nmxreg <- deparse(substitute(xreg))
+    if(!is.numeric(xreg))
+      stop("xreg should be a numeric matrix or a numeric vector")
     xregg <- as.matrix(xreg)
-    if (ncol(xregg) == 1 && length(nmxreg) > 1) {
-      nmxreg <- "xreg"
-    }
     if (is.null(colnames(xregg))) {
-      colnames(xregg) <- if (ncol(xregg) == 1) {
-        nmxreg
-      } else {
-        paste(nmxreg, 1:ncol(xregg), sep = "")
-      }
+      colnames(xregg) <- if (ncol(xregg) == 1) "xreg" else paste("xreg", 1:ncol(xregg), sep = "")
     }
 
     xx <- x
@@ -785,7 +776,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
     }
     fit$xreg <- xreg
 
-    return(structure(fit, class = c("ARIMA", "Arima")))
+    return(structure(fit, class = c("ARIMA", "forecast_ARIMA", "Arima")))
   }
   else {
     # Catch errors due to unused arguments

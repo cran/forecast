@@ -80,7 +80,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         constant <- unlist(all.models[[i]][1, 2])
       }
     }
-    class(bestfit) <- c("ARIMA", "Arima")
+    class(bestfit) <- c("ARIMA", "forecast_ARIMA", "Arima")
   }
 
   if (exists("bestfit")) {
@@ -289,15 +289,24 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
 
   use.drift <- is.element("drift", names(object$coef))
   x <- object$x <- getResponse(object)
-  usexreg <- (!is.null(xreg) | use.drift | is.element("xreg", names(object))) # | use.constant)
+  usexreg <- (use.drift | is.element("xreg", names(object))) # | use.constant)
 
-  if (!is.null(xreg)) {
-    if("data.frame" %in% class(xreg))
+  if (!is.null(xreg) && usexreg) {
+    if(!is.numeric(xreg))
       stop("xreg should be a numeric matrix or a numeric vector")
+    xreg <- as.matrix(xreg)
+    if (is.null(colnames(xreg))) {
+      colnames(xreg) <- if (ncol(xreg) == 1) "xreg" else paste("xreg", 1:ncol(xreg), sep = "")
+    }
+
     origxreg <- xreg <- as.matrix(xreg)
     h <- nrow(xreg)
   }
   else {
+    if(!is.null(xreg)){
+      warning("xreg not required by this model, ignoring the provided regressors")
+      xreg <- NULL
+    }
     origxreg <- NULL
   }
 
@@ -680,15 +689,11 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   }
 
   if (!is.null(xreg)) {
-    if("data.frame" %in% class(xreg))
+    if(!is.numeric(xreg))
       stop("xreg should be a numeric matrix or a numeric vector")
-    nmxreg <- deparse(substitute(xreg))
     xreg <- as.matrix(xreg)
-    if (ncol(xreg) == 1 & length(nmxreg) > 1) {
-      nmxreg <- "xreg"
-    }
     if (is.null(colnames(xreg))) {
-      colnames(xreg) <- if (ncol(xreg) == 1) nmxreg else paste(nmxreg, 1:ncol(xreg), sep = "")
+      colnames(xreg) <- if (ncol(xreg) == 1) "xreg" else paste("xreg", 1:ncol(xreg), sep = "")
     }
   }
 
@@ -743,7 +748,7 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   missing <- is.na(tmp$residuals)
   firstnonmiss <- head(which(!missing),1)
   lastnonmiss <- tail(which(!missing),1)
-  n <- lastnonmiss - firstnonmiss + 1
+  n <- sum(!missing[firstnonmiss:lastnonmiss])
   nstar <- n - tmp$arma[6] - tmp$arma[7] * tmp$arma[5]
   tmp$aicc <- tmp$aic + 2 * npar * (nstar / (nstar - npar - 1) - 1)
   tmp$bic <- tmp$aic + npar * (log(nstar) - 2)
@@ -757,7 +762,7 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   if (is.null(model)) {
     tmp$sigma2 <- sum(tmp$residuals ^ 2, na.rm = TRUE) / (nstar - npar + 1)
   }
-  out <- structure(tmp, class = c("ARIMA", "Arima"))
+  out <- structure(tmp, class = c("ARIMA", "forecast_ARIMA", "Arima"))
   out$fitted <- fitted.Arima(out)
   out$series <- series
   return(out)
@@ -828,7 +833,7 @@ arima2 <- function(x, model, xreg, method) {
 
 # Modified version of function print.Arima from stats package
 #' @export
-print.ARIMA <- function(x, digits=max(3, getOption("digits") - 3), se=TRUE, ...) {
+print.forecast_ARIMA <- function(x, digits=max(3, getOption("digits") - 3), se=TRUE, ...) {
   cat("Series:", x$series, "\n")
   cat(arima.string(x, padding = FALSE), "\n")
   if (!is.null(x$lambda)) {
