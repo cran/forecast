@@ -283,7 +283,10 @@ forecast.stl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), e
   }
 
   if ("mstl" %in% class(object)) {
-    seasonal.periods <- attributes(object)$seasonal.periods
+    seasonal.periods <- attr(object, "seasonal.periods")
+    if(is.null(seasonal.periods)){
+      seasonal.periods <- frequency(object)
+    }
     seascomp <- matrix(0, ncol = length(seasonal.periods), nrow = h)
     for (i in seq_along(seasonal.periods))
     {
@@ -486,9 +489,11 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
   
   # In-case forecast method uses different horizon length (such as using xregs)
   h <- NROW(fcast$mean)
-  
   # Forecast seasonal series with seasonal naive
   seasonal.periods <- attributes(object$stl)$seasonal.periods
+  if(is.null(seasonal.periods)){
+    seasonal.periods <- frequency(object$stl)
+  }
   seascomp <- matrix(0, ncol = length(seasonal.periods), nrow = h)
   for (i in seq_along(seasonal.periods))
   {

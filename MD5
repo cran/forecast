@@ -1,12 +1,12 @@
-4f3664c8d2678bfe6436051fea209f4c *DESCRIPTION
+016aac4fdebea04dbde8b6aaaad3d018 *DESCRIPTION
 e1a7980ba208a49183483322a74475d7 *NAMESPACE
-969e242051929cec9fbb955d16f4b72f *NEWS.md
+22c1b527224de93b1a17923874166a00 *NEWS.md
 c4b02c0c13b37a2035dec0d7e085ba46 *R/DM2.R
 3c47eae47a7eb28d4497cbc7c76c5f0a *R/HoltWintersNew.R
 1b043feeac43033179eb19344e1acaad *R/acf.R
 10aeb00db687cbc0fe804367a30954ea *R/adjustSeasonalSeeds.R
 5dc66acb3c34b6b07bffe5e705bb50d6 *R/arfima.R
-b829ec47178ae5b0ed95c12794ae9d22 *R/arima.R
+d07ced61123228bbdb797728ad25af25 *R/arima.R
 b79b966680280302f5d580f0a2e055b3 *R/armaroots.R
 a7bb14cb1c2c5a060e86dec2a9726a2a *R/attach.R
 b920eb56936860753d8573c47eb50327 *R/baggedModel.R
@@ -14,10 +14,10 @@ b920eb56936860753d8573c47eb50327 *R/baggedModel.R
 f1e498a274d282628472065273b1ee0e *R/bootstrap.R
 6be8f0b6cc8818ccc60c7c44ad163872 *R/calendar.R
 2c2afd2e69e126efdc41a43a633d18b0 *R/checkAdmissibility.R
-772bfbad75e4aadbb3f18fd1e1196fd2 *R/checkresiduals.R
+722e9c8d4ba5e226001ce87a10b6fae2 *R/checkresiduals.R
 7385ec537af729f1461db3dabb9cdc3c *R/clean.R
 53bd366467f8721c4b2082c60a5c95ea *R/components.R
-a929189812b33537ad719f3c125f5d4b *R/data.R
+55fe30a71cd7f5ae40f161978e6fdd97 *R/data.R
 543155fedb59977083cef4a8935fd1a7 *R/dshw.r
 7642f93ffe7eec3621f3c395918276a4 *R/errors.R
 2c08c1b571899541372abfa235961115 *R/ets.R
@@ -31,7 +31,7 @@ e9981655b9694d179542667862149651 *R/forecast2.R
 7c0c20e754ff35b7feb377dd2486045e *R/forecastBATS.R
 0623b29f1c1455343dfba7c407cf6b13 *R/forecastTBATS.R
 59487861d39e9110e24d6bacc9545db5 *R/getResponse.R
-b315ab92ec92afe9c54d29909b4f3794 *R/ggplot.R
+071a4b34a2e298f5d22fac814f783a35 *R/ggplot.R
 f56657114ae288100a22228c220a6362 *R/graph.R
 7994a42eddcf1d55617a1d41e4be3af6 *R/guerrero.R
 bda6e93eefa9abb276af53eef43d4d2e *R/lm.R
@@ -39,10 +39,10 @@ bda6e93eefa9abb276af53eef43d4d2e *R/lm.R
 0adc77cdf07adaa24b684119221a6491 *R/makeParamVector.R
 628071330458003f0c3c3c15fd9580c2 *R/mforecast.R
 f3f60222a5bda8991d07ee35db53f237 *R/modelAR.R
-f7cde2d6c0c264950740af32f130ad97 *R/mstl.R
+f78b6c00b974d0298f31402c6624495a *R/mstl.R
 b8c10730e24fb0980f2974d580257034 *R/msts.R
 90d58a3786c558de7f44fef393050421 *R/naive.R
-d8635afadad0de8666b5a28e1b03b80e *R/newarima2.R
+fc13e3fd8fa87a00fb9095778fb1636c *R/newarima2.R
 433dd93f210c63584e2165961dc411d1 *R/nnetar.R
 06c6975ecaee2692d5375f7ef1eb029a *R/residuals.R
 c5bdfab63d2ac485461593f224bc3902 *R/seasadj.R
@@ -53,7 +53,7 @@ c67bf3e4f4fd3492fd16aec0790b9cae *R/simulate.R
 c99af22089b0907bc95aa3563167c283 *R/tbats.R
 2e56581d67b48dcb18f4f79db3270e44 *R/theta.R
 6e57f7f7e5854dea052b3cba835e1177 *R/tscv.R
-5cec41f1ab367539b28ee220356caf15 *R/unitRoot.R
+2556d62253f07e71ea72ad5ed16cc007 *R/unitRoot.R
 f62e29216b535aca80540bd15d1c1a33 *R/whichmodels.R
 7238604557eca232bdfce0502ee4a2eb *R/wrangle.R
 8c6903b7fc4bf504765ff04d9bc520f4 *README.md
@@ -66,7 +66,7 @@ f0c82cb5de038d46b4489ef90769d58b *data/taylor.rda
 6e7f925e744e3e0a1f2f91a7601a0254 *inst/CITATION
 c73627538dabbee899d45fe63c01951a *inst/doc/JSS2008.R
 7a2e5e576ba31a363326aa91b2fbca40 *inst/doc/JSS2008.Rmd
-25bdd58912e0318c3dd9dfb4263c3384 *inst/doc/JSS2008.pdf
+3bc581456191c499644d228896b03a01 *inst/doc/JSS2008.pdf
 fc48b1fde3e77c9d33e28802a3ec5ccc *man/Acf.Rd
 d4745a652f4c87781617414c35b8bc99 *man/Arima.Rd
 f4fa1c6b3edc4306aafaae17b1503fac *man/BoxCox.Rd
@@ -157,8 +157,8 @@ e2d80d1588caa4c2393007135e01b587 *man/tbats.Rd
 607aa3cc03aa46af5b6cac8828ef73b4 *man/tsdisplay.Rd
 3822a7637be4232e2d420c72a45871be *man/tslm.Rd
 910d9724a80d3a742e4692147418ec11 *man/tsoutliers.Rd
-6139a3f596f941ec4a61ee15f0957b06 *man/wineind.Rd
-8125f24177f64c4f7079df8b254210c0 *man/woolyrnq.Rd
+1c186b3d7403af141c2bbf1da20dbace *man/wineind.Rd
+01a10f3d879e1a57db75d960a426bdcd *man/woolyrnq.Rd
 166c1631a4f4969619043bed438faee8 *src/Makevars
 6796115ac9817b6e4eddac34dbed1240 *src/Makevars.win
 38495f349d41f61303e792b76ff82198 *src/calcBATS.cpp
@@ -175,7 +175,7 @@ cb354872396085b03468769a824eba6e *src/makeBATSMatrices.cpp
 f1daf6f870e4dff16534e36b4db45b59 *src/updateMatrices.cpp
 71262d9e1413ed38590fd80d6b92562e *src/updateTBATSMatrices.cpp
 22708a41a2f33a810a8353ff0a62a1eb *tests/testthat.R
-ef50ce8582dd0bd18d889276a3040d0a *tests/testthat/Rplots.pdf
+49c7680df21f20b924d998f8f37af94d *tests/testthat/Rplots.pdf
 37f59f1159dcba059a76d9fa3358be5c *tests/testthat/test-accuracy.R
 57f73ca6be01e5553012d57b01c07950 *tests/testthat/test-acf.R
 d72c47f6508a07358651ba36d8adc27d *tests/testthat/test-arfima.R
@@ -198,7 +198,7 @@ c089470c7a53ba2d59ef2cc8fcc6dd56 *tests/testthat/test-msts.R
 a9531df313189bada61c4c55fc3618ea *tests/testthat/test-newarima2.R
 de7a4a85284bfc2edec09ea075f1bf17 *tests/testthat/test-nnetar.R
 898c38abe7a351b0697fbed504a4be92 *tests/testthat/test-refit.R
-27ec9e0f5d9268b9fa812c7f880682a5 *tests/testthat/test-season.R
+431f129b3076507880c0796cba9d55d0 *tests/testthat/test-season.R
 45ba43aa2fff1fc3e51030377c816db1 *tests/testthat/test-spline.R
 f519817c24c1ed526636f8f170a5d8e2 *tests/testthat/test-subset.R
 0b3ce8c7a0acca8cd4be1b278aee0255 *tests/testthat/test-tbats.R
