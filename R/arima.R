@@ -80,7 +80,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
         constant <- unlist(all.models[[i]][1, 2])
       }
     }
-    class(bestfit) <- c("ARIMA", "forecast_ARIMA", "Arima")
+    class(bestfit) <- c("forecast_ARIMA", "ARIMA", "Arima")
   }
 
   if (exists("bestfit")) {
@@ -266,6 +266,7 @@ SD.test <- function(wts, s=frequency(wts)) {
 #' differenced ARIMA models, \emph{Journal of Time Series Analysis},
 #' \bold{9}(3), 215-220.
 #' @keywords ts
+#' @aliases forecast.forecast_ARIMA
 #' @examples
 #' fit <- Arima(WWWusage,c(3,1,0))
 #' plot(forecast(fit))
@@ -432,6 +433,9 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
   ))
 }
 
+#' @export
+forecast.forecast_ARIMA <- forecast.Arima
+
 #' @rdname forecast.Arima
 #' @export
 forecast.ar <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NULL,
@@ -555,6 +559,7 @@ arima.errors <- function(object) {
 #' \code{\link{residuals.bats}}, \code{\link{residuals.tbats}},
 #' \code{\link{residuals.ets}}, \code{\link{residuals.nnetar}}.
 #' @keywords ts
+#' @aliases fitted.forecast_ARIMA
 #' @examples
 #' fit <- ets(WWWusage)
 #' plot(WWWusage)
@@ -586,6 +591,9 @@ fitted.Arima <- function(object, h = 1, ...) {
     return(hfitted(object = object, h = h, FUN = "Arima", ...))
   }
 }
+
+#' @export
+fitted.forecast_ARIMA <- fitted.Arima
 
 # Calls arima from stats package and adds data to the returned object
 # Also allows refitting to new data
@@ -746,7 +754,7 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   }
 
   # Calculate aicc & bic based on tmp$aic
-  npar <- length(tmp$coef) + 1
+  npar <- length(tmp$coef[tmp$mask]) + 1
   missing <- is.na(tmp$residuals)
   firstnonmiss <- head(which(!missing),1)
   lastnonmiss <- tail(which(!missing),1)
@@ -764,7 +772,7 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   if (is.null(model)) {
     tmp$sigma2 <- sum(tmp$residuals ^ 2, na.rm = TRUE) / (nstar - npar + 1)
   }
-  out <- structure(tmp, class = c("ARIMA", "forecast_ARIMA", "Arima"))
+  out <- structure(tmp, class = c("forecast_ARIMA", "ARIMA", "Arima"))
   out$fitted <- fitted.Arima(out)
   out$series <- series
   return(out)

@@ -201,7 +201,7 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
     }
     else{
       if (any(constant_columns)) {
-        xregg <- xregg[, -which(constant_columns)]
+        xregg <- xregg[, -which(constant_columns), drop = FALSE]
       }
 
       # Now check if it is rank deficient
@@ -723,7 +723,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
       # names(fit$coef) <- fitnames
       fit$xreg <- xreg
     }
-    npar <- length(fit$coef) + 1
+    npar <- length(fit$coef[fit$mask]) + 1
     if (method == "CSS") {
       fit$aic <- offset + nstar * log(fit$sigma2) + 2 * npar
     }
@@ -782,7 +782,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
     }
     fit$xreg <- xreg
 
-    return(structure(fit, class = c("ARIMA", "forecast_ARIMA", "Arima")))
+    return(structure(fit, class = c("forecast_ARIMA", "ARIMA", "Arima")))
   }
   else {
     # Catch errors due to unused arguments

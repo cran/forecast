@@ -77,7 +77,14 @@ MBB <- function(x, window_size) {
 #'
 #' @export
 bld.mbb.bootstrap <- function(x, num, block_size=NULL) {
+
+  if(length(x) <= 1L)
+    return(rep(list(x), num))
+
   freq <- frequency(x)
+  if(length(x) <= 2*freq)
+    freq <- 1L
+
   if (is.null(block_size)) {
     block_size <- ifelse(freq > 1, 2 * freq, min(8, floor(length(x) / 2)))
   }
@@ -94,7 +101,6 @@ bld.mbb.bootstrap <- function(x, num, block_size=NULL) {
     }
     x.bc <- BoxCox(x, lambda)
     lambda <- attr(x.bc, "lambda")
-
     if (freq > 1) {
       # STL decomposition
       x.stl <- stl(ts(x.bc, frequency = freq), "per")$time.series
@@ -104,16 +110,19 @@ bld.mbb.bootstrap <- function(x, num, block_size=NULL) {
     } else {
       # Loess
       trend <- 1:length(x)
-      suppressWarnings(x.loess <- loess(x.bc ~ trend, span = 6 / length(x), degree = 1))
+      suppressWarnings(
+        x.loess <- loess(ts(x.bc, frequency = 1) ~ trend, span = 6 / length(x), degree = 1)
+      )
       seasonal <- rep(0, length(x))
       trend <- x.loess$fitted
       remainder <- x.loess$residuals
     }
+  }
 
-    # Bootstrap some series, using MBB
-    for (i in 2:num) {
-      xs[[i]] <- InvBoxCox(trend + seasonal + MBB(remainder, block_size), lambda)
-    }
+  # Bootstrap some series, using MBB
+  for (i in 2:num) {
+    xs[[i]] <- ts(InvBoxCox(trend + seasonal + MBB(remainder, block_size), lambda))
+    tsp(xs[[i]]) <- tsp(x)
   }
 
   xs

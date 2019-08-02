@@ -2,7 +2,7 @@
 library('forecast')
 library('expsmooth')
 
-## ----ets-forecast, fig.height=7, fig.width=9, echo=FALSE, cache=TRUE-----
+## ----etsexamples, fig.height=7, fig.width=9, echo=FALSE, fig.cap="Four time series showing point forecasts and 80\\% \\& 95\\% prediction intervals obtained using exponential smoothing state space models."----
 par(mfrow = c(2,2))
 mod1 <- ets(bonds)
 mod2 <- ets(usnetelec)
@@ -18,31 +18,31 @@ plot(forecast(mod4), main="(d) Overseas visitors to Australia", xlab="Year", yla
 etsnames <- c(mod1$method, mod2$method, mod3$method, mod4$method)
 etsnames <- gsub("Ad","A\\\\damped",etsnames)
 
-## ----ets-usnetelec, echo=TRUE, cache=TRUE--------------------------------
+## ----ets-usnetelec, echo=TRUE--------------------------------------------
 etsfit <- ets(usnetelec)
 
-## ----ets-usnetelec-print,echo=TRUE, cache=TRUE---------------------------
+## ----ets-usnetelec-print,echo=TRUE---------------------------------------
 etsfit
 
-## ----ets-usnetelec-accuracy,eval=TRUE,echo=TRUE, cache=TRUE--------------
+## ----ets-usnetelec-accuracy,eval=TRUE,echo=TRUE--------------------------
 accuracy(etsfit)
 
-## ----ets-usnetelec-fcast, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE, output=FALSE----
+## ----ets-usnetelec-fcast, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=FALSE, output=FALSE----
 fcast <- forecast(etsfit)
 plot(fcast)
 
-## ----ets-usnetelec-fcast-print,eval=TRUE,echo=TRUE, cache=TRUE-----------
+## ----ets-usnetelec-fcast-print,eval=TRUE,echo=TRUE-----------------------
 fcast
 
-## ----ets-usnetelec-newdata,eval=FALSE,echo=TRUE, cache=TRUE--------------
+## ----ets-usnetelec-newdata,eval=FALSE,echo=TRUE--------------------------
 #  fit <- ets(usnetelec[1:45])
 #  test <- ets(usnetelec[46:55], model = fit)
 #  accuracy(test)
 
-## ----ets-usnetelec-fcast-accuracy,eval=FALSE,echo=TRUE, cache=TRUE-------
+## ----ets-usnetelec-fcast-accuracy,eval=FALSE,echo=TRUE-------------------
 #  accuracy(forecast(fit,10), usnetelec[46:55])
 
-## ----arima-forecast-plots, fig.height=7, fig.width=9, echo=FALSE, cache=TRUE----
+## ----arimaexamples, fig.height=7, fig.width=9, echo=FALSE, fig.cap="Four time series showing point forecasts and 80\\% \\& 95\\% prediction intervals obtained using ARIMA models."----
 mod1 <- auto.arima(bonds, seasonal=FALSE, approximation=FALSE)
 mod2 <- auto.arima(usnetelec)
 mod3 <- auto.arima(ukcars)
@@ -53,7 +53,7 @@ plot(forecast(mod2), main="(b) US net electricity generation", xlab="Year", ylab
 plot(forecast(mod3), main="(c) UK passenger motor vehicle production", xlab="Year", ylab="Thousands of cars")
 plot(forecast(mod4), main="(d) Overseas visitors to Australia", xlab="Year", ylab="Thousands of people")
 
-## ----arima-auto-fcast,eval=TRUE,echo=TRUE,fig.show="hide", cache=TRUE----
+## ----arima-auto-fcast,eval=TRUE,echo=TRUE,fig.show="hide"----------------
 arimafit <- auto.arima(usnetelec)
 fcast <- forecast(arimafit)
 plot(fcast)
