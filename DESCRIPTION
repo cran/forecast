@@ -1,5 +1,5 @@
 Package: forecast
-Version: 8.8
+Version: 8.9
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -8,8 +8,7 @@ Depends: R (>= 3.0.2),
 Imports: colorspace, fracdiff, ggplot2 (>= 2.2.1), graphics, lmtest,
         magrittr, nnet, parallel, Rcpp (>= 0.11.0), stats, timeDate,
         tseries, urca, zoo
-Suggests: expsmooth, uroot, knitr, rmarkdown, rticles, testthat,
-        methods
+Suggests: uroot, knitr, rmarkdown, rticles, testthat, methods
 LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.2.35)
 LazyData: yes
 ByteCompile: TRUE
@@ -39,7 +38,7 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2019-08-02 04:54:46 UTC; hyndman
+Packaged: 2019-08-22 03:02:51 UTC; hyndman
 Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut],
   Christoph Bergmeir [aut] (<https://orcid.org/0000-0002-3665-9021>),
@@ -58,4 +57,4 @@ Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2019-08-02 15:10:02 UTC
+Date/Publication: 2019-08-22 11:50:02 UTC
