@@ -1,3 +1,7 @@
+## forecast 8.10 (4 December 2019)
+  * Updates to remove new CRAN errors
+  * Bug fixes
+  
 ## forecast 8.9 (22 August 2019)
   * Updates for CRAN policies on Suggests packages
   * Bug fixes

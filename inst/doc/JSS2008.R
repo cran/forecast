@@ -1,10 +1,10 @@
-## ----load_forecast, echo=FALSE, message=FALSE----------------------------
+## ----load_forecast, echo=FALSE, message=FALSE---------------------------------
 library('forecast')
 
-## ----load_expsmooth, echo=FALSE, message=FALSE, eval=FALSE---------------
+## ----load_expsmooth, echo=FALSE, message=FALSE, eval=FALSE--------------------
 #  library('expsmooth')
 
-## ----expsmooth_datsets, echo=FALSE, message=FALSE------------------------
+## ----expsmooth_datsets, echo=FALSE, message=FALSE-----------------------------
 bonds <-
 structure(c(5.83, 6.06, 6.58, 7.09, 7.31, 7.23, 7.43, 7.37, 7.6,
 7.89, 8.12, 7.96, 7.93, 7.61, 7.33, 7.18, 6.74, 6.27, 6.38, 6.6,
@@ -87,32 +87,32 @@ plot(forecast(mod2), main="(b) US net electricity generation", xlab="Year", ylab
 plot(forecast(mod3), main="(c) UK passenger motor vehicle production", xlab="Year", ylab="Thousands of cars")
 plot(forecast(mod4), main="(d) Overseas visitors to Australia", xlab="Year", ylab="Thousands of people")
 
-## ----etsnames, echo=FALSE------------------------------------------------
+## ----etsnames, echo=FALSE-----------------------------------------------------
 etsnames <- c(mod1$method, mod2$method, mod3$method, mod4$method)
 etsnames <- gsub("Ad","A\\\\damped",etsnames)
 
-## ----ets-usnetelec, echo=TRUE--------------------------------------------
+## ----ets-usnetelec, echo=TRUE-------------------------------------------------
 etsfit <- ets(usnetelec)
 
-## ----ets-usnetelec-print,echo=TRUE---------------------------------------
+## ----ets-usnetelec-print,echo=TRUE--------------------------------------------
 etsfit
 
-## ----ets-usnetelec-accuracy,eval=TRUE,echo=TRUE--------------------------
+## ----ets-usnetelec-accuracy,eval=TRUE,echo=TRUE-------------------------------
 accuracy(etsfit)
 
 ## ----ets-usnetelec-fcast, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=FALSE, output=FALSE----
 fcast <- forecast(etsfit)
 plot(fcast)
 
-## ----ets-usnetelec-fcast-print,eval=TRUE,echo=TRUE-----------------------
+## ----ets-usnetelec-fcast-print,eval=TRUE,echo=TRUE----------------------------
 fcast
 
-## ----ets-usnetelec-newdata,eval=FALSE,echo=TRUE--------------------------
+## ----ets-usnetelec-newdata,eval=FALSE,echo=TRUE-------------------------------
 #  fit <- ets(usnetelec[1:45])
 #  test <- ets(usnetelec[46:55], model = fit)
 #  accuracy(test)
 
-## ----ets-usnetelec-fcast-accuracy,eval=FALSE,echo=TRUE-------------------
+## ----ets-usnetelec-fcast-accuracy,eval=FALSE,echo=TRUE------------------------
 #  accuracy(forecast(fit,10), usnetelec[46:55])
 
 ## ----arimaexamples, fig.height=7, fig.width=9, echo=FALSE, fig.cap="Four time series showing point forecasts and 80\\% \\& 95\\% prediction intervals obtained using ARIMA models."----
@@ -126,12 +126,12 @@ plot(forecast(mod2), main="(b) US net electricity generation", xlab="Year", ylab
 plot(forecast(mod3), main="(c) UK passenger motor vehicle production", xlab="Year", ylab="Thousands of cars")
 plot(forecast(mod4), main="(d) Overseas visitors to Australia", xlab="Year", ylab="Thousands of people")
 
-## ----arima-auto-fcast,eval=TRUE,echo=TRUE,fig.show="hide"----------------
+## ----arima-auto-fcast,eval=TRUE,echo=TRUE,fig.show="hide"---------------------
 arimafit <- auto.arima(usnetelec)
 fcast <- forecast(arimafit)
 plot(fcast)
 
-## ----arimanames, echo=FALSE----------------------------------------------
+## ----arimanames, echo=FALSE---------------------------------------------------
 # Convert character strings to latex
 arimanames <- c(as.character(mod1),
   as.character(mod2),

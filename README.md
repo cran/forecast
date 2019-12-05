@@ -3,12 +3,15 @@ forecast <img src="man/figures/logo.png" align="right" />
 
 [![Travis-CI Build Status](https://travis-ci.org/robjhyndman/forecast.svg?branch=master)](https://travis-ci.org/robjhyndman/forecast)
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/forecast)](https://cran.r-project.org/package=forecast)
-[![lifecycle](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
+[![cran checks](https://cranchecks.info/badges/worst/forecast)](https://cran.r-project.org/web/checks/check_results_forecast.html)
+[![Lifecycle: retired](https://img.shields.io/badge/lifecycle-retired-orange.svg)](https://www.tidyverse.org/lifecycle/#retired)
 [![Downloads](https://cranlogs.r-pkg.org/badges/forecast)](https://cran.r-project.org/package=forecast)
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 
 The R package *forecast* provides methods and tools for displaying and analysing univariate time series forecasts including exponential smoothing via state space models and automatic ARIMA modelling.
+
+This package is now retired in favour of the [fable](http://fable.tidyverts.org/) package. The forecast package will remain in its current state, and maintained with bug fixes only. For the latest features and development, we recommend forecasting with the fable package.
 
 ## Installation
 You can install the **stable** version from
@@ -22,8 +25,8 @@ You can install the **development** version from
 [Github](https://github.com/robjhyndman/forecast)
 
 ```s
-# install.packages("devtools")
-devtools::install_github("robjhyndman/forecast")
+# install.packages("remotes")
+remotes::install_github("robjhyndman/forecast")
 ```
 
 ## Usage

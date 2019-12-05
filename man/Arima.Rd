@@ -7,10 +7,21 @@
 \alias{as.character.Arima}
 \title{Fit ARIMA model to univariate time series}
 \usage{
-Arima(y, order = c(0, 0, 0), seasonal = c(0, 0, 0), xreg = NULL,
-  include.mean = TRUE, include.drift = FALSE, include.constant,
-  lambda = model$lambda, biasadj = FALSE, method = c("CSS-ML", "ML",
-  "CSS"), model = NULL, x = y, ...)
+Arima(
+  y,
+  order = c(0, 0, 0),
+  seasonal = c(0, 0, 0),
+  xreg = NULL,
+  include.mean = TRUE,
+  include.drift = FALSE,
+  include.constant,
+  lambda = model$lambda,
+  biasadj = FALSE,
+  method = c("CSS-ML", "ML", "CSS"),
+  model = NULL,
+  x = y,
+  ...
+)
 }
 \arguments{
 \item{y}{a univariate time series of class \code{ts}.}
@@ -69,6 +80,7 @@ parameters.}
 See the \code{\link[stats]{arima}} function in the stats package.
 The additional objects returned are \item{x}{The time series data}
 \item{xreg}{The regressors used in fitting (when relevant).}
+\item{sigma2}{The bias adjusted MLE of the innovations variance.}
 }
 \description{
 Largely a wrapper for the \code{\link[stats]{arima}} function in the stats

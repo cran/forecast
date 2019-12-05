@@ -1,5 +1,5 @@
 Package: forecast
-Version: 8.9
+Version: 8.10
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -36,9 +36,9 @@ URL: http://pkg.robjhyndman.com/forecast,
         https://github.com/robjhyndman/forecast
 VignetteBuilder: knitr
 Encoding: UTF-8
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.1.9000
 NeedsCompilation: yes
-Packaged: 2019-08-22 03:02:51 UTC; hyndman
+Packaged: 2019-12-03 22:35:15 UTC; robjhyndman
 Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut],
   Christoph Bergmeir [aut] (<https://orcid.org/0000-0002-3665-9021>),
@@ -57,4 +57,4 @@ Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2019-08-22 11:50:02 UTC
+Date/Publication: 2019-12-05 12:10:02 UTC

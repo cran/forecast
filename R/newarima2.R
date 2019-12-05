@@ -285,7 +285,10 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
     dx <- diff(dx, differences = d, lag = 1)
   }
 
-  if (is.constant(dx)) {
+
+  if(length(dx) == 0L)
+    stop("Not enough data to proceed")
+  else if (is.constant(dx)) {
     if (is.null(xreg)) {
       if (D > 0 && d == 0) {
         fit <- Arima(x, order = c(0, d, 0), seasonal = list(order = c(0, D, 0), period = m), include.constant = TRUE, fixed = mean(dx/m, na.rm = TRUE), method = method, ...)
@@ -683,7 +686,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
   missing <- is.na(x)
   firstnonmiss <- head(which(!missing),1)
   lastnonmiss <- tail(which(!missing),1)
-  n <- lastnonmiss - firstnonmiss + 1
+  n <- sum(!missing[firstnonmiss:lastnonmiss])
   m <- frequency(x)
   use.season <- (sum(seasonal) > 0) & m > 0
   diffs <- order[2] + seasonal[2]
@@ -695,7 +698,7 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
     }
   }
   if (diffs == 1 && constant) {
-    xreg <- `colnames<-`(cbind(drift = 1:length(x), xreg), 
+    xreg <- `colnames<-`(cbind(drift = 1:length(x), xreg),
       make.unique(c("drift", if(is.null(colnames(xreg)) && !is.null(xreg)) rep("", NCOL(xreg)) else colnames(xreg))))
     if (use.season) {
       suppressWarnings(fit <- try(stats::arima(x = x, order = order, seasonal = list(order = seasonal, period = m), xreg = xreg, method = method, ...), silent = TRUE))
