@@ -1,3 +1,6 @@
+## forecast (development version)
+* The axis for `gglagplot()` have been reversed for consistency with `stats::lag.plot()`.
+
 ## forecast 8.10 (4 December 2019)
   * Updates to remove new CRAN errors
   * Bug fixes

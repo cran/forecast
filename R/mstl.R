@@ -19,10 +19,11 @@
 #' @examples
 #' library(ggplot2)
 #' mstl(taylor) %>% autoplot()
-#' mstl(AirPassengers, lambda='auto') %>% autoplot()
+#' mstl(AirPassengers, lambda = "auto") %>% autoplot()
 #' @export
-mstl <- function(x, lambda=NULL, iterate=2, s.window=13, ...) {
+mstl <- function(x, lambda = NULL, iterate = 2, s.window = 13, ...) {
   # What is x?
+  origx <- x
   n <- length(x)
   if ("msts" %in% class(x)) {
     msts <- attributes(x)$msts
@@ -42,10 +43,10 @@ mstl <- function(x, lambda=NULL, iterate=2, s.window=13, ...) {
     msts <- 1L
   }
   # Check dimension
-  if(!is.null(dim(x)))
-  {
-    if(NCOL(x)==1L)
-      x <- x[,1]
+  if (!is.null(dim(x))) {
+    if (NCOL(x) == 1L) {
+      x <- x[, 1]
+    }
   }
 
   # Replace missing values if necessary
@@ -88,14 +89,18 @@ mstl <- function(x, lambda=NULL, iterate=2, s.window=13, ...) {
   }
   attributes(trend) <- attributes(x)
 
+  # Put back NAs
+  deseas[is.na(origx)] <- NA
+
   # Estimate remainder
   remainder <- deseas - trend
 
   # Package into matrix
-  output <- cbind(x, trend)
+  output <- cbind(origx, trend)
   if (!is.null(msts)) {
-    for (i in seq_along(msts))
+    for (i in seq_along(msts)) {
       output <- cbind(output, seas[[i]])
+    }
   }
   output <- cbind(output, remainder)
   colnames(output)[1L:2L] <- c("Data", "Trend")
@@ -106,8 +111,10 @@ mstl <- function(x, lambda=NULL, iterate=2, s.window=13, ...) {
 
   if (length(msts) > 1) {
     attr(output, "seasonal.periods") <- msts
-    return(structure(output, seasonal.periods = msts, 
-                     class = c("mstl", "mts", "msts", "ts")))
+    return(structure(output,
+      seasonal.periods = msts,
+      class = c("mstl", "mts", "msts", "ts")
+    ))
   }
 
   return(structure(output, class = c("mstl", "mts", "ts")))
@@ -118,8 +125,6 @@ mstl <- function(x, lambda=NULL, iterate=2, s.window=13, ...) {
 autoplot.mstl <- function(object, ...) {
   autoplot.mts(object, facets = TRUE, ylab = "", ...)
 }
-
-
 
 #' Forecasting using stl objects
 #'
@@ -226,17 +231,16 @@ autoplot.mstl <- function(object, ...) {
 #' @keywords ts
 #' @examples
 #'
-#' tsmod <- stlm(USAccDeaths, modelfunction=ar)
-#' plot(forecast(tsmod, h=36))
+#' tsmod <- stlm(USAccDeaths, modelfunction = ar)
+#' plot(forecast(tsmod, h = 36))
 #'
-#' decomp <- stl(USAccDeaths,s.window="periodic")
+#' decomp <- stl(USAccDeaths, s.window = "periodic")
 #' plot(forecast(decomp))
-#'
 #' @export
-forecast.stl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), etsmodel="ZZN",
-                         forecastfunction=NULL,
+forecast.stl <- function(object, method = c("ets", "arima", "naive", "rwdrift"), etsmodel = "ZZN",
+                         forecastfunction = NULL,
                          h = frequency(object$time.series) * 2, level = c(80, 95), fan = FALSE,
-                         lambda=NULL, biasadj=NULL, xreg=NULL, newxreg=NULL, allow.multiplicative.trend=FALSE, ...) {
+                         lambda = NULL, biasadj = NULL, xreg = NULL, newxreg = NULL, allow.multiplicative.trend = FALSE, ...) {
   method <- match.arg(method)
   if (is.null(forecastfunction)) {
     if (method != "arima" && (!is.null(xreg) || !is.null(newxreg))) {
@@ -249,7 +253,7 @@ forecast.stl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), e
         substr(etsmodel, 3, 3) <- "N"
       }
       forecastfunction <- function(x, h, level, ...) {
-        fit <- ets(x, model = etsmodel, allow.multiplicative.trend = allow.multiplicative.trend, ...)
+        fit <- ets(na.interp(x), model = etsmodel, allow.multiplicative.trend = allow.multiplicative.trend, ...)
         return(forecast(fit, h = h, level = level))
       }
     }
@@ -284,13 +288,13 @@ forecast.stl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), e
 
   if ("mstl" %in% class(object)) {
     seasonal.periods <- attr(object, "seasonal.periods")
-    if(is.null(seasonal.periods)){
+    if (is.null(seasonal.periods)) {
       seasonal.periods <- frequency(object)
     }
     seascomp <- matrix(0, ncol = length(seasonal.periods), nrow = h)
     for (i in seq_along(seasonal.periods))
     {
-      mp <- round(seasonal.periods[i],2)
+      mp <- round(seasonal.periods[i], 2)
       n <- NROW(object)
       colname <- paste0("Seasonal", mp)
       seascomp[, i] <- rep(object[n - rev(seq_len(mp)) + 1, colname], trunc(1 + (h - 1) / mp))[seq_len(h)]
@@ -298,13 +302,13 @@ forecast.stl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), e
     lastseas <- rowSums(seascomp)
     xdata <- object[, "Data"]
     seascols <- grep("Seasonal", colnames(object))
-    allseas <- rowSums(object[, seascols, drop=FALSE])
+    allseas <- rowSums(object[, seascols, drop = FALSE])
     series <- NULL
   }
   else if ("stl" %in% class(object)) {
     m <- frequency(object$time.series)
     n <- NROW(object$time.series)
-    lastseas <- rep(seasonal(object)[n - (m:1) + 1], trunc(1 + (h-1)/m))[1:h]
+    lastseas <- rep(seasonal(object)[n - (m:1) + 1], trunc(1 + (h - 1) / m))[1:h]
     xdata <- ts(rowSums(object$time.series))
     tsp(xdata) <- tsp(object$time.series)
     allseas <- seasonal(object)
@@ -344,12 +348,13 @@ forecast.stl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), e
 }
 
 #' @export
-forecast.mstl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), etsmodel="ZZN",
-                          forecastfunction=NULL,
+forecast.mstl <- function(object, method = c("ets", "arima", "naive", "rwdrift"), etsmodel = "ZZN",
+                          forecastfunction = NULL,
                           h = frequency(object) * 2, level = c(80, 95), fan = FALSE,
-                          lambda=NULL, biasadj=NULL, xreg=NULL, newxreg=NULL, allow.multiplicative.trend=FALSE, ...) {
+                          lambda = NULL, biasadj = NULL, xreg = NULL, newxreg = NULL, allow.multiplicative.trend = FALSE, ...) {
   forecast.stl(
-    object, method = method, etsmodel = etsmodel,
+    object,
+    method = method, etsmodel = etsmodel,
     forecastfunction = forecastfunction, h = h, level = level, fan = fan, lambda = lambda,
     biasadj = biasadj, xreg = xreg, newxreg = newxreg, allow.multiplicative.trend = allow.multiplicative.trend, ...
   )
@@ -359,8 +364,8 @@ forecast.mstl <- function(object, method=c("ets", "arima", "naive", "rwdrift"), 
 # But it does not forecast. Instead, the result can be passed to forecast().
 #' @rdname forecast.stl
 #' @export
-stlm <- function(y, s.window=13, robust=FALSE, method=c("ets", "arima"), modelfunction=NULL, model=NULL,
-                 etsmodel="ZZN", lambda=NULL, biasadj=FALSE, xreg=NULL, allow.multiplicative.trend=FALSE, x=y, ...) {
+stlm <- function(y, s.window = 13, robust = FALSE, method = c("ets", "arima"), modelfunction = NULL, model = NULL,
+                 etsmodel = "ZZN", lambda = NULL, biasadj = FALSE, xreg = NULL, allow.multiplicative.trend = FALSE, x = y, ...) {
   method <- match.arg(method)
 
   # Check univariate
@@ -399,7 +404,7 @@ stlm <- function(y, s.window=13, robust=FALSE, method=c("ets", "arima"), modelfu
     }
     else if (inherits(model$model, "Arima")) {
       modelfunction <- function(x, ...) {
-        return(Arima(x, model = model$model, xreg=xreg, ...))
+        return(Arima(x, model = model$model, xreg = xreg, ...))
       }
     }
     else if (!is.null(model$modelfunction)) {
@@ -426,7 +431,8 @@ stlm <- function(y, s.window=13, robust=FALSE, method=c("ets", "arima"), modelfu
       }
       modelfunction <- function(x, ...) {
         return(ets(
-          x, model = etsmodel,
+          x,
+          model = etsmodel,
           allow.multiplicative.trend = allow.multiplicative.trend, ...
         ))
       }
@@ -465,7 +471,7 @@ stlm <- function(y, s.window=13, robust=FALSE, method=c("ets", "arima"), modelfu
 #' @rdname forecast.stl
 #' @export
 forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FALSE,
-                          lambda=object$lambda, biasadj=NULL, newxreg=NULL, allow.multiplicative.trend=FALSE, ...) {
+                          lambda = object$lambda, biasadj = NULL, newxreg = NULL, allow.multiplicative.trend = FALSE, ...) {
   if (!is.null(newxreg)) {
     if (nrow(as.matrix(newxreg)) != h) {
       stop("newxreg should have the same number of rows as the forecast horizon h")
@@ -480,18 +486,19 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
     fcast <- forecast(object$model, h = h, level = level, xreg = newxreg, ...)
   } else if (is.element("ets", class(object$model))) {
     fcast <- forecast(
-      object$model, h = h, level = level,
+      object$model,
+      h = h, level = level,
       allow.multiplicative.trend = allow.multiplicative.trend, ...
     )
   } else {
     fcast <- forecast(object$model, h = h, level = level, ...)
   }
-  
+
   # In-case forecast method uses different horizon length (such as using xregs)
   h <- NROW(fcast$mean)
   # Forecast seasonal series with seasonal naive
   seasonal.periods <- attributes(object$stl)$seasonal.periods
-  if(is.null(seasonal.periods)){
+  if (is.null(seasonal.periods)) {
     seasonal.periods <- frequency(object$stl)
   }
   seascomp <- matrix(0, ncol = length(seasonal.periods), nrow = h)
@@ -507,10 +514,9 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
   seascols <- grep("Seasonal", colnames(object$stl))
   allseas <- rowSums(object$stl[, seascols, drop = FALSE])
   series <- NULL
-  
+
   #  m <- frequency(object$stl$time.series)
   n <- NROW(xdata)
-  
 
   # Reseasonalize
   fcast$mean <- fcast$mean + lastseas
@@ -540,10 +546,9 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
 #'
 #' @examples
 #'
-#' plot(stlf(AirPassengers, lambda=0))
-#'
+#' plot(stlf(AirPassengers, lambda = 0))
 #' @export
-stlf <- function(y, h=frequency(x) * 2, s.window=13, t.window=NULL, robust=FALSE, lambda=NULL, biasadj=FALSE, x=y, ...) {
+stlf <- function(y, h = frequency(x) * 2, s.window = 13, t.window = NULL, robust = FALSE, lambda = NULL, biasadj = FALSE, x = y, ...) {
   seriesname <- deparse(substitute(y))
 
   # Check univariate
@@ -586,8 +591,6 @@ stlf <- function(y, h=frequency(x) * 2, s.window=13, t.window=NULL, robust=FALSE
 
   return(fcast)
 }
-
-
 
 #' @rdname is.ets
 #' @export
