@@ -417,7 +417,7 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
   }
   fits <- fitted.Arima(object)
   if (!is.null(lambda) & is.null(object$constant)) { # Back-transform point forecasts and prediction intervals
-    pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, var(residuals.Arima(object), na.rm = TRUE))
+    pred$pred <- InvBoxCox(pred$pred, lambda, biasadj, pred$se^2)
     if (!bootstrap) { # Bootstrapped intervals already back-transformed
       lower <- InvBoxCox(lower, lambda)
       upper <- InvBoxCox(upper, lambda)
@@ -787,7 +787,7 @@ arima2 <- function(x, model, xreg, method) {
   sigma2 <- model$sigma2
   if (use.drift) {
     driftmod <- lm(model$xreg[, "drift"] ~ I(time(as.ts(model$x))))
-    newxreg <- driftmod$coeff[1] + driftmod$coeff[2] * time(as.ts(x))
+    newxreg <- driftmod$coefficients[1] + driftmod$coefficients[2] * time(as.ts(x))
     if (!is.null(xreg)) {
       origColNames <- colnames(xreg)
       xreg <- cbind(newxreg, xreg)
