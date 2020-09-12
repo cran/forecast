@@ -12,7 +12,7 @@ lagwalk <- function(y, lag=1, drift=FALSE, lambda=NULL, biasadj=FALSE) {
     y <- BoxCox(y, lambda)
     lambda <- attr(y, "lambda")
   }
-  
+
   m <- frequency(y)
   # Complete missing values with lagged values
   y_na <- which(is.na(y))
@@ -23,7 +23,7 @@ lagwalk <- function(y, lag=1, drift=FALSE, lambda=NULL, biasadj=FALSE) {
       fits[i] <- fits[i-lag]
     }
   }
-  
+
   fitted <- ts(c(rep(NA, lag), head(fits, -lag)), start = start(y), frequency = m)
   if(drift){
     fit <- summary(lm(y-fitted ~ 1, na.action=na.exclude))
@@ -31,20 +31,21 @@ lagwalk <- function(y, lag=1, drift=FALSE, lambda=NULL, biasadj=FALSE) {
     b.se <- fit$coefficients[1,2]
     sigma <- fit$sigma
     fitted <- fitted + b
+    res <- y - fitted
     method <- "Lag walk with drift"
   }
   else{
+    res <- y - fitted
     b <- b.se <- 0
-    sigma <- sd(y-fitted, na.rm=TRUE)
+    sigma <- sqrt(mean(res^2, na.rm=TRUE))
     method <- "Lag walk"
   }
-  res <- y - fitted
-  
+
   if (!is.null(lambda)) {
     fitted <- InvBoxCox(fitted, lambda, biasadj, var(res))
     attr(lambda, "biasadj") <- biasadj
   }
-  
+
   model <- structure(
     list(
       x = origy,
@@ -64,19 +65,19 @@ lagwalk <- function(y, lag=1, drift=FALSE, lambda=NULL, biasadj=FALSE) {
 
 #' @export
 forecast.lagwalk <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NULL,
-                        bootstrap=FALSE, npaths=5000, biasadj=FALSE, ...) {
+    simulate=FALSE, bootstrap=FALSE, npaths=5000, biasadj=FALSE, ...) {
   lag <- object$par$lag
   fullperiods <- (h-1)/lag+1
   steps <- rep(1:fullperiods, rep(lag,fullperiods))[1:h]
-  
+
   # Point forecasts
   fc <- rep(object$future, fullperiods)[1:h] + steps*object$par$drift
-  
+
   # Intervals
   # Adjust prediction intervals to allow for drift coefficient standard error
   mse <- mean(object$residuals^2, na.rm=TRUE)
   se <- sqrt(mse*steps + (steps*object$par$drift.se)^2)
-  
+
   if(fan)
     level <- seq(51,99,by=3)
   else
@@ -86,14 +87,14 @@ forecast.lagwalk <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NU
     else if(min(level) < 0 | max(level) > 99.99)
       stop("Confidence limit out of range")
   }
-  
+
   nconf <- length(level)
-  
-  if (bootstrap) # Compute prediction intervals using simulations
+
+  if (simulate | bootstrap) # Compute prediction intervals using simulations
   {
     sim <- matrix(NA, nrow = npaths, ncol = h)
     for (i in 1:npaths)
-      sim[i, ] <- simulate(object, nsim = h, bootstrap = TRUE, lambda = lambda)
+      sim[i, ] <- simulate(object, nsim = h, bootstrap = bootstrap, lambda = lambda)
     lower <- apply(sim, 2, quantile, 0.5 - level / 200, type = 8)
     upper <- apply(sim, 2, quantile, 0.5 + level / 200, type = 8)
     if (nconf > 1L) {
@@ -114,7 +115,7 @@ forecast.lagwalk <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NU
       upper[,i] <- fc + z[i]*se
     }
   }
-  
+
   if (!is.null(lambda)) {
     fc <- InvBoxCox(fc, lambda, biasadj, se^2)
     if(!bootstrap){ # Bootstrap intervals are already backtransformed
@@ -122,17 +123,17 @@ forecast.lagwalk <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NU
       lower <- InvBoxCox(lower, lambda)
     }
   }
-  
+
   # Set tsp
   m <- frequency(object$x)
   fc <- ts(fc,start=tsp(object$x)[2]+1/m,frequency=m)
   lower <- ts(lower,start=tsp(object$x)[2]+1/m,frequency=m)
   upper <- ts(upper,start=tsp(object$x)[2]+1/m,frequency=m)
   colnames(lower) <- colnames(upper) <- paste(level,"%",sep="")
-  
+
   return(structure(
     list(
-      method = object$method, model = object, lambda = lambda, x = object$x, 
+      method = object$method, model = object, lambda = lambda, x = object$x,
       fitted = fitted(object), residuals = residuals(object), series = object$series,
       mean = fc, level = level, lower = lower, upper = upper
     ), class = "forecast")
@@ -169,11 +170,11 @@ rwf <- function(y, h=10, drift=FALSE, level=c(80, 95), fan=FALSE, lambda=NULL, b
     x, lag = 1, drift = drift,
     lambda = lambda, biasadj = biasadj
   )
-  
+
   fc <- forecast(fit, h = h,
                  level = level, fan = fan,
                  lambda = fit$lambda, biasadj = biasadj, ...)
-  
+
   fc$model$call <- match.call()
   fc$series <- deparse(substitute(y))
 
@@ -214,7 +215,7 @@ rwf <- function(y, h=10, drift=FALSE, level=c(80, 95), fan=FALSE, lambda=NULL, b
 #' fan plots.
 #' @param x Deprecated. Included for backwards compatibility.
 #' @inheritParams forecast
-#' 
+#'
 #' @return An object of class "\code{forecast}".
 #'
 #' The function \code{summary} is used to obtain and print a summary of the

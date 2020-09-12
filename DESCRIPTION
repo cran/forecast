@@ -1,5 +1,5 @@
 Package: forecast
-Version: 8.12
+Version: 8.13
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -8,7 +8,8 @@ Depends: R (>= 3.0.2),
 Imports: colorspace, fracdiff, ggplot2 (>= 2.2.1), graphics, lmtest,
         magrittr, nnet, parallel, Rcpp (>= 0.11.0), stats, timeDate,
         tseries, urca, zoo
-Suggests: uroot, knitr, rmarkdown, rticles, testthat, methods
+Suggests: forecTheta, knitr, methods, rmarkdown, rticles, seasonal,
+        testthat, uroot
 LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.2.35)
 LazyData: yes
 ByteCompile: TRUE
@@ -32,13 +33,13 @@ Authors@R: c(
   )
 BugReports: https://github.com/robjhyndman/forecast/issues
 License: GPL-3
-URL: http://pkg.robjhyndman.com/forecast,
+URL: https://pkg.robjhyndman.com/forecast/,
         https://github.com/robjhyndman/forecast
 VignetteBuilder: knitr
 Encoding: UTF-8
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2020-03-31 08:18:48 UTC; robjhyndman
+Packaged: 2020-09-11 07:27:05 UTC; robjhyndman
 Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut],
   Christoph Bergmeir [aut] (<https://orcid.org/0000-0002-3665-9021>),
@@ -57,4 +58,4 @@ Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2020-03-31 14:10:07 UTC
+Date/Publication: 2020-09-12 06:00:08 UTC

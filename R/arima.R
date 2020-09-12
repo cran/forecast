@@ -65,6 +65,8 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
       num.cores <- detectCores()
     }
     cl <- makeCluster(num.cores)
+    #exporting the max.order object in the cluster
+    #clusterExport(cl,c("max.order"))
     all.models <- parLapply(cl = cl, X = to.check, fun = par.all.arima)
     stopCluster(cl = cl)
 
@@ -321,13 +323,14 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
     }
   }
   level <- sort(level)
-  
+
   if (use.drift) {
-    missing <- is.na(x)
-    firstnonmiss <- head(which(!missing),1)
-    n <- length(x) - firstnonmiss + 1
+    n <- length(x)
+    #missing <- is.na(x)
+    #firstnonmiss <- head(which(!missing),1)
+    #n <- length(x) - firstnonmiss + 1
     if (!is.null(xreg)) {
-      xreg <- `colnames<-`(cbind(drift = (1:h) + n, xreg), 
+      xreg <- `colnames<-`(cbind(drift = (1:h) + n, xreg),
         make.unique(c("drift", if(is.null(colnames(xreg)) && !is.null(xreg)) rep("", NCOL(xreg)) else colnames(xreg))))
     } else {
       xreg <- `colnames<-`(as.matrix((1:h) + n), "drift")
@@ -583,7 +586,7 @@ fitted.Arima <- function(object, h = 1, ...) {
       return(x - object$residuals)
     }
     else {
-      fits <- InvBoxCox(BoxCox(x, object$lambda) - object$residuals, object$lambda, NULL, var(object$residuals))
+      fits <- InvBoxCox(BoxCox(x, object$lambda) - object$residuals, object$lambda, NULL, var(object$residuals, na.rm=TRUE))
       return(fits)
     }
   }
@@ -744,7 +747,7 @@ Arima <- function(y, order=c(0, 0, 0), seasonal=c(0, 0, 0), xreg=NULL, include.m
   }
   else {
     if (include.drift) {
-      xreg <- `colnames<-`(cbind(drift = 1:length(x), xreg), 
+      xreg <- `colnames<-`(cbind(drift = 1:length(x), xreg),
                            make.unique(c("drift", if(is.null(colnames(xreg)) && !is.null(xreg)) rep("", NCOL(xreg)) else colnames(xreg))))
     }
     if (is.null(xreg)) {

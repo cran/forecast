@@ -65,6 +65,9 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
   ## Fix formula's environment for correct `...` scoping.
   attr(formula, ".Environment") <- environment()
 
+  ## Ensure response variable is taken from dataset (including transformations)
+  formula[[2]] <- as.symbol(deparse(formula[[2]]))
+
   if (sum(c(tsvar, fnvar)) > 0) {
     # Remove variables not needed in data (trend+season+functions)
     rmvar <- c(tsvar, fnvar)
@@ -474,6 +477,17 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
   }
 
   return(structure(fcast, class = "forecast"))
+}
+
+#' @export
+summary.tslm <- function(object, ...) {
+  # Remove NA from object structure as summary.lm() expects (#836)
+  object$residuals <- na.omit(as.numeric(object$residuals))
+  object$fitted.values <- na.omit(as.numeric(object$fitted.values))
+  if(!is.null(object$lambda)) {
+    object$fitted.values <- BoxCox(object$fitted.values, object$lambda)
+  }
+  NextMethod()
 }
 
 # Compute cross-validation and information criteria from a linear model

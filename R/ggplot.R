@@ -428,14 +428,14 @@ autoplot.decomposed.ts <- function(object, labels=NULL, range.bars = NULL, ...) 
     }
 
     if (is.null(labels)) {
-      labels <- c("seasonal", "trend", "remainder")
+      labels <- c("trend", "seasonal", "remainder")
     }
 
     cn <- c("data", labels)
 
     data <- data.frame(
       datetime = rep(time(object$x), 4),
-      y = c(object$x, object$seasonal, object$trend, object$random),
+      y = c(object$x, object$trend, object$seasonal, object$random),
       parts = factor(rep(cn, each = NROW(object$x)), levels = cn)
     )
 
@@ -450,7 +450,8 @@ autoplot.decomposed.ts <- function(object, labels=NULL, range.bars = NULL, ...) 
       data = subset(data, data$parts == cn[4]), lineend = "butt", na.rm = TRUE
     )
     p <- p + ggplot2::facet_grid("parts ~ .", scales = "free_y", switch = "y")
-    p <- p + ggplot2::geom_hline(ggplot2::aes_(yintercept = ~y), data = data.frame(y = int, parts = cn[4]))
+    p <- p + ggplot2::geom_hline(ggplot2::aes_(yintercept = ~y),
+                                 data = data.frame(y = int, parts = factor(cn[4], levels = cn)))
 
     if (is.null(range.bars)) {
       range.bars <- object$type == "additive"
@@ -464,7 +465,8 @@ autoplot.decomposed.ts <- function(object, labels=NULL, range.bars = NULL, ...) 
       barpos <- data.frame(
         left = xranges[2] + barwidth, right = xranges[2] + barwidth * 2,
         top = barmid + barlength / 2, bottom = barmid - barlength / 2,
-        parts = colnames(yranges), datetime = xranges[2], y = barmid
+        parts = factor(colnames(yranges), levels = cn),
+        datetime = xranges[2], y = barmid
       )
       p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
     }
@@ -522,7 +524,8 @@ autoplot.ets <- function(object, range.bars = NULL, ...) {
       barpos <- data.frame(
         left = xranges[2] + barwidth, right = xranges[2] + barwidth * 2,
         top = barmid + barlength / 2, bottom = barmid - barlength / 2,
-        parts = colnames(yranges), datetime = xranges[2], y = barmid
+        parts = factor(colnames(yranges), levels = cn),
+        datetime = xranges[2], y = barmid
       )
       p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
     }
@@ -568,7 +571,8 @@ autoplot.bats <- function(object, range.bars = FALSE, ...) {
     barpos <- data.frame(
       left = xranges[2] + barwidth, right = xranges[2] + barwidth * 2,
       top = barmid + barlength / 2, bottom = barmid - barlength / 2,
-      parts = colnames(yranges), datetime = xranges[2], y = barmid
+      parts = factor(colnames(yranges), levels = cn),
+      datetime = xranges[2], y = barmid
     )
     p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
   }
@@ -1020,9 +1024,9 @@ gglagplot <- function(x, lags=ifelse(frequency(x) > 9, 16, 9),
           data,
           data.frame(
             lagnum = 1:(n - lagi),
-            freqcur = ifelse(rep(seasonal, n - lagi), linecol[1:(n - lagi)], 1:(n - lagi)),
-            orig = x[1:(n - lagi), i],
-            lagged = x[(lagi + 1):n, i],
+            freqcur = if(seasonal) linecol[(lagi + 1):n] else (lagi + 1):n,
+            orig = x[(lagi + 1):n, i],
+            lagged = x[1:(n - lagi), i],
             lagVal = rep(lagi, n - lagi),
             series = factor(rep(sname, n - lagi))
           )
@@ -1034,7 +1038,7 @@ gglagplot <- function(x, lags=ifelse(frequency(x) > 9, 16, 9),
     }
 
     # Initialise ggplot object
-    p <- ggplot2::ggplot(ggplot2::aes_(x = ~orig, y = ~lagged), data = data)
+    p <- ggplot2::ggplot(ggplot2::aes_(x = ~lagged, y = ~orig), data = data)
 
     if (diag) {
       p <- p + ggplot2::geom_abline(colour = diag.col, linetype = "dashed")
@@ -1486,14 +1490,16 @@ autoplot.stl <- function(object, labels = NULL, range.bars = TRUE, ...) {
       barpos <- data.frame(
         left = xranges[2] + barwidth, right = xranges[2] + barwidth * 2,
         top = barmid + barlength / 2, bottom = barmid - barlength / 2,
-        parts = colnames(yranges), datetime = xranges[2], y = barmid
+        parts = factor(colnames(yranges), levels = cn),
+        datetime = xranges[2], y = barmid
       )
       p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
     }
 
     # Remainder
     p <- p + ggplot2::facet_grid("parts ~ .", scales = "free_y", switch = "y")
-    p <- p + ggplot2::geom_hline(ggplot2::aes_(yintercept = ~y), data = data.frame(y = 0, parts = cn[4]))
+    p <- p + ggplot2::geom_hline(ggplot2::aes_(yintercept = ~y),
+                                 data = data.frame(y = 0, parts = factor(cn[4], levels = cn)))
 
     # Add axis labels
     p <- p + ggAddExtras(xlab = "Time", ylab = "")
@@ -1545,7 +1551,8 @@ autoplot.StructTS <- function(object, labels = NULL, range.bars = TRUE, ...) {
       barpos <- data.frame(
         left = xranges[2] + barwidth, right = xranges[2] + barwidth * 2,
         top = barmid + barlength / 2, bottom = barmid - barlength / 2,
-        parts = colnames(yranges), datetime = xranges[2], y = barmid
+        parts = factor(colnames(yranges), levels = cn),
+        datetime = xranges[2], y = barmid
       )
       p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
     }
@@ -1603,15 +1610,20 @@ autoplot.seas <- function(object, labels = NULL, range.bars = NULL, ...) {
       stop("autoplot.seas requires a seas object")
     }
     if (is.null(labels)) {
-      labels <- c("seasonal", "trend", "remainder")
+      labels <- c("trend", "seasonal", "remainder")
     }
 
-    data <- cbind(object$x, object$data[, c("seasonal", "trend", "irregular")])
+    data <- cbind(object$x, object$data[, c("trend", "seasonal", "irregular")])
     cn <- c("data", labels)
     data <- data.frame(
       datetime = rep(time(data), NCOL(data)), y = c(data),
       parts = factor(rep(cn, each = NROW(data)), levels = cn)
     )
+
+    # Is it additive or multiplicative?
+    freq <- frequency(seasonal(object))
+    sum_first_year <- sum(seasonal(object)[seq(freq)])
+    int <- as.integer(sum_first_year > 0.5) # Closer to 1 than 0.
 
     # Initialise ggplot object
     p <- ggplot2::ggplot(ggplot2::aes_(x = ~datetime, y = ~y), data = data)
@@ -1619,11 +1631,12 @@ autoplot.seas <- function(object, labels = NULL, range.bars = NULL, ...) {
     # Add data
     p <- p + ggplot2::geom_line(ggplot2::aes_(x = ~datetime, y = ~y), data = subset(data, data$parts != cn[4]), na.rm = TRUE)
     p <- p + ggplot2::geom_segment(
-      ggplot2::aes_(x = ~datetime, xend = ~datetime, y = 1, yend = ~y),
+      ggplot2::aes_(x = ~datetime, xend = ~datetime, y = int, yend = ~y),
       data = subset(data, data$parts == cn[4]), lineend = "butt"
     )
     p <- p + ggplot2::facet_grid("parts ~ .", scales = "free_y", switch = "y")
-    p <- p + ggplot2::geom_hline(ggplot2::aes_(yintercept = ~y), data = data.frame(y = 1, parts = cn[4]))
+    p <- p + ggplot2::geom_hline(ggplot2::aes_(yintercept = ~y),
+                                 data = data.frame(y = int, parts = factor(cn[4], levels = cn)))
 
     # Rangebars
     if (is.null(range.bars)) {
@@ -1638,7 +1651,8 @@ autoplot.seas <- function(object, labels = NULL, range.bars = NULL, ...) {
       barpos <- data.frame(
         left = xranges[2] + barwidth, right = xranges[2] + barwidth * 2,
         top = barmid + barlength / 2, bottom = barmid - barlength / 2,
-        parts = colnames(yranges), datetime = xranges[2], y = barmid
+        parts = factor(colnames(yranges), levels = cn),
+        datetime = xranges[2], y = barmid
       )
       p <- p + ggplot2::geom_rect(ggplot2::aes_(xmin = ~left, xmax = ~right, ymax = ~top, ymin = ~bottom), data = barpos, fill = "gray75", colour = "black", size = 1 / 3)
     }

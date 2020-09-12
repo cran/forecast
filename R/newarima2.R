@@ -129,6 +129,12 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
 
   # Trim initial missing values
   x <- subset(x, start=firstnonmiss)
+  if(!is.null(xreg)) {
+    if(!is.numeric(xreg))
+      stop("xreg should be a numeric matrix or a numeric vector")
+    xreg <- as.matrix(xreg)
+    xreg <- xreg[firstnonmiss:NROW(xreg),,drop=FALSE]
+  }
 
   # Check for constant data
   if (is.constant(x)) {
@@ -184,9 +190,6 @@ auto.arima <- function(y, d=NA, D=NA, max.p=5, max.q=5,
 
   # Check xreg and do regression if necessary
   if (!is.null(xreg)) {
-    if(!is.numeric(xreg))
-      stop("xreg should be a numeric matrix or a numeric vector")
-    xreg <- as.matrix(xreg)
     if (is.null(colnames(xreg))) {
       colnames(xreg) <- if (ncol(xreg) == 1) "xreg" else paste("xreg", 1:ncol(xreg), sep = "")
     }
@@ -777,9 +780,10 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
         else fit$ic <- Inf
       }
     }
-    if (minroot < 1 + 1e-2) { # Previously 1+1e-3
+    # Avoid bad models
+    if (minroot < 1 + 1e-2 | checkarima(fit)) {
       fit$ic <- Inf
-    } # Don't like this model
+    }
     if (trace) {
       cat("\n", arima.string(fit, padding = TRUE), ":", fit$ic)
     }
