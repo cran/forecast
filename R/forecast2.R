@@ -126,14 +126,14 @@ meanf <- function(y, h=10, level=c(80, 95), fan=FALSE, lambda=NULL, biasadj=FALS
 #' BoxCox() returns a transformation of the input variable using a Box-Cox
 #' transformation. InvBoxCox() reverses the transformation.
 #'
-#' The Box-Cox transformation is given by \deqn{f_\lambda(x) =\frac{x^\lambda -
-#' 1}{\lambda}}{f(x;lambda)=(x^lambda - 1)/lambda} if \eqn{\lambda\ne0}{lambda
+#' The Box-Cox transformation (as given by Bickel & Doksum 1981) is given by \deqn{f_\lambda(x) =sign(x)(|x|^\lambda -
+#' 1)/\lambda}{f(x;lambda)=sign(x)(|x|^lambda - 1)/lambda} if \eqn{\lambda\ne0}{lambda
 #' is not equal to 0}. For \eqn{\lambda=0}{lambda=0},
 #' \deqn{f_0(x)=\log(x)}{f(x;0)=log(x)}.
 #'
 #' @param x a numeric vector or time series of class \code{ts}.
 #' @param lambda transformation parameter. If \code{lambda = "auto"}, then
-#' the transformation parameter lambda is chosen using BoxCox.lambda.
+#' the transformation parameter lambda is chosen using BoxCox.lambda (with a lower bound of -0.9)
 #' @param biasadj Use adjusted back-transformed mean for Box-Cox
 #' transformations. If transformed data is used to produce forecasts and fitted values,
 #' a regular back transformation will result in median forecasts. If biasadj is TRUE,
@@ -146,6 +146,7 @@ meanf <- function(y, h=10, level=c(80, 95), fan=FALSE, lambda=NULL, biasadj=FALS
 #' @seealso \code{\link{BoxCox.lambda}}
 #' @references Box, G. E. P. and Cox, D. R. (1964) An analysis of
 #' transformations. \emph{JRSS B} \bold{26} 211--246.
+#' Bickel, P. J. and Doksum K. A. (1981) An Analysis of Transformations Revisited. \emph{JASA} \bold{76} 296-311.
 #' @keywords ts
 #' @examples
 #'
@@ -156,7 +157,7 @@ meanf <- function(y, h=10, level=c(80, 95), fan=FALSE, lambda=NULL, biasadj=FALS
 #' @export
 BoxCox <- function(x, lambda) {
   if (lambda == "auto") {
-    lambda <- BoxCox.lambda(x)
+    lambda <- BoxCox.lambda(x, lower = -0.9)
   }
   if (lambda < 0) {
     x[x < 0] <- NA
@@ -217,7 +218,7 @@ InvBoxCox <- function(x, lambda, biasadj=FALSE, fvar=NULL) {
     if (NCOL(fvar) > 1) {
       fvar <- diag(fvar)
     }
-    out <- out * (1 + 0.5 * fvar * (1 - lambda) / (out) ^ (2 * lambda))
+    out <- out * (1 + 0.5 * as.numeric(fvar) * (1 - lambda) / (out) ^ (2 * lambda))
   }
   return(out)
 }
