@@ -241,17 +241,23 @@ print.forecast <- function(x, ...) {
 
 #' @export
 summary.forecast <- function(object, ...) {
-  cat(paste("\nForecast method:", object$method))
-  #    cat(paste("\n\nCall:\n",deparse(object$call)))
+  class(object) <- c("summary.forecast", class(object))
+  object
+}
+
+#' @export
+print.summary.forecast <- function(x, ...) {
+  cat(paste("\nForecast method:", x$method))
+  #    cat(paste("\n\nCall:\n",deparse(x$call)))
   cat(paste("\n\nModel Information:\n"))
-  print(object$model)
+  print(x$model)
   cat("\nError measures:\n")
-  print(accuracy(object))
-  if (is.null(object$mean)) {
+  print(accuracy(x))
+  if (is.null(x$mean)) {
     cat("\n No forecasts\n")
   } else {
     cat("\nForecasts:\n")
-    print(object)
+    NextMethod()
   }
 }
 
@@ -679,11 +685,14 @@ as.data.frame.forecast <- function(x, ...) {
   colnames(out) <- names
   tx <- time(x$mean)
   if (max(abs(tx - round(tx))) < 1e-11) {
-    nd <- 0
+    nd <- 0L
   } else {
-    nd <- max(round(log10(fr.x) + 1), 2)
+    nd <- max(round(log10(fr.x) + 1), 2L)
   }
-  rownames(out) <- format(tx, nsmall = nd, digits = nd)
+  if(nd == 0L)
+    rownames(out) <- round(tx)
+  else
+    rownames(out) <- format(tx, nsmall = nd, digits = nd)
   # Rest of function borrowed from print.ts(), but with header() omitted
   if (!ists) {
     return(as.data.frame(out))

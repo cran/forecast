@@ -1323,9 +1323,15 @@ plot.ets <- function(x, ...) {
 
 #' @export
 summary.ets <- function(object, ...) {
-  print(object)
+  class(object) <- c("summary.ets", class(object))
+  object
+}
+
+#' @export
+print.summary.ets <- function(x, ...) {
+  NextMethod()
   cat("\nTraining set error measures:\n")
-  print(accuracy(object))
+  print(accuracy(x))
 }
 
 #' @export

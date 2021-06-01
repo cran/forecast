@@ -1,3 +1,7 @@
+# forecast 8.15 (1 June 2021)
+  * Changed `summary()` methods to defer console output until `print()`
+  * Changed default `s.window` values for `mstl()`, `stlf()` and `stlm()`. The new defaults are based on extensive empirical testing.
+
 # forecast 8.14 (11 March 2021)
   * Changed default `BoxCox(lambda = "auto")` lower bound to -0.9.
   * Use better variance estimates for `ets()` bias adjustments.
@@ -429,7 +433,7 @@
 
 ## Version 3.16 (24 December 2011)
   * Corrected problem with AIC computation in bats and tbats
-  * Fixed handlng of non-seasonal data in bats()
+  * Fixed handling of non-seasonal data in bats()
   * Changed dependency to >= R 2.14.0 in order to ensure parallel package available.
 
 ## Version 3.15 (22 December 2011)

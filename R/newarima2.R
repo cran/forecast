@@ -67,7 +67,7 @@
 #' @param allowmean If \code{TRUE}, models with a non-zero mean are considered.
 #' @param parallel If \code{TRUE} and \code{stepwise = FALSE}, then the
 #' specification search is done in parallel. This can give a significant
-#' speedup on mutlicore machines.
+#' speedup on multicore machines.
 #' @param num.cores Allows the user to specify the amount of parallel processes
 #' to be used if \code{parallel = TRUE} and \code{stepwise = FALSE}. If
 #' \code{NULL}, then the number of logical cores is automatically detected and
@@ -871,9 +871,15 @@ arima.string <- function(object, padding=FALSE) {
 
 #' @export
 summary.Arima <- function(object, ...) {
-  print(object)
+  class(object) <- c("summary.Arima", class(object))
+  object
+}
+
+#' @export
+print.summary.Arima <- function(x, ...) {
+  NextMethod()
   cat("\nTraining set error measures:\n")
-  print(accuracy(object))
+  print(accuracy(x))
 }
 
 # Check that Arima object has positive coefficient variances without returning warnings
