@@ -146,8 +146,9 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
     data <- data[subset, ] # model.frame(formula,as.data.frame(data[subsetTF,]))
   }
   if (!is.null(lambda)) {
-    data[, 1] <- BoxCox(data[, 1], lambda)
-    lambda <- attr(data[, 1], "lambda")
+    resp_var <- deparse(attr(mt, "variables")[[attr(mt, "response") + 1]])
+    data[, resp_var] <- BoxCox(data[, resp_var], lambda)
+    lambda <- attr(data[, resp_var], "lambda")
   }
   if (tsdat[2] == 0 && tsvar[2] != 0) {
     data$season <- factor(data$season) # fix for lost factor information, may not be needed?
@@ -470,7 +471,7 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
   }
 
   if (!is.null(lambda)) {
-    fcast$x <- InvBoxCox(fcast$x, lambda)
+    #fcast$x <- InvBoxCox(fcast$x, lambda)
     fcast$mean <- InvBoxCox(fcast$mean, lambda, biasadj, fcast)
     fcast$lower <- InvBoxCox(fcast$lower, lambda)
     fcast$upper <- InvBoxCox(fcast$upper, lambda)

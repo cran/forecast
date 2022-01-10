@@ -40,7 +40,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
   } else if (parallel == TRUE) {
     to.check <- WhichModels(max.p, max.q, max.P, max.Q, maxK)
 
-    par.all.arima <- function(l) {
+    par.all.arima <- function(l, max.order) {
       .tmp <- UndoWhichModels(l)
       i <- .tmp[1]
       j <- .tmp[2]
@@ -64,12 +64,8 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
     if (is.null(num.cores)) {
       num.cores <- detectCores()
     }
-    cl <- makeCluster(num.cores)
-    #exporting the objects needed in all nodes of the cluster
-    clusterExport(cl, c("max.order"), envir=environment())
 
-    all.models <- parLapply(cl = cl, X = to.check, fun = par.all.arima)
-    stopCluster(cl = cl)
+    all.models <- mclapply(X = to.check, FUN = par.all.arima, max.order=max.order)
 
     # Removing null elements
     all.models <- all.models[!sapply(all.models, is.null)]
@@ -430,8 +426,9 @@ forecast.Arima <- function(object, h=ifelse(object$arma[5] > 1, 2 * object$arma[
   return(structure(
     list(
       method = method, model = object, level = level,
-      mean = pred$pred, lower = lower, upper = upper, x = x, series = seriesname,
-      fitted = fits, residuals = residuals.Arima(object)
+      mean = future_msts(x, pred$pred), lower = future_msts(x, lower),
+      upper = future_msts(x, upper), x = x, series = seriesname,
+      fitted = copy_msts(x, fits), residuals = copy_msts(x, residuals.Arima(object))
     ),
     class = "forecast"
   ))
@@ -487,8 +484,11 @@ forecast.ar <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NULL,
 
   return(structure(
     list(
-      method = method, model = object, level = level, mean = pred$pred,
-      lower = lower, upper = upper, x = x, series = deparse(object$call$x), fitted = fits, residuals = res
+      method = method, model = object, level = level,
+      mean = future_msts(x, pred$pred),
+      lower = future_msts(x, lower),
+      upper = future_msts(x, upper), x = x, series = deparse(object$call$x),
+      fitted = copy_msts(x, fits), residuals = copy_msts(x, res)
     )
     , class = "forecast"
   ))
@@ -883,30 +883,24 @@ print.forecast_ARIMA <- function(x, digits=max(3, getOption("digits") - 3), se=T
     print.default(coef, print.gap = 2)
   }
   cm <- x$call$method
+  cat("\nsigma^2 = ", format(x$sigma2, digits = digits), sep="")
+  if(!is.na(x$loglik))
+    cat(":  log likelihood = ", format(round(x$loglik, 2L)), sep = "")
+  cat("\n")
   if (is.null(cm) || cm != "CSS") {
-    cat(
-      "\nsigma^2 estimated as ", format(x$sigma2, digits = digits),
-      ":  log likelihood=", format(round(x$loglik, 2L)), "\n", sep = ""
-    )
-    # npar <- length(x$coef) + 1
-    npar <- length(x$coef[x$mask]) + 1
-    missing <- is.na(x$residuals)
-    firstnonmiss <- head(which(!missing),1)
-    lastnonmiss <- tail(which(!missing),1)
-    n <- lastnonmiss - firstnonmiss + 1
-    nstar <- n - x$arma[6] - x$arma[7] * x$arma[5]
-    bic <- x$aic + npar * (log(nstar) - 2)
-    aicc <- x$aic + 2 * npar * (nstar / (nstar - npar - 1) - 1)
-    cat("AIC=", format(round(x$aic, 2L)), sep = "")
-    cat("   AICc=", format(round(aicc, 2L)), sep = "")
-    cat("   BIC=", format(round(bic, 2L)), "\n", sep = "")
-  }
-  else {
-    cat(
-      "\nsigma^2 estimated as ", format(x$sigma2, digits = digits),
-      ":  part log likelihood=", format(round(x$loglik, 2)),
-      "\n", sep = ""
-    )
+    if(!is.na(x$aic)) {
+      npar <- length(x$coef[x$mask]) + 1
+      missing <- is.na(x$residuals)
+      firstnonmiss <- head(which(!missing),1)
+      lastnonmiss <- tail(which(!missing),1)
+      n <- lastnonmiss - firstnonmiss + 1
+      nstar <- n - x$arma[6] - x$arma[7] * x$arma[5]
+      bic <- x$aic + npar * (log(nstar) - 2)
+      aicc <- x$aic + 2 * npar * (nstar / (nstar - npar - 1) - 1)
+      cat("AIC=", format(round(x$aic, 2L)), sep = "")
+      cat("   AICc=", format(round(aicc, 2L)), sep = "")
+      cat("   BIC=", format(round(bic, 2L)), "\n", sep = "")
+    }
   }
   invisible(x)
 }

@@ -92,7 +92,8 @@
 or "\code{nnetar}".}
 
 \item{nsim}{Number of periods for the simulated series. Ignored if either
-\code{xreg} or \code{innov} are not \code{NULL}.}
+\code{xreg} or \code{innov} are not \code{NULL}. Otherwise the default is
+the length of series used to train model (or 100 if no data found).}
 
 \item{seed}{Either \code{NULL} or an integer that will be used in a call to
 \code{\link[base]{set.seed}} before simulating the time series. The default,
@@ -141,9 +142,8 @@ start at the value of the first observation.
 }
 \examples{
 fit <- ets(USAccDeaths)
-plot(USAccDeaths, xlim=c(1973,1982))
-lines(simulate(fit, 36), col="red")
-
+plot(USAccDeaths, xlim = c(1973, 1982))
+lines(simulate(fit, 36), col = "red")
 }
 \seealso{
 \code{\link{ets}}, \code{\link{Arima}}, \code{\link{auto.arima}},
