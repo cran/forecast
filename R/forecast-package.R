@@ -1,3 +1,7 @@
+#' @keywords package
+#' @aliases forecast-package
+"_PACKAGE"
+
 #' @import parallel
 #' @import Rcpp
 #'
@@ -16,9 +20,16 @@
 #' @importFrom lmtest bgtest
 #' @importFrom stats supsmu
 #' @importFrom magrittr %>%
+#' @importFrom generics forecast accuracy
 #'
 #' @useDynLib forecast, .registration = TRUE
 NULL
 
+# Generics to re-export
+
 #' @export
 magrittr::`%>%`
+#' @export
+generics::forecast
+#' @export
+generics::accuracy

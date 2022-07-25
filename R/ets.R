@@ -40,8 +40,8 @@
 #' The transformation is ignored if NULL. Otherwise,
 #' data transformed before model is estimated. When \code{lambda} is specified,
 #' \code{additive.only} is set to \code{TRUE}.
-#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi)
-#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi)
+#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.
+#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.
 #' @param opt.crit Optimization criterion. One of "mse" (Mean Square Error),
 #' "amse" (Average MSE over first \code{nmse} forecast horizons), "sigma"
 #' (Standard deviation of residuals), "mae" (Mean of absolute residuals), or
@@ -65,7 +65,7 @@
 #' contains NA values. By default, the largest contiguous portion of the
 #' time-series will be used.
 #' @param ... Other undocumented arguments.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{ets}".
 #'
@@ -148,7 +148,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
   }
 
   # If model is an ets object, re-fit model to new data
-  if (class(model) == "ets") {
+  if ("ets" %in% class(model)) {
     # Prevent alpha being zero (to avoid divide by zero in the C code)
     alpha <- max(model$par["alpha"], 1e-10)
     beta <- model$par["beta"]
@@ -535,7 +535,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   }
 
   # Initialize smoothing parameters
-  par <- initparam(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m)
+  par <- initparam(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m, bounds)
   names(alpha) <- names(beta) <- names(gamma) <- names(phi) <- NULL
   par.noopt <- c(alpha = alpha, beta = beta, gamma = gamma, phi = phi)
   if (!is.null(par.noopt)) {
@@ -845,11 +845,14 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
 }
 
 
-
-initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m) {
-  if (any(lower > upper)) {
+initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m, bounds) {
+  if(bounds == "admissible") {
+    lower[1L:3L] <- lower[1L:3L]*0
+    upper[1L:3L] <- upper[1L:3L]*0 + 1e-3
+  } else if (any(lower > upper)) {
     stop("Inconsistent parameter boundaries")
   }
+
 
   # Select alpha
   if (is.null(alpha)) {

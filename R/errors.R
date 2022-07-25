@@ -241,13 +241,6 @@ trainingaccuracy <- function(f, test, d, D) {
 #' plot(fit1)
 #' lines(EuStockMarkets[1:300, 1])
 #' @export
-accuracy <- function(object, ...) {
-  UseMethod("accuracy")
-}
-
-#' @rdname accuracy
-#' @method accuracy default
-#' @export
 accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NULL, ...) {
   if (!is.null(f)) {
     warning("Using `f` as the argument for `accuracy()` is deprecated. Please use `object` instead.")
@@ -257,7 +250,7 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
     "ARFIMA", "mforecast", "forecast", "ts", "integer", "numeric",
     "Arima", "ets", "lm", "bats", "tbats", "nnetar", "stlm", "baggedModel"
   )))) {
-    stop("First argument should be a forecast object or a time series.")
+    stop(paste("No accuracy method found for an object of class",class(object)))
   }
   if (is.element("mforecast", class(object))) {
     return(accuracy.mforecast(object, x, test, d, D))
@@ -293,7 +286,6 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
       D <- as.numeric(frequency(object) > 1)
     }
   }
-
 
   if (trainset) {
     trainout <- trainingaccuracy(object, test, d, D)

@@ -74,7 +74,7 @@
 #' all available cores are used.
 #' @param x Deprecated. Included for backwards compatibility.
 #' @param ... Additional arguments to be passed to \code{\link[stats]{arima}}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return Same as for \code{\link{Arima}}
 #' @author Rob J Hyndman
@@ -784,11 +784,13 @@ myarima <- function(x, order = c(0, 0, 0), seasonal = c(0, 0, 0), constant=TRUE,
     if (minroot < 1 + 1e-2 | checkarima(fit)) {
       fit$ic <- Inf
     }
+    
+    fit$xreg <- xreg
+    
     if (trace) {
       cat("\n", arima.string(fit, padding = TRUE), ":", fit$ic)
     }
-    fit$xreg <- xreg
-
+    
     return(structure(fit, class = c("forecast_ARIMA", "ARIMA", "Arima")))
   }
   else {
