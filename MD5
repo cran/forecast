@@ -1,6 +1,6 @@
-804d6652d7be4a0d3dda917e61261ecd *DESCRIPTION
+28e22f2cc57ba8544fe423fee477b66e *DESCRIPTION
 94dd2770668ef197820d2bea40dc4ee2 *NAMESPACE
-9113499c0e2f78236ef06c814e3d3229 *NEWS.md
+4d9a75fc09af748ca003b703a8f3ff26 *NEWS.md
 d884d3fda8c7608528b8f43461504cca *R/DM2.R
 d1e5423b18da656d6809572192149ee8 *R/HoltWintersNew.R
 1b043feeac43033179eb19344e1acaad *R/acf.R
@@ -35,14 +35,14 @@ afadee60b503269acb89aee9e3291cfa *R/forecastTBATS.R
 daaa71bf506b02e7c85b7b1c039b74f9 *R/ggplot.R
 743957102a0e2d3cf76fa39ae2edd50c *R/graph.R
 0853d362c2019600993b6301345e7308 *R/guerrero.R
-285436d9576ec88f25611a829c5ca17b *R/lm.R
+32683169b00bab66e1de8cdd26367777 *R/lm.R
 8d6a434df27ab36d14aa837b9c7d28c5 *R/makeMatrices.R
 0adc77cdf07adaa24b684119221a6491 *R/makeParamVector.R
 84ecca8248dd1c1eaa7875e0b2e5913b *R/mforecast.R
 143a45f1b92dcbb77076eff83a4c6cf9 *R/modelAR.R
 a4eaa2c8d145c67e3e4e8be37d614d71 *R/mstl.R
 3a91d0c24a2601ca3a18fb60acccd08f *R/msts.R
-3c3118718514d9ae2eb9300e1710d86a *R/naive.R
+0671f77dd0215ace15151b427bb834c1 *R/naive.R
 4d8caf4377fce185f4013a538f1995b9 *R/newarima2.R
 784d95265ca8cf68d8cf1419154ae18d *R/nnetar.R
 4ed698eabfe343e66ba3dc075ddc486e *R/residuals.R
@@ -68,7 +68,7 @@ f0c82cb5de038d46b4489ef90769d58b *data/taylor.rda
 9b45fac044642faf3111c502328b4643 *inst/CITATION
 74af0a2135e16058d635d5f3ef844ade *inst/doc/JSS2008.R
 88707b6f325ca31a04de790665873ab9 *inst/doc/JSS2008.Rmd
-5ce7c486a4f2550d056e83bc3eab5403 *inst/doc/JSS2008.pdf
+8267777a1f8ea9f4c1b0b8eba7462352 *inst/doc/JSS2008.pdf
 83f91e71324a77f2e65abbb0a39dac82 *man/Acf.Rd
 1233246bc7f32a0e669fe3670261dc78 *man/Arima.Rd
 ca00d1c4cb84c84ff99170ab31076541 *man/BoxCox.Rd
@@ -184,7 +184,7 @@ e303d5c3080d10f458814c162e3ee7b9 *tests/testthat/test-accuracy.R
 18a5ec34d18aa5b68dc4c1b6b3ed0fce *tests/testthat/test-armaroots.R
 5f8dbfe8dd700906956627f36a79bb36 *tests/testthat/test-bats.R
 1284efd9233ac8be5df2d558bb41a49c *tests/testthat/test-boxcox.R
-1362bcd1c085043db8263418ef8ee0ec *tests/testthat/test-calendar.R
+aa11db476b47412da68eb1785de0b15f *tests/testthat/test-calendar.R
 41948ed5de8a4aa489b0f8f2927fa32d *tests/testthat/test-clean.R
 f23b0d7aed7bcd9e5aa1531e00b12cae *tests/testthat/test-dshw.R
 65125baba6758ae9cf9e09fb313cfa15 *tests/testthat/test-ets.R
@@ -209,3 +209,4 @@ d64e6944239df9c50e84539c1f4aec4d *tests/testthat/test-tbats.R
 c84653dccc60c5c7460cf3a4878d501a *vignettes/JSS-paper.bib
 88707b6f325ca31a04de790665873ab9 *vignettes/JSS2008.Rmd
 16e6ff1f952a8b8b4f77aa0adf736559 *vignettes/jsslogo.jpg
+5476cea82c73c77a83ddb7e2619d3727 *vignettes/orcidlink.sty
