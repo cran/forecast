@@ -1,5 +1,5 @@
 Package: forecast
-Version: 8.18
+Version: 8.19
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -14,25 +14,26 @@ LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.2.35)
 LazyData: yes
 ByteCompile: TRUE
 Authors@R: c(
-  person("Rob", "Hyndman", email="Rob.Hyndman@monash.edu", role=c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-2140-5352")),
-  person("George", "Athanasopoulos", role='aut', comment=c(ORCID = "0000-0002-5389-2802")),
-  person("Christoph", "Bergmeir", role="aut", comment = c(ORCID = "0000-0002-3665-9021")),
-  person("Gabriel", "Caceres", role="aut", comment=c(ORCID = "0000-0002-2947-2023")),
-  person("Leanne", "Chhay", role='aut'),
-  person("Kirill", "Kuroptev", role="aut"),
-  person("Mitchell", "O'Hara-Wild", role="aut", comment=c(ORCID = "0000-0001-6729-7695")),
-  person("Fotios", "Petropoulos", role='aut', comment=c(ORCID = "0000-0003-3039-4955")),
-  person("Slava", "Razbash", role="aut"),
-  person("Earo", "Wang", role="aut", comment = c(ORCID = "0000-0001-6448-5260")),
-  person("Farah", "Yasmeen", role='aut', comment=c(ORCID="0000-0002-1479-5401")),
-  person("Daniel", "Reid", role='ctb'),
-  person("David", "Shaub", role='ctb'),
-  person("Federico","Garza",role='ctb'),
-  person("R Core Team", role=c('ctb','cph')),
-  person("Ross", "Ihaka", role=c('ctb','cph')),
-  person("Xiaoqian","Wang",role='ctb'),
-  person("Yuan", "Tang", role='ctb', comment = c(ORCID = "0000-0001-5243-233X")),
-  person("Zhenyu","Zhou", role='ctb')
+  person("Rob", "Hyndman", email = "Rob.Hyndman@monash.edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-2140-5352")),
+  person("George", "Athanasopoulos", role = "aut", comment = c(ORCID = "0000-0002-5389-2802")),
+  person("Christoph", "Bergmeir", role = "aut", comment = c(ORCID = "0000-0002-3665-9021")),
+  person("Gabriel", "Caceres", role = "aut", comment = c(ORCID = "0000-0002-2947-2023")),
+  person("Leanne", "Chhay", role = "aut"),
+  person("Kirill", "Kuroptev", role = "aut"),
+  person("Mitchell", "O'Hara-Wild", role = "aut", comment = c(ORCID = "0000-0001-6729-7695")),
+  person("Fotios", "Petropoulos", role = "aut", comment = c(ORCID = "0000-0003-3039-4955")),
+  person("Slava", "Razbash", role = "aut"),
+  person("Earo", "Wang", role = "aut", comment = c(ORCID = "0000-0001-6448-5260")),
+  person("Farah", "Yasmeen", role = "aut", comment = c(ORCID = "0000-0002-1479-5401")),
+  person("Federico", "Garza", role = "ctb"),
+  person("Daniele", "Girolimetto", role = "ctb"),
+  person("Ross", "Ihaka", role = c("ctb", "cph")),
+  person("R Core Team", role = c("ctb", "cph")),
+  person("Daniel", "Reid", role = "ctb"),
+  person("David", "Shaub", role = "ctb"),
+  person("Yuan", "Tang", role = "ctb", comment = c(ORCID = "0000-0001-5243-233X")),
+  person("Xiaoqian", "Wang", role = "ctb"),
+  person("Zhenyu", "Zhou", role = "ctb")
   )
 BugReports: https://github.com/robjhyndman/forecast/issues
 License: GPL-3
@@ -42,7 +43,7 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 RoxygenNote: 7.2.1
 NeedsCompilation: yes
-Packaged: 2022-10-02 02:02:08 UTC; hyndman
+Packaged: 2022-11-19 23:56:05 UTC; hyndman
 Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut] (<https://orcid.org/0000-0002-5389-2802>),
   Christoph Bergmeir [aut] (<https://orcid.org/0000-0002-3665-9021>),
@@ -54,14 +55,15 @@ Author: Rob Hyndman [aut, cre, cph] (<https://orcid.org/0000-0002-2140-5352>),
   Slava Razbash [aut],
   Earo Wang [aut] (<https://orcid.org/0000-0001-6448-5260>),
   Farah Yasmeen [aut] (<https://orcid.org/0000-0002-1479-5401>),
+  Federico Garza [ctb],
+  Daniele Girolimetto [ctb],
+  Ross Ihaka [ctb, cph],
+  R Core Team [ctb, cph],
   Daniel Reid [ctb],
   David Shaub [ctb],
-  Federico Garza [ctb],
-  R Core Team [ctb, cph],
-  Ross Ihaka [ctb, cph],
-  Xiaoqian Wang [ctb],
   Yuan Tang [ctb] (<https://orcid.org/0000-0001-5243-233X>),
+  Xiaoqian Wang [ctb],
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2022-10-02 03:10:02 UTC
+Date/Publication: 2022-11-20 23:10:05 UTC

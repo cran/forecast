@@ -1,3 +1,6 @@
+# forecast 8.19 (20 November 2022)
+  * Bug fixes
+
 # forecast 8.18 (30 September 2022)
   * Updated RW forecasts to use an unbiased estimate of sigma2
   * Bug fixes

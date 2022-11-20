@@ -1,6 +1,5 @@
 # Mean forecast
 
-
 #' Mean Forecast
 #'
 #' Returns forecasts and prediction intervals for an iid model applied to y.
@@ -118,14 +117,13 @@ meanf <- function(y, h=10, level=c(80, 95), fan=FALSE, lambda=NULL, biasadj=FALS
   return(structure(out, class = "forecast"))
 }
 
-
 #' Box Cox Transformation
 #'
 #' BoxCox() returns a transformation of the input variable using a Box-Cox
 #' transformation. InvBoxCox() reverses the transformation.
 #'
-#' The Box-Cox transformation (as given by Bickel & Doksum 1981) is given by \deqn{f_\lambda(x) =sign(x)(|x|^\lambda -
-#' 1)/\lambda}{f(x;lambda)=sign(x)(|x|^lambda - 1)/lambda} if \eqn{\lambda\ne0}{lambda
+#' The Box-Cox transformation (as given by Bickel & Doksum 1981) is given by \deqn{f_\lambda(x) =(sign(x)|x|^\lambda -
+#' 1)/\lambda}{f(x;lambda)=(sign(x)|x|^lambda - 1)/lambda} if \eqn{\lambda\ne0}{lambda
 #' is not equal to 0}. For \eqn{\lambda=0}{lambda=0},
 #' \deqn{f_0(x)=\log(x)}{f(x;0)=log(x)}.
 #'
@@ -250,7 +248,6 @@ InvBoxCoxf <- function(x=NULL, fvar=NULL, lambda=NULL) {
 
   return(x$mean * (1 + 0.5 * fvar * (1 - lambda) / (x$mean) ^ (2 * lambda)))
 }
-
 
 
 #' Forecasting using Structural Time Series models
@@ -436,7 +433,6 @@ forecast.HoltWinters <- function(object, h=ifelse(frequency(object$x) > 1, 2 * f
   }
   colnames(lower) <- colnames(upper) <- paste(level, "%", sep = "")
 
-
   if (!is.null(lambda)) {
     fitted <- InvBoxCox(object$fitted[, 1], lambda)
     x <- InvBoxCox(x, lambda)
@@ -467,7 +463,6 @@ forecast.HoltWinters <- function(object, h=ifelse(frequency(object$x) > 1, 2 * f
     class = "forecast"
   ))
 }
-
 
 ## CROSTON
 
