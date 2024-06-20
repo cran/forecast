@@ -1,6 +1,6 @@
-b73d884070e650769b4003fb96ca61e7 *DESCRIPTION
-1884bae9b661025b9de7930efdf8b69e *NAMESPACE
-eae7065a55c0977637fc500bb6d76f3c *NEWS.md
+103911f1ca79231d39b14cff8d820339 *DESCRIPTION
+4f62633bc8574b54ff4ae0085d81c27e *NAMESPACE
+0b0771c6cfc6a053365cef62a6dc5a51 *NEWS.md
 8635679a18d096d9e79886efa4d42274 *R/DM2.R
 d1e5423b18da656d6809572192149ee8 *R/HoltWintersNew.R
 1012ef80bcd84169d6dc2deb48a963f8 *R/acf.R
@@ -8,7 +8,7 @@ d1e5423b18da656d6809572192149ee8 *R/HoltWintersNew.R
 fb78073e67fe711b3941914d3282771d *R/arfima.R
 07c0667dc8fef4820619ebac54fb670a *R/arima.R
 c796cd0fb735c672daea94fb8b7145ca *R/armaroots.R
-4b8878d0f00f9970035ffe574f82090b *R/attach.R
+a691673cff3fc30436fe246f83f833c3 *R/attach.R
 e8dfa73402b7eae5fa670c4156cabcbe *R/baggedModel.R
 90bd8fca0bfdc3fa6f31e5acc4d8e1b5 *R/bats.R
 c69f52ca63cefc8ec286095b01c490c8 *R/bootstrap.R
@@ -20,7 +20,7 @@ c69f52ca63cefc8ec286095b01c490c8 *R/bootstrap.R
 55fe30a71cd7f5ae40f161978e6fdd97 *R/data.R
 bca8b27285a9249d7623917d8e2f3fca *R/dshw.r
 4a801ec36eb9a67d3db94e61d3756414 *R/errors.R
-a4b1e24cff358dbc962e290afb8b6fb4 *R/ets.R
+4d608066a4002dbd58837c07e8bcd520 *R/ets.R
 3b3832d7c86c1f67879af315d49c5265 *R/etsforecast.R
 a49e4ecccdb8c0f70f70da4b1f8b6086 *R/findfrequency.R
 3dd911673657a1e049a988b0d629e30f *R/fitBATS.R
@@ -32,7 +32,7 @@ ef1376b4cc03cf23e66b9569117be3a8 *R/forecast-package.R
 cb6d7bf60c5cc71b81270d2b0205bc19 *R/forecastBATS.R
 4677125c3355f315250c5067e99557b3 *R/forecastTBATS.R
 f647e0b6d5a501facddd395bdb302346 *R/getResponse.R
-a49c19c9527504ae24d4f18836507f5d *R/ggplot.R
+29869b613fb21e6a436f32c300265475 *R/ggplot.R
 e7f4efc9862f994b97d627d7b76e6ec3 *R/graph.R
 f20ad130d6d6233d41d4e5acf82703ea *R/guerrero.R
 90ad1f95e8d0f73c785736698d1b127e *R/lm.R
@@ -51,7 +51,7 @@ d0671eae6082fc26ced141856ab8c043 *R/nnetar.R
 2fbf0f39f2012e5c4d5ead042215e66e *R/simulate.R
 7cd92409b235cd14d40ee0701e0204a9 *R/simulate_tbats.R
 3a8559406c735ff0f799388e55d77d5a *R/spline.R
-ba07e532a8b3adbd4a6c2fb7a195cc07 *R/subset.R
+3d73197fd6c1ce91302d121c0e155fb9 *R/subset.R
 ba9d6d3fbdb1c085de82e30b90b6c48f *R/tbats.R
 1db4998c13a6a1da4e228ca7a612111a *R/theta.R
 df1a2b39917256fd4786e1992e4d2c04 *R/tscv.R
@@ -59,7 +59,7 @@ df1a2b39917256fd4786e1992e4d2c04 *R/tscv.R
 10f32c6de9168ac9d066307d318bae91 *R/whichmodels.R
 7238604557eca232bdfce0502ee4a2eb *R/wrangle.R
 57d15099f8ff73632535706efd46709b *README.md
-aaf1f1f68f75f3658af801f3b7aaf4e2 *build/vignette.rds
+c19e7665a0ff630ef08d5772020fdd3e *build/vignette.rds
 d83263b393c17189250711ff49f730b6 *data/gas.rda
 de9a9e1c277aa90de4c8ee718d4ef93f *data/gold.rda
 f0c82cb5de038d46b4489ef90769d58b *data/taylor.rda
@@ -68,7 +68,7 @@ f0c82cb5de038d46b4489ef90769d58b *data/taylor.rda
 03603761cd0e19d3b66c6e1346eb76a2 *inst/CITATION
 74af0a2135e16058d635d5f3ef844ade *inst/doc/JSS2008.R
 c654c548be2e55c4284dab38657eeebe *inst/doc/JSS2008.Rmd
-ab12c9ef7e179ce7d59ac962282c328f *inst/doc/JSS2008.pdf
+58379aad70b60f82e7ced8cad03ae665 *inst/doc/JSS2008.pdf
 83f91e71324a77f2e65abbb0a39dac82 *man/Acf.Rd
 1233246bc7f32a0e669fe3670261dc78 *man/Arima.Rd
 b91d83371a8f3574234b6ba4beca570a *man/BoxCox.Rd
@@ -80,10 +80,10 @@ b91d83371a8f3574234b6ba4beca570a *man/BoxCox.Rd
 9c2e1f1ef44dcd07a8db27af46c6273f *man/arima.errors.Rd
 99d19c63d529f30309f5fa5f22b20d59 *man/arimaorder.Rd
 b77919994f730e51935edf1c014caa7d *man/auto.arima.Rd
-a5a62e15bc34c63075b2ee3d2110c7bf *man/autolayer.Rd
+059fe7a40892ae77b6cc1d16a3aeb4af *man/autolayer.Rd
 f33ea9daffe72a6de6dc4e444c8bf564 *man/autoplot.acf.Rd
 292043ae77bb3767640d3493a56424b8 *man/autoplot.seas.Rd
-d1f76dff11374046f0bdbb99749a765c *man/autoplot.ts.Rd
+5135c65efe9400b5e3b7884129b5dc99 *man/autoplot.ts.Rd
 790787a95a2779ed85b870d9d774cc8b *man/baggedModel.Rd
 0e974f0da71ec18800366d77440e1356 *man/bats.Rd
 e0142a3b240fcc9f6229defc4727c238 *man/bizdays.Rd
@@ -113,7 +113,7 @@ e3f2afcecffefa3e11da29c3c7dfc082 *man/forecast.stl.Rd
 ca6e4c0080b53338eaa63e5388737c59 *man/forecast.ts.Rd
 8536b20ad167f572a8f41ff7157276a4 *man/fourier.Rd
 4c310ce65a57cac565c003ba8d1c706c *man/gas.Rd
-a04b42c97c1bbf9972e5c05fb5649954 *man/geom_forecast.Rd
+d4e84da63601e9c09e84929d6c9b9b01 *man/geom_forecast.Rd
 04278fb50a27f247325113f626cd9214 *man/getResponse.Rd
 c6dbd99bebbefa49cb1cb4a012e66963 *man/gghistogram.Rd
 fe56843c030a399f300275aae6eee230 *man/gglagplot.Rd
@@ -178,7 +178,6 @@ f6e3a6eda213b1c0154adb7d2a638852 *src/makeTBATSMatrices.cpp
 cdb9079de1d58f886f769aa68f0f480e *src/updateMatrices.cpp
 06adefbef775d3ddd511764f84d16f13 *src/updateTBATSMatrices.cpp
 22708a41a2f33a810a8353ff0a62a1eb *tests/testthat.R
-15b89782b16534396440fc31acf81540 *tests/testthat/Rplots.pdf
 5ce26e5e558d08a2e0c411a36ad60f7b *tests/testthat/test-accuracy.R
 3b580e8bd4b8da3bac0d6489a2ad2e64 *tests/testthat/test-acf.R
 05607b4a3ee0b4bd6354a7c342bf748c *tests/testthat/test-arfima.R
