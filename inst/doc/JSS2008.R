@@ -2,7 +2,7 @@
 library('forecast')
 
 ## ----load_expsmooth, echo=FALSE, message=FALSE, eval=FALSE--------------------
-#  library('expsmooth')
+# library('expsmooth')
 
 ## ----expsmooth_datsets, echo=FALSE, message=FALSE-----------------------------
 bonds <-
@@ -108,12 +108,12 @@ plot(fcast)
 fcast
 
 ## ----ets-usnetelec-newdata,eval=FALSE,echo=TRUE-------------------------------
-#  fit <- ets(usnetelec[1:45])
-#  test <- ets(usnetelec[46:55], model = fit)
-#  accuracy(test)
+# fit <- ets(usnetelec[1:45])
+# test <- ets(usnetelec[46:55], model = fit)
+# accuracy(test)
 
 ## ----ets-usnetelec-fcast-accuracy,eval=FALSE,echo=TRUE------------------------
-#  accuracy(forecast(fit,10), usnetelec[46:55])
+# accuracy(forecast(fit,10), usnetelec[46:55])
 
 ## ----arimaexamples, fig.height=7, fig.width=9, echo=FALSE, fig.cap="Four time series showing point forecasts and 80\\% \\& 95\\% prediction intervals obtained using ARIMA models."----
 mod1 <- auto.arima(bonds, seasonal=FALSE, approximation=FALSE)

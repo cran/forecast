@@ -1,3 +1,7 @@
+# forecast 8.24.0
+  * Documentation improvements
+  * Bug fixes
+
 # forecast 8.23.0
   * Prevented RNG state changing when the package is attached (#954, #955).
   * head.ts and tail.ts only defined for R < 4.5.0 due to new base R functions.
