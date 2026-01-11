@@ -19,8 +19,8 @@ Numerical matrix.
 }
 \description{
 \code{seasonaldummy} returns a matrix of dummy variables suitable for use in
-\code{\link{Arima}}, \code{\link{auto.arima}} or \code{\link{tslm}}. The
-last season is omitted and used as the control.
+\code{\link[=Arima]{Arima()}}, \code{\link[=auto.arima]{auto.arima()}} or \code{\link[=tslm]{tslm()}}. The last season is omitted and used
+as the control.
 }
 \details{
 \code{seasonaldummyf} is deprecated, instead use the \code{h} argument in
@@ -39,20 +39,22 @@ plot(ldeaths)
 
 # Using seasonal dummy variables
 month <- seasonaldummy(ldeaths)
-deaths.lm  <- tslm(ldeaths ~ month)
+deaths.lm <- tslm(ldeaths ~ month)
 tsdisplay(residuals(deaths.lm))
-ldeaths.fcast <- forecast(deaths.lm,
-    data.frame(month=I(seasonaldummy(ldeaths,36))))
+ldeaths.fcast <- forecast(
+  deaths.lm,
+  data.frame(month = I(seasonaldummy(ldeaths, 36)))
+)
 plot(ldeaths.fcast)
 
 # A simpler approach to seasonal dummy variables
-deaths.lm  <- tslm(ldeaths ~ season)
-ldeaths.fcast <- forecast(deaths.lm, h=36)
+deaths.lm <- tslm(ldeaths ~ season)
+ldeaths.fcast <- forecast(deaths.lm, h = 36)
 plot(ldeaths.fcast)
 
 }
 \seealso{
-\code{\link{fourier}}
+\code{\link[=fourier]{fourier()}}
 }
 \author{
 Rob J Hyndman

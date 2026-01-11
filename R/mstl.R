@@ -4,28 +4,35 @@
 #' Seasonal components are estimated iteratively using STL. Multiple seasonal periods are
 #' allowed. The trend component is computed for the last iteration of STL.
 #' Non-seasonal time series are decomposed into trend and remainder only.
-#' In this case, \code{\link[stats]{supsmu}} is used to estimate the trend.
+#' In this case, [stats::supsmu()] is used to estimate the trend.
 #' Optionally, the time series may be Box-Cox transformed before decomposition.
-#' Unlike \code{\link[stats]{stl}}, \code{mstl} is completely automated.
-#' @param x Univariate time series of class \code{msts} or \code{ts}.
+#' Unlike [stats::stl()], `mstl` is completely automated.
+#' @param x Univariate time series of class `msts` or `ts`.
 #' @param iterate Number of iterations to use to refine the seasonal component.
 #' @param s.window Seasonal windows to be used in the  decompositions. If scalar,
 #' the same value is used for all seasonal components. Otherwise, it should be a vector
 #' of the same length as the number of seasonal components (or longer).
-#' @param ... Other arguments are passed to \code{\link[stats]{stl}}.
+#' @param ... Other arguments are passed to [stats::stl()].
 #' @inheritParams forecast.ts
 #'
-#' @seealso \code{\link[stats]{stl}}, \code{\link[stats]{supsmu}}
+#' @seealso [stats::stl()], [stats::supsmu()]
 #' @examples
 #' library(ggplot2)
-#' mstl(taylor) %>% autoplot()
-#' mstl(AirPassengers, lambda = "auto") %>% autoplot()
+#' mstl(taylor) |> autoplot()
+#' mstl(AirPassengers, lambda = "auto") |> autoplot()
 #' @export
-mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
+mstl <- function(
+  x,
+  lambda = NULL,
+  biasadj = FALSE,
+  iterate = 2,
+  s.window = 7 + 4 * seq(6),
+  ...
+) {
   # What is x?
   origx <- x
   n <- length(x)
-  if ("msts" %in% class(x)) {
+  if (inherits(x, "msts")) {
     msts <- attributes(x)$msts
     if (any(msts >= n / 2)) {
       warning("Dropping seasonal components with fewer than two full periods.")
@@ -33,12 +40,10 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
       x <- msts(x, seasonal.periods = msts)
     }
     msts <- sort(msts, decreasing = FALSE)
-  }
-  else if ("ts" %in% class(x)) {
+  } else if (is.ts(x)) {
     msts <- frequency(x)
     iterate <- 1L
-  }
-  else {
+  } else {
     x <- as.ts(x)
     msts <- 1L
   }
@@ -57,9 +62,8 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
   # Transform if necessary
   if (!is.null(lambda)) {
     x <- BoxCox(x, lambda = lambda)
-    lambda <- attr(x, "lambda")
+    attr(lambda, "biasadj") <- biasadj
   }
-  tt <- seq_len(n)
 
   # Now fit stl models with only one type of seasonality at a time
   if (msts[1L] > 1) {
@@ -69,10 +73,8 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
       s.window <- rep(s.window, length(msts))
     }
     iterate <- pmax(1L, iterate)
-    for (j in seq_len(iterate))
-    {
-      for (i in seq_along(msts))
-      {
+    for (j in seq_len(iterate)) {
+      for (i in seq_along(msts)) {
         deseas <- deseas + seas[[i]]
         fit <- stl(ts(deseas, frequency = msts[i]), s.window = s.window[i], ...)
         seas[[i]] <- msts(seasonal(fit), seasonal.periods = msts)
@@ -81,8 +83,7 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
       }
     }
     trend <- msts(trendcycle(fit), seasonal.periods = msts)
-  }
-  else {
+  } else {
     msts <- NULL
     deseas <- x
     trend <- ts(stats::supsmu(seq_len(n), x)$y)
@@ -103,7 +104,7 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
     }
   }
   output <- cbind(output, c(remainder))
-  colnames(output) <- paste0("V",seq(NCOL(output)))
+  colnames(output) <- paste0("V", seq_len(NCOL(output)))
   colnames(output)[1L:2L] <- c("Data", "Trend")
   if (!is.null(msts)) {
     colnames(output)[2L + seq_along(msts)] <- paste0("Seasonal", round(msts, 2))
@@ -112,7 +113,7 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
 
   output <- copy_msts(origx, output)
   class(output) <- c("mstl", class(output))
-  return(output)
+  output
 }
 
 #' @rdname autoplot.seas
@@ -127,24 +128,17 @@ autoplot.mstl <- function(object, ...) {
 #' method to the seasonally adjusted data and re-seasonalizing using the last
 #' year of the seasonal component.
 #'
-#' \code{stlm} takes a time series \code{y}, applies an STL decomposition, and
-#' models the seasonally adjusted data using the model passed as
-#' \code{modelfunction} or specified using \code{method}. It returns an object
-#' that includes the original STL decomposition and a time series model fitted
-#' to the seasonally adjusted data. This object can be passed to the
-#' \code{forecast.stlm} for forecasting.
-#'
-#' \code{forecast.stlm} forecasts the seasonally adjusted data, then
+#' `forecast.stlm` forecasts the seasonally adjusted data, then
 #' re-seasonalizes the results by adding back the last year of the estimated
 #' seasonal component.
 #'
-#' \code{stlf} combines \code{stlm} and \code{forecast.stlm}. It takes a
-#' \code{ts} argument, applies an STL decomposition, models the seasonally
+#' `stlf` combines [stlm()] and `forecast.stlm`. It takes a
+#' `ts` argument, applies an STL decomposition, models the seasonally
 #' adjusted data, reseasonalizes, and returns the forecasts. However, it allows
 #' more general forecasting methods to be specified via
-#' \code{forecastfunction}.
+#' `forecastfunction`.
 #'
-#' \code{forecast.stl} is similar to \code{stlf} except that it takes the STL
+#' `forecast.stl` is similar to `stlf` except that it takes the STL
 #' decomposition as the first argument, instead of the time series.
 #'
 #' Note that the prediction intervals ignore the uncertainty associated with
@@ -153,76 +147,53 @@ autoplot.mstl <- function(object, ...) {
 #' last year of the seasonal component. The uncertainty in the seasonal
 #' component is ignored.
 #'
-#' The time series model for the seasonally adjusted data can be specified in
-#' \code{stlm} using either \code{method} or \code{modelfunction}. The
-#' \code{method} argument provides a shorthand way of specifying
-#' \code{modelfunction} for a few special cases. More generally,
-#' \code{modelfunction} can be any function with first argument a \code{ts}
-#' object, that returns an object that can be passed to \code{\link{forecast}}.
-#' For example, \code{forecastfunction=ar} uses the \code{\link{ar}} function
-#' for modelling the seasonally adjusted series.
-#'
 #' The forecasting method for the seasonally adjusted data can be specified in
-#' \code{stlf} and \code{forecast.stl} using either \code{method} or
-#' \code{forecastfunction}. The \code{method} argument provides a shorthand way
-#' of specifying \code{forecastfunction} for a few special cases. More
-#' generally, \code{forecastfunction} can be any function with first argument a
-#' \code{ts} object, and other \code{h} and \code{level}, which returns an
-#' object of class \code{\link{forecast}}. For example,
-#' \code{forecastfunction=thetaf} uses the \code{\link{thetaf}} function for
+#' `stlf` and `forecast.stl` using either `method` or
+#' `forecastfunction`. The `method` argument provides a shorthand way
+#' of specifying `forecastfunction` for a few special cases. More
+#' generally, `forecastfunction` can be any function with first argument a
+#' `ts` object, and other `h` and `level`, which returns an
+#' object of class [forecast()]. For example,
+#' `forecastfunction = thetaf` uses the [thetaf()] function for
 #' forecasting the seasonally adjusted series.
 #'
-#' @param y A univariate numeric time series of class \code{ts}
-#' @param object An object of class \code{stl} or \code{stlm}. Usually the
-#' result of a call to \code{\link[stats]{stl}} or \code{stlm}.
+#' @inheritParams forecast.Arima
+#' @param object An object of class `stl` or `stlm`. Usually the
+#' result of a call to [stats::stl()] or `stlm`.
 #' @param method Method to use for forecasting the seasonally adjusted series.
-#' @param modelfunction An alternative way of specifying the function for
-#' modelling the seasonally adjusted series. If \code{modelfunction} is not
-#' \code{NULL}, then \code{method} is ignored. Otherwise \code{method} is used
-#' to specify the time series model to be used.
-#' @param model Output from a previous call to \code{stlm}. If a \code{stlm}
-#' model is passed, this same model is fitted to y without re-estimating any
-#' parameters.
 #' @param forecastfunction An alternative way of specifying the function for
-#' forecasting the seasonally adjusted series. If \code{forecastfunction} is
-#' not \code{NULL}, then \code{method} is ignored. Otherwise \code{method} is
+#' forecasting the seasonally adjusted series. If `forecastfunction` is
+#' not `NULL`, then `method` is ignored. Otherwise `method` is
 #' used to specify the forecasting method to be used.
 #' @param etsmodel The ets model specification passed to
-#' \code{\link[forecast]{ets}}. By default it allows any non-seasonal model. If
-#' \code{method!="ets"}, this argument is ignored.
+#' [ets()]. By default it allows any non-seasonal model. If
+#' `method != "ets"`, this argument is ignored.
 #' @param xreg Historical regressors to be used in
-#' \code{\link[forecast]{auto.arima}()} when \code{method=="arima"}.
-#' @param newxreg Future regressors to be used in
-#' \code{\link[forecast]{forecast.Arima}()}.
-#' @param h Number of periods for forecasting.
-#' @param level Confidence level for prediction intervals.
-#' @param fan If \code{TRUE}, level is set to seq(51,99,by=3). This is suitable
-#' for fan plots.
-#' @param s.window Either the character string ``periodic'' or the span (in
+#' [auto.arima()] when `method = "arima"`.
+#' @param newxreg Future regressors to be used in [forecast.Arima()].
+#' @param s.window Either the character string `"periodic"` or the span (in
 #' lags) of the loess window for seasonal extraction.
 #' @param t.window A number to control the smoothness of the trend. See
-#' \code{\link[stats]{stl}} for details.
-#' @param robust If \code{TRUE}, robust fitting will used in the loess
-#' procedure within \code{\link[stats]{stl}}.
-#' @param allow.multiplicative.trend If TRUE, then ETS models with
+#' [stats::stl()] for details.
+#' @param robust If `TRUE`, robust fitting will used in the loess
+#' procedure within [stats::stl()].
+#' @param allow.multiplicative.trend If `TRUE`, then ETS models with
 #' multiplicative trends are allowed. Otherwise, only additive or no trend ETS
 #' models are permitted.
-#' @param x Deprecated. Included for backwards compatibility.
-#' @param ... Other arguments passed to \code{forecast.stl},
-#' \code{modelfunction} or \code{forecastfunction}.
-#' @inheritParams forecast.ts
+#' @param ... Other arguments passed to `forecast.stl`,
+#' `modelfunction` or `forecastfunction`.
+#' @inheritParams Arima
 #'
-#' @return \code{stlm} returns an object of class \code{stlm}. The other
-#' functions return objects of class \code{forecast}.
+#' @return `stlm` returns an object of class `stlm`. The other
+#' functions return objects of class `forecast`.
 #'
-#' There are many methods for working with \code{\link{forecast}} objects
-#' including \code{summary} to obtain and print a summary of the results, while
-#' \code{plot} produces a plot of the forecasts and prediction intervals. The
-#' generic accessor functions \code{fitted.values} and \code{residuals} extract
+#' There are many methods for working with [forecast()] objects
+#' including `summary` to obtain and print a summary of the results, while
+#' `plot` produces a plot of the forecasts and prediction intervals. The
+#' generic accessor functions `fitted.values` and `residuals` extract
 #' useful features.
 #' @author Rob J Hyndman
-#' @seealso \code{\link[stats]{stl}}, \code{\link{forecast.ets}},
-#' \code{\link{forecast.Arima}}.
+#' @seealso [stats::stl()], [forecast.ets()], [forecast.Arima()].
 #' @keywords ts
 #' @examples
 #'
@@ -232,10 +203,21 @@ autoplot.mstl <- function(object, ...) {
 #' decomp <- stl(USAccDeaths, s.window = "periodic")
 #' plot(forecast(decomp))
 #' @export
-forecast.stl <- function(object, method = c("ets", "arima", "naive", "rwdrift"), etsmodel = "ZZN",
-                         forecastfunction = NULL,
-                         h = frequency(object$time.series) * 2, level = c(80, 95), fan = FALSE,
-                         lambda = NULL, biasadj = NULL, xreg = NULL, newxreg = NULL, allow.multiplicative.trend = FALSE, ...) {
+forecast.stl <- function(
+  object,
+  method = c("ets", "arima", "naive", "rwdrift"),
+  etsmodel = "ZZN",
+  forecastfunction = NULL,
+  h = frequency(object$time.series) * 2,
+  level = c(80, 95),
+  fan = FALSE,
+  lambda = NULL,
+  biasadj = FALSE,
+  xreg = NULL,
+  newxreg = NULL,
+  allow.multiplicative.trend = FALSE,
+  ...
+) {
   method <- match.arg(method)
   if (is.null(forecastfunction)) {
     if (method != "arima" && (!is.null(xreg) || !is.null(newxreg))) {
@@ -244,26 +226,30 @@ forecast.stl <- function(object, method = c("ets", "arima", "naive", "rwdrift"),
     if (method == "ets") {
       # Ensure non-seasonal model
       if (substr(etsmodel, 3, 3) != "N") {
-        warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
+        warning(
+          "The ETS model must be non-seasonal. I'm ignoring the seasonal component specified."
+        )
         substr(etsmodel, 3, 3) <- "N"
       }
       forecastfunction <- function(x, h, level, ...) {
-        fit <- ets(na.interp(x), model = etsmodel, allow.multiplicative.trend = allow.multiplicative.trend, ...)
-        return(forecast(fit, h = h, level = level))
+        fit <- ets(
+          na.interp(x),
+          model = etsmodel,
+          allow.multiplicative.trend = allow.multiplicative.trend,
+          ...
+        )
+        forecast(fit, h = h, level = level)
       }
-    }
-    else if (method == "arima") {
+    } else if (method == "arima") {
       forecastfunction <- function(x, h, level, ...) {
         fit <- auto.arima(x, xreg = xreg, seasonal = FALSE, ...)
-        return(forecast(fit, h = h, level = level, xreg = newxreg))
+        forecast(fit, h = h, level = level, xreg = newxreg)
       }
-    }
-    else if (method == "naive") {
+    } else if (method == "naive") {
       forecastfunction <- function(x, h, level, ...) {
         rwf(x, drift = FALSE, h = h, level = level, ...)
       }
-    }
-    else if (method == "rwdrift") {
+    } else if (method == "rwdrift") {
       forecastfunction <- function(x, h, level, ...) {
         rwf(x, drift = TRUE, h = h, level = level, ...)
       }
@@ -274,33 +260,45 @@ forecast.stl <- function(object, method = c("ets", "arima", "naive", "rwdrift"),
   }
   if (!is.null(newxreg)) {
     if (NROW(as.matrix(newxreg)) != h) {
-      stop("newxreg should have the same number of rows as the forecast horizon h")
+      stop(
+        "newxreg should have the same number of rows as the forecast horizon h"
+      )
     }
   }
   if (fan) {
     level <- seq(51, 99, by = 3)
   }
 
-  if ("mstl" %in% class(object)) {
-    seasoncolumns <- which(grepl("Season", colnames(object)))
+  if (inherits(object, "mstl")) {
+    seasoncolumns <- grep("Season", colnames(object), fixed = TRUE)
     nseasons <- length(seasoncolumns)
     seascomp <- matrix(0, ncol = nseasons, nrow = h)
-    seasonal.periods <- as.numeric(sub("Seasonal","", colnames(object)[seasoncolumns]))
+    seasonal.periods <- as.numeric(sub(
+      "Seasonal",
+      "",
+      colnames(object)[seasoncolumns],
+      fixed = TRUE
+    ))
     n <- NROW(object)
     for (i in seq(nseasons)) {
       mp <- seasonal.periods[i]
       colname <- colnames(object)[seasoncolumns[i]]
-      seascomp[, i] <- rep(object[n - rev(seq_len(mp)) + 1, colname], trunc(1 + (h - 1) / mp))[seq_len(h)]
+      seascomp[, i] <- rep(
+        object[n - rev(seq_len(mp)) + 1, colname],
+        trunc(1 + (h - 1) / mp)
+      )[seq_len(h)]
     }
     lastseas <- rowSums(seascomp)
     xdata <- object[, "Data"]
-    seascols <- grep("Seasonal", colnames(object))
+    seascols <- grep("Seasonal", colnames(object), fixed = TRUE)
     allseas <- rowSumsTS(object[, seascols, drop = FALSE])
     series <- NULL
-  } else if ("stl" %in% class(object)) {
+  } else if (inherits(object, "stl")) {
     m <- frequency(object$time.series)
     n <- NROW(object$time.series)
-    lastseas <- rep(seasonal(object)[n - (m:1) + 1], trunc(1 + (h - 1) / m))[1:h]
+    lastseas <- rep(seasonal(object)[n - (m:1) + 1], trunc(1 + (h - 1) / m))[
+      1:h
+    ]
     xdata <- ts(rowSums(object$time.series))
     tsp(xdata) <- tsp(object$time.series)
     allseas <- seasonal(object)
@@ -334,19 +332,39 @@ forecast.stl <- function(object, method = c("ets", "arima", "naive", "rwdrift"),
     fcast$lambda <- lambda
   }
 
-  return(fcast)
+  fcast
 }
 
 #' @export
-forecast.mstl <- function(object, method = c("ets", "arima", "naive", "rwdrift"), etsmodel = "ZZN",
-                          forecastfunction = NULL,
-                          h = frequency(object) * 2, level = c(80, 95), fan = FALSE,
-                          lambda = NULL, biasadj = NULL, xreg = NULL, newxreg = NULL, allow.multiplicative.trend = FALSE, ...) {
+forecast.mstl <- function(
+  object,
+  method = c("ets", "arima", "naive", "rwdrift"),
+  etsmodel = "ZZN",
+  forecastfunction = NULL,
+  h = frequency(object) * 2,
+  level = c(80, 95),
+  fan = FALSE,
+  lambda = object$lambda,
+  biasadj = attr(object$lambda, "biasadj"),
+  xreg = NULL,
+  newxreg = NULL,
+  allow.multiplicative.trend = FALSE,
+  ...
+) {
   forecast.stl(
     object,
-    method = method, etsmodel = etsmodel,
-    forecastfunction = forecastfunction, h = h, level = level, fan = fan, lambda = lambda,
-    biasadj = biasadj, xreg = xreg, newxreg = newxreg, allow.multiplicative.trend = allow.multiplicative.trend, ...
+    method = method,
+    etsmodel = etsmodel,
+    forecastfunction = forecastfunction,
+    h = h,
+    level = level,
+    fan = fan,
+    lambda = lambda,
+    biasadj = biasadj,
+    xreg = xreg,
+    newxreg = newxreg,
+    allow.multiplicative.trend = allow.multiplicative.trend,
+    ...
   )
 }
 
@@ -356,11 +374,11 @@ forecast.mstl <- function(object, method = c("ets", "arima", "naive", "rwdrift")
 # allows the result to be added to other time series with different lengths
 # but overlapping time indexes.
 # param mts a matrix or multivariate time series
-# return a vector of rowsums which is a ts if the \code{mts} is a ts
-rowSumsTS <- function (mts) {
+# return a vector of rowsums which is a ts if the `mts` is a ts
+rowSumsTS <- function(mts) {
   the_tsp <- tsp(mts)
   ret <- rowSums(mts)
-  if (is.null(the_tsp)){
+  if (is.null(the_tsp)) {
     ret
   } else {
     tsp(ret) <- the_tsp
@@ -368,12 +386,80 @@ rowSumsTS <- function (mts) {
   }
 }
 
-# Function takes time series, does STL decomposition, and fits a model to seasonally adjusted series
-# But it does not forecast. Instead, the result can be passed to forecast().
-#' @rdname forecast.stl
+#' Forecasting model using STL with a generative time series model
+#'
+#' Forecasts of STL objects are obtained by applying a non-seasonal forecasting
+#' model to the seasonally adjusted data and re-seasonalizing using the last
+#' year of the seasonal component. `stlm` takes a time series `y`, applies an STL decomposition, and
+#' models the seasonally adjusted data using the model passed as
+#' `modelfunction` or specified using `method`. It returns an object
+#' that includes the original STL decomposition and a time series model fitted
+#' to the seasonally adjusted data. This object can be passed to the
+#' `forecast.stlm` for forecasting.
+#'
+#' The time series model for the seasonally adjusted data can be specified in
+#' `stlm` using either `method` or `modelfunction`. The
+#' `method` argument provides a shorthand way of specifying
+#' `modelfunction` for a few special cases. More generally,
+#' `modelfunction` can be any function with first argument a `ts`
+#' object, that returns an object that can be passed to [forecast()].
+#' For example, `modelfunction = ar` uses the [ar()] function
+#' for modelling the seasonally adjusted series.
+#'
+#' @inheritParams Arima
+#' @param method Method to use for forecasting the seasonally adjusted series.
+#' @param modelfunction An alternative way of specifying the function for
+#' modelling the seasonally adjusted series. If `modelfunction` is not
+#' `NULL`, then `method` is ignored. Otherwise `method` is used
+#' to specify the time series model to be used.
+#' @param model Output from a previous call to `stlm`. If a `stlm`
+#' model is passed, this same model is fitted to y without re-estimating any
+#' parameters.
+#' @param etsmodel The ets model specification passed to
+#' [ets()]. By default it allows any non-seasonal model. If
+#' `method != "ets"`, this argument is ignored.
+#' @param xreg Historical regressors to be used in
+#' [auto.arima()] when `method = "arima"`.
+#' @param s.window Either the character string `"periodic"` or the span (in
+#' lags) of the loess window for seasonal extraction.
+#' @param t.window A number to control the smoothness of the trend. See
+#' [stats::stl()] for details.
+#' @param robust If `TRUE`, robust fitting will used in the loess
+#' procedure within [stats::stl()].
+#' @param allow.multiplicative.trend If `TRUE`, then ETS models with
+#' multiplicative trends are allowed. Otherwise, only additive or no trend ETS
+#' models are permitted.
+#' @param ... Other arguments passed to `modelfunction`.
+#'
+#' @return An object of class `stlm`. 
+#'
+#' @author Rob J Hyndman
+#' @seealso [stats::stl()], [ets()], [Arima()].
+#' @keywords ts
+#' @examples
+#'
+#' tsmod <- stlm(USAccDeaths, modelfunction = ar)
+#' forecast(tsmod, h = 36) |> autoplot()
+#'
+#' decomp <- stl(USAccDeaths, s.window = "periodic")
+#' forecast(decomp) |> autoplot()
 #' @export
-stlm <- function(y, s.window = 7+4*seq(6), robust = FALSE, method = c("ets", "arima"), modelfunction = NULL, model = NULL,
-                 etsmodel = "ZZN", lambda = NULL, biasadj = FALSE, xreg = NULL, allow.multiplicative.trend = FALSE, x = y, ...) {
+stlm <- function(
+  y,
+  s.window = 7 + 4 * seq(6),
+  t.window = NULL,
+  robust = FALSE,
+  method = c("ets", "arima"),
+  modelfunction = NULL,
+  model = NULL,
+  etsmodel = "ZZN",
+  lambda = NULL,
+  biasadj = FALSE,
+  xreg = NULL,
+  allow.multiplicative.trend = FALSE,
+  x = y,
+  ...
+) {
   method <- match.arg(method)
 
   # Check univariate
@@ -381,7 +467,8 @@ stlm <- function(y, s.window = 7+4*seq(6), robust = FALSE, method = c("ets", "ar
     stop("y must be a univariate time series")
   } else {
     if (!is.null(ncol(x))) {
-      if (ncol(x) == 1L) { # Probably redundant check
+      if (ncol(x) == 1L) {
+        # Probably redundant check
         x <- x[, 1L]
       }
     }
@@ -394,60 +481,64 @@ stlm <- function(y, s.window = 7+4*seq(6), robust = FALSE, method = c("ets", "ar
     stop("y is not a seasonal ts object")
   }
 
+  if (!is.null(model) && is.null(lambda)) {
+    lambda <- model$lambda
+  }
+
   # Transform data if necessary
   origx <- x
   if (!is.null(lambda)) {
     x <- BoxCox(x, lambda)
     lambda <- attr(x, "lambda")
+    attr(lambda, "biasadj") <- biasadj
   }
 
   # Do STL decomposition
-  stld <- mstl(x, s.window = s.window, robust = robust)
+  stld <- mstl(x, s.window = s.window, t.window = t.window, robust = robust)
 
   if (!is.null(model)) {
     if (inherits(model$model, "ets")) {
       modelfunction <- function(x, ...) {
-        return(ets(x, model = model$model, use.initial.values = TRUE, ...))
+        ets(x, model = model$model, use.initial.values = TRUE, ...)
       }
-    }
-    else if (inherits(model$model, "Arima")) {
+    } else if (inherits(model$model, "Arima")) {
       modelfunction <- function(x, ...) {
-        return(Arima(x, model = model$model, xreg = xreg, ...))
+        Arima(x, model = model$model, xreg = xreg, ...)
       }
-    }
-    else if (!is.null(model$modelfunction)) {
+    } else if (!is.null(model$modelfunction)) {
       if ("model" %in% names(formals(model$modelfunction))) {
         modelfunction <- function(x, ...) {
-          return(model$modelfunction(x, model = model$model, ...))
+          model$modelfunction(x, model = model$model, ...)
         }
       }
     }
     if (is.null(modelfunction)) {
       stop("Unknown model type")
     }
-  }
-  # Construct modelfunction if not passed as an argument
-  else if (is.null(modelfunction)) {
+  } else if (is.null(modelfunction)) {
+    # Construct modelfunction if not passed as an argument
     if (method != "arima" && !is.null(xreg)) {
       stop("xreg arguments can only be used with ARIMA models")
     }
     if (method == "ets") {
       # Ensure non-seasonal model
       if (substr(etsmodel, 3, 3) != "N") {
-        warning("The ETS model must be non-seasonal. I'm ignoring the seasonal component specified.")
+        warning(
+          "The ETS model must be non-seasonal. I'm ignoring the seasonal component specified."
+        )
         substr(etsmodel, 3, 3) <- "N"
       }
       modelfunction <- function(x, ...) {
-        return(ets(
+        ets(
           x,
           model = etsmodel,
-          allow.multiplicative.trend = allow.multiplicative.trend, ...
-        ))
+          allow.multiplicative.trend = allow.multiplicative.trend,
+          ...
+        )
       }
-    }
-    else if (method == "arima") {
+    } else if (method == "arima") {
       modelfunction <- function(x, ...) {
-        return(auto.arima(x, xreg = xreg, seasonal = FALSE, ...))
+        auto.arima(x, xreg = xreg, seasonal = FALSE, ...)
       }
     }
   }
@@ -460,29 +551,49 @@ stlm <- function(y, s.window = 7+4*seq(6), robust = FALSE, method = c("ets", "ar
   fit$x <- x.sa
 
   # Fitted values and residuals
-  seascols <- grep("Seasonal", colnames(stld))
+  seascols <- grep("Seasonal", colnames(stld), fixed = TRUE)
   allseas <- rowSumsTS(stld[, seascols, drop = FALSE])
 
   fits <- fitted(fit) + allseas
   res <- residuals(fit)
   if (!is.null(lambda)) {
     fits <- InvBoxCox(fits, lambda, biasadj, var(res))
-    attr(lambda, "biasadj") <- biasadj
   }
 
-  return(structure(list(
-    stl = stld, model = fit, modelfunction = modelfunction, lambda = lambda,
-    x = origx, series = deparse(substitute(y)), m = frequency(origx), fitted = fits, residuals = res
-  ), class = "stlm"))
+  structure(
+    list(
+      stl = stld,
+      model = fit,
+      modelfunction = modelfunction,
+      lambda = lambda,
+      x = origx,
+      series = deparse1(substitute(y)),
+      m = frequency(origx),
+      fitted = fits,
+      residuals = res
+    ),
+    class = c("fc_model", "stlm")
+  )
 }
 
 #' @rdname forecast.stl
 #' @export
-forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FALSE,
-                          lambda = object$lambda, biasadj = NULL, newxreg = NULL, allow.multiplicative.trend = FALSE, ...) {
+forecast.stlm <- function(
+  object,
+  h = 2 * object$m,
+  level = c(80, 95),
+  fan = FALSE,
+  lambda = object$lambda,
+  biasadj = attr(lambda, "biasadj"),
+  newxreg = NULL,
+  allow.multiplicative.trend = FALSE,
+  ...
+) {
   if (!is.null(newxreg)) {
     if (nrow(as.matrix(newxreg)) != h) {
-      stop("newxreg should have the same number of rows as the forecast horizon h")
+      stop(
+        "newxreg should have the same number of rows as the forecast horizon h"
+      )
     }
   }
   if (fan) {
@@ -490,13 +601,15 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
   }
 
   # Forecast seasonally adjusted series
-  if (is.element("Arima", class(object$model)) && !is.null(newxreg)) {
+  if (is.Arima(object$model) && !is.null(newxreg)) {
     fcast <- forecast(object$model, h = h, level = level, xreg = newxreg, ...)
-  } else if (is.element("ets", class(object$model))) {
+  } else if (is.ets(object$model)) {
     fcast <- forecast(
       object$model,
-      h = h, level = level,
-      allow.multiplicative.trend = allow.multiplicative.trend, ...
+      h = h,
+      level = level,
+      allow.multiplicative.trend = allow.multiplicative.trend,
+      ...
     )
   } else {
     fcast <- forecast(object$model, h = h, level = level, ...)
@@ -510,18 +623,19 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
     seasonal.periods <- frequency(object$stl)
   }
   seascomp <- matrix(0, ncol = length(seasonal.periods), nrow = h)
-  for (i in seq_along(seasonal.periods))
-  {
+  for (i in seq_along(seasonal.periods)) {
     mp <- seasonal.periods[i]
     n <- NROW(object$stl)
     colname <- paste0("Seasonal", round(mp, 2))
-    seascomp[, i] <- rep(object$stl[n - rev(seq_len(mp)) + 1, colname], trunc(1 + (h - 1) / mp))[seq_len(h)]
+    seascomp[, i] <- rep(
+      object$stl[n - rev(seq_len(mp)) + 1, colname],
+      trunc(1 + (h - 1) / mp)
+    )[seq_len(h)]
   }
   lastseas <- rowSums(seascomp)
   xdata <- object$stl[, "Data"]
-  seascols <- grep("Seasonal", colnames(object$stl))
+  seascols <- grep("Seasonal", colnames(object$stl), fixed = TRUE)
   allseas <- rowSumsTS(object$stl[, seascols, drop = FALSE])
-  series <- NULL
 
   #  m <- frequency(object$stl$time.series)
   n <- NROW(xdata)
@@ -547,7 +661,7 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
   }
   fcast$x <- object$x
 
-  return(fcast)
+  fcast
 }
 
 #' @rdname forecast.stl
@@ -556,15 +670,26 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
 #'
 #' plot(stlf(AirPassengers, lambda = 0))
 #' @export
-stlf <- function(y, h = frequency(x) * 2, s.window = 7+4*seq(6), t.window = NULL, robust = FALSE, lambda = NULL, biasadj = FALSE, x = y, ...) {
-  seriesname <- deparse(substitute(y))
+stlf <- function(
+  y,
+  h = frequency(x) * 2,
+  s.window = 7 + 4 * seq(6),
+  t.window = NULL,
+  robust = FALSE,
+  lambda = NULL,
+  biasadj = FALSE,
+  x = y,
+  ...
+) {
+  seriesname <- deparse1(substitute(y))
 
   # Check univariate
   if (NCOL(x) > 1L) {
     stop("y must be a univariate time series")
   } else {
     if (!is.null(ncol(x))) {
-      if (ncol(x) == 1L) { # Probably redundant check
+      if (ncol(x) == 1L) {
+        # Probably redundant check
         x <- x[, 1L]
       }
     }
@@ -580,6 +705,7 @@ stlf <- function(y, h = frequency(x) * 2, s.window = 7+4*seq(6), t.window = NULL
   if (!is.null(lambda)) {
     x <- BoxCox(x, lambda)
     lambda <- attr(x, "lambda")
+    attr(lambda, "biasadj") <- biasadj
   }
 
   fit <- mstl(x, s.window = s.window, t.window = t.window, robust = robust)
@@ -597,7 +723,7 @@ stlf <- function(y, h = frequency(x) * 2, s.window = 7+4*seq(6), t.window = NULL
 
   fcast$series <- seriesname
 
-  return(fcast)
+  fcast
 }
 
 #' @rdname is.ets

@@ -18,8 +18,8 @@
 method consistency).}
 
 \item{range.bars}{Logical indicating if each plot should have a bar at its
-right side representing relative size. If NULL, automatic selection takes
-place.}
+right side representing relative size. If \code{NULL}, automatic selection
+takes place.}
 }
 \value{
 None. Function produces a plot
@@ -35,14 +35,14 @@ model.
 
 fit <- ets(USAccDeaths)
 plot(fit)
-plot(fit,plot.type="single",ylab="",col=1:3)
+plot(fit, plot.type = "single", ylab = "", col = 1:3)
 
 library(ggplot2)
 autoplot(fit)
 
 }
 \seealso{
-\code{\link{ets}}
+\code{\link[=ets]{ets()}}
 }
 \author{
 Rob J Hyndman & Mitchell O'Hara-Wild

@@ -9,14 +9,14 @@ testaccuracy <- function(f, x, test, d, D) {
   dx <- getResponse(f)
   if (is.data.frame(x)) {
     responsevar <- as.character(formula(f$model))[2]
-    if (is.element(responsevar, colnames(x))) {
+    if (responsevar %in% colnames(x)) {
       x <- x[, responsevar]
     } else {
       stop("I can't figure out what data to use.")
     }
   }
   if (is.list(f)) {
-    if (is.element("mean", names(f))) {
+    if ("mean" %in% names(f)) {
       f <- f$mean
     } else {
       stop("Unknown list structure")
@@ -64,9 +64,11 @@ testaccuracy <- function(f, x, test, d, D) {
   if (!is.null(dx)) {
     tspdx <- tsp(dx)
     if (!is.null(tspdx)) {
-      if (D > 0) { # seasonal differencing
+      if (D > 0) {
+        # seasonal differencing
         nsd <- diff(dx, lag = round(tspdx[3L]), differences = D)
-      } else { # non seasonal differencing
+      } else {
+        # non seasonal differencing
         nsd <- dx
       }
       if (d > 0) {
@@ -75,7 +77,8 @@ testaccuracy <- function(f, x, test, d, D) {
         nd <- nsd
       }
       scale <- mean(abs(nd), na.rm = TRUE)
-    } else { # not time series
+    } else {
+      # not time series
       scale <- mean(abs(dx - mean(dx, na.rm = TRUE)), na.rm = TRUE)
     }
     mase <- mean(abs(error / scale), na.rm = TRUE)
@@ -89,7 +92,11 @@ testaccuracy <- function(f, x, test, d, D) {
     ape <- (c(xx[2:n]) / c(xx[1:(n - 1)]) - 1)[test - 1]
     theil <- sqrt(sum((fpe - ape)^2, na.rm = TRUE) / sum(ape^2, na.rm = TRUE))
     if (length(error) > 1) {
-      r1 <- acf(error, plot = FALSE, lag.max = 2, na.action = na.pass)$acf[2, 1, 1]
+      r1 <- acf(error, plot = FALSE, lag.max = 2, na.action = na.pass)$acf[
+        2,
+        1,
+        1
+      ]
     } else {
       r1 <- NA
     }
@@ -98,7 +105,7 @@ testaccuracy <- function(f, x, test, d, D) {
     names(out)[nj + (1:2)] <- c("ACF1", "Theil's U")
   }
 
-  return(out)
+  out
 }
 
 trainingaccuracy <- function(f, test, d, D) {
@@ -106,7 +113,7 @@ trainingaccuracy <- function(f, test, d, D) {
   # if(!is.list(f))
   #  stop("f must be a forecast object or a time series model object.")
   dx <- getResponse(f)
-  if (is.element("splineforecast", class(f))) {
+  if (is.splineforecast(f) || inherits(f, "spline_model")) {
     fits <- f$onestepf
   } else {
     fits <- fitted(f)
@@ -114,8 +121,8 @@ trainingaccuracy <- function(f, test, d, D) {
 
   res <- dx - fits
   n <- length(res)
-  if (is.null(test)) {
-    test <- 1:n
+  if (is.null(test) && n > 0) {
+    test <- seq(n)
   }
   if (min(test) < 1 || max(test) > n) {
     warning("test elements must be within sample")
@@ -139,9 +146,11 @@ trainingaccuracy <- function(f, test, d, D) {
   # Compute MASE if historical data available
   if (!is.null(dx)) {
     if (!is.null(tspdx)) {
-      if (D > 0) { # seasonal differencing
+      if (D > 0) {
+        # seasonal differencing
         nsd <- diff(dx, lag = round(tspdx[3L]), differences = D)
-      } else { # non seasonal differencing
+      } else {
+        # non seasonal differencing
         nsd <- dx
       }
       if (d > 0) {
@@ -150,7 +159,8 @@ trainingaccuracy <- function(f, test, d, D) {
         nd <- nsd
       }
       scale <- mean(abs(nd), na.rm = TRUE)
-    } else { # not time series
+    } else {
+      # not time series
       scale <- mean(abs(dx - mean(dx, na.rm = TRUE)), na.rm = TRUE)
     }
     mase <- mean(abs(res / scale), na.rm = TRUE)
@@ -161,7 +171,11 @@ trainingaccuracy <- function(f, test, d, D) {
   # Additional time series measures
   if (!is.null(tspdx)) {
     if (length(res) > 1) {
-      r1 <- acf(res, plot = FALSE, lag.max = 2, na.action = na.pass)$acf[2, 1, 1]
+      r1 <- acf(res, plot = FALSE, lag.max = 2, na.action = na.pass)$acf[
+        2,
+        1,
+        1
+      ]
     } else {
       r1 <- NA
     }
@@ -170,17 +184,16 @@ trainingaccuracy <- function(f, test, d, D) {
     names(out)[nj + 1] <- "ACF1"
   }
 
-  return(out)
+  out
 }
-
 
 #' Accuracy measures for a forecast model
 #'
-#' Returns range of summary measures of the forecast accuracy. If \code{x} is
+#' Returns range of summary measures of the forecast accuracy. If `x` is
 #' provided, the function measures test set forecast accuracy
-#' based on \code{x-f}. If \code{x} is not provided, the function only produces
+#' based on `x - f`. If `x` is not provided, the function only produces
 #' training set accuracy measures of the forecasts based on
-#' \code{f["x"]-fitted(f)}. All measures are defined and discussed in Hyndman
+#' `f["x"] - fitted(f)`. All measures are defined and discussed in Hyndman
 #' and Koehler (2006).
 #'
 #' The measures calculated are:
@@ -196,20 +209,20 @@ trainingaccuracy <- function(f, test, d, D) {
 #' By default, the MASE calculation is scaled using MAE of training set naive
 #' forecasts for non-seasonal time series, training set seasonal naive forecasts
 #' for seasonal time series and training set mean forecasts for non-time series data.
-#' If \code{f} is a numerical vector rather than a \code{forecast} object, the MASE
+#' If `f` is a numerical vector rather than a `forecast` object, the MASE
 #' will not be returned as the training data will not be available.
 #'
 #' See Hyndman and Koehler (2006) and Hyndman and Athanasopoulos (2014, Section
 #' 2.5) for further details.
 #'
-#' @param object An object of class \dQuote{\code{forecast}}, or a numerical vector
-#' containing forecasts. It will also work with \code{Arima}, \code{ets} and
-#' \code{lm} objects if \code{x} is omitted -- in which case training set accuracy
+#' @param object An object of class `forecast`, or a numerical vector
+#' containing forecasts. It will also work with `Arima`, `ets` and
+#' `lm` objects if `x` is omitted -- in which case training set accuracy
 #' measures are returned.
 #' @param x An optional numerical vector containing actual values of the same
-#' length as object, or a time series overlapping with the times of \code{f}.
-#' @param test Indicator of which elements of \code{x} and \code{f} to test. If
-#' \code{test} is \code{NULL}, all elements are used. Otherwise test is a
+#' length as object, or a time series overlapping with the times of `f`.
+#' @param test Indicator of which elements of `x` and `f` to test. If
+#' `test` is `NULL`, all elements are used. Otherwise test is a
 #' numeric vector containing the indices of the elements to use in the test.
 #' @param d An integer indicating the number of lag-1 differences to be used
 #' for the denominator in MASE calculation. Default value is 1 for non-seasonal
@@ -218,7 +231,6 @@ trainingaccuracy <- function(f, test, d, D) {
 #' for the denominator in MASE calculation. Default value is 0 for non-seasonal
 #' series and 1 for seasonal series.
 #' @param ... Additional arguments depending on the specific method.
-#' @param f Deprecated. Please use `object` instead.
 #' @return Matrix giving forecast accuracy measures.
 #' @author Rob J Hyndman
 #' @references Hyndman, R.J. and Koehler, A.B. (2006) "Another look at measures
@@ -231,7 +243,6 @@ trainingaccuracy <- function(f, test, d, D) {
 #' \url{https://otexts.com/fpp2/accuracy.html}.
 #' @keywords ts
 #' @examples
-#'
 #' fit1 <- rwf(EuStockMarkets[1:200, 1], h = 100)
 #' fit2 <- meanf(EuStockMarkets[1:200, 1], h = 100)
 #' accuracy(fit1)
@@ -241,23 +252,16 @@ trainingaccuracy <- function(f, test, d, D) {
 #' plot(fit1)
 #' lines(EuStockMarkets[1:300, 1])
 #' @export
-accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NULL, ...) {
-  if (!is.null(f)) {
-    warning("Using `f` as the argument for `accuracy()` is deprecated. Please use `object` instead.")
-    object <- f
-  }
-  if (!any(is.element(class(object), c(
-    "ARFIMA", "mforecast", "forecast", "ts", "integer", "numeric",
-    "Arima", "ets", "lm", "bats", "tbats", "nnetar", "stlm", "baggedModel"
-  )))) {
-    stop(paste("No accuracy method found for an object of class",class(object)))
-  }
-  if (is.element("mforecast", class(object))) {
-    return(accuracy.mforecast(object, x, test, d, D))
-  }
-
-  trainset <- (is.list(object))
-  testset <- (!missing(x))
+accuracy.forecast <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
+  trainset <- is.list(object)
+  testset <- !missing(x)
   if (testset && !is.null(test)) {
     trainset <- FALSE
   }
@@ -270,18 +274,16 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
     if (testset) {
       d <- as.numeric(frequency(x) == 1)
       D <- as.numeric(frequency(x) > 1)
-    }
-    else if (trainset) {
+    } else if (trainset) {
       if (!is.null(object$mean)) {
         d <- as.numeric(frequency(object$mean) == 1)
         D <- as.numeric(frequency(object$mean) > 1)
+      } else {
+        y <- getResponse(object)
+        d <- as.numeric(frequency(y) == 1)
+        D <- as.numeric(frequency(y) > 1)
       }
-      else {
-        d <- as.numeric(frequency(object[["x"]]) == 1)
-        D <- as.numeric(frequency(object[["x"]]) > 1)
-      }
-    }
-    else {
+    } else {
       d <- as.numeric(frequency(object) == 1)
       D <- as.numeric(frequency(object) > 1)
     }
@@ -290,15 +292,13 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
   if (trainset) {
     trainout <- trainingaccuracy(object, test, d, D)
     trainnames <- names(trainout)
-  }
-  else {
+  } else {
     trainnames <- NULL
   }
   if (testset) {
     testout <- testaccuracy(object, x, test, d, D)
     testnames <- names(testout)
-  }
-  else {
+  } else {
     testnames <- NULL
   }
   outnames <- unique(c(trainnames, testnames))
@@ -319,29 +319,96 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
   if (!trainset) {
     out <- out[2, , drop = FALSE]
   }
-  return(out)
+  out
 }
 
-# Compute accuracy for an mforecast object
+#' @rdname accuracy.forecast
 #' @export
-accuracy.mforecast <- function(object, x, test = NULL, d, D, f = NULL, ...) {
-  if (!is.null(f)) {
-    warning("Using `f` as the argument for `accuracy()` is deprecated. Please use `object` instead.")
-    object <- f
-  }
+accuracy.mforecast <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
   out <- NULL
   nox <- missing(x)
   i <- 1
-  for (fcast in object$forecast)
-  {
+  for (fcast in object$forecast) {
     if (nox) {
-      out1 <- accuracy(fcast, test = test, d = d, D = D)
+      out1 <- accuracy(fcast, test = test, d = d, D = D, ...)
     } else {
-      out1 <- accuracy(fcast, x[, i], test, d, D)
+      out1 <- accuracy(fcast, x = x[, i], test = test, d = d, D = D, ...)
     }
     rownames(out1) <- paste(fcast$series, rownames(out1))
     out <- rbind(out, out1)
     i <- i + 1
   }
-  return(out)
+  out
+}
+
+#' @rdname accuracy.forecast
+#' @export
+accuracy.fc_model <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
+  accuracy.forecast(object, x, test, d, D, ...)
+}
+
+#' @rdname accuracy.forecast
+#' @export
+accuracy.Arima <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
+  accuracy.forecast(object, x, test, d, D, ...)
+}
+
+#' @rdname accuracy.forecast
+#' @export
+accuracy.lm <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
+  accuracy.forecast(object, x, test, d, D, ...)
+}
+
+#' @rdname accuracy.forecast
+#' @export
+accuracy.ts <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
+  accuracy.forecast(object, x, test, d, D, ...)
+}
+
+#' @rdname accuracy.forecast
+#' @export
+accuracy.numeric <- function(
+  object,
+  x,
+  test = NULL,
+  d = NULL,
+  D = NULL,
+  ...
+) {
+  accuracy.forecast(object, x, test, d, D, ...)
 }

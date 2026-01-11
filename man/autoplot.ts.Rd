@@ -20,7 +20,7 @@
   object,
   series = NULL,
   xlab = "Time",
-  ylab = deparse(substitute(object)),
+  ylab = deparse1(substitute(object)),
   main = NULL,
   ...
 )
@@ -30,7 +30,7 @@
   colour = TRUE,
   facets = FALSE,
   xlab = "Time",
-  ylab = deparse(substitute(object)),
+  ylab = deparse1(substitute(object)),
   main = NULL,
   ...
 )
@@ -40,12 +40,12 @@
 \method{fortify}{ts}(model, data, ...)
 }
 \arguments{
-\item{object}{Object of class \dQuote{\code{ts}} or \dQuote{\code{mts}}.}
+\item{object}{Object of class \code{ts} or \code{mts}.}
 
-\item{colour}{If TRUE, the time series will be assigned a colour aesthetic}
+\item{colour}{If \code{TRUE}, the time series will be assigned a colour aesthetic}
 
 \item{series}{Identifies the time series with a colour, which integrates well
-with the functionality of \link{geom_forecast}.}
+with the functionality of \code{\link[=geom_forecast]{geom_forecast()}}.}
 
 \item{...}{Other plotting parameters to affect the plot.}
 
@@ -55,14 +55,13 @@ with the functionality of \link{geom_forecast}.}
 
 \item{main}{Main title.}
 
-\item{facets}{If TRUE, multiple time series will be faceted (and unless
-specified, colour is set to FALSE). If FALSE, each series will be assigned a
-colour.}
+\item{facets}{If \code{TRUE}, multiple time series will be faceted (and
+unless specified, colour is set to \code{FALSE}). If \code{FALSE}, each
+series will be assigned a colour.}
 
-\item{model}{Object of class \dQuote{\code{ts}} to be converted to
-\dQuote{\code{data.frame}}.}
+\item{model}{Object of class \code{ts} to be converted to \code{data.frame}.}
 
-\item{data}{Not used (required for \code{\link[ggplot2]{fortify}} method)}
+\item{data}{Not used (required for \code{\link[ggplot2:fortify]{ggplot2::fortify()}} method)}
 }
 \value{
 None. Function produces a ggplot graph.
@@ -82,11 +81,11 @@ autoplot(USAccDeaths)
 
 lungDeaths <- cbind(mdeaths, fdeaths)
 autoplot(lungDeaths)
-autoplot(lungDeaths, facets=TRUE)
+autoplot(lungDeaths, facets = TRUE)
 
 }
 \seealso{
-\code{\link[stats]{plot.ts}}, \code{\link[ggplot2]{fortify}}
+\code{\link[stats:plot.ts]{stats::plot.ts()}}, \code{\link[ggplot2:fortify]{ggplot2::fortify()}}
 }
 \author{
 Mitchell O'Hara-Wild

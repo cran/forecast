@@ -19,12 +19,12 @@ for ggplot graphics (S3 method consistency).}
 \item{PI}{If \code{FALSE}, confidence intervals will not be plotted, giving
 only the forecast line.}
 
-\item{facets}{If TRUE, multiple time series will be faceted. If FALSE, each
-series will be assigned a colour.}
+\item{facets}{If \code{TRUE}, multiple time series will be faceted. If
+\code{FALSE}, each series will be assigned a colour.}
 
-\item{colour}{If TRUE, the time series will be assigned a colour aesthetic}
+\item{colour}{If \code{TRUE}, the time series will be assigned a colour aesthetic}
 
-\item{\dots}{additional arguments to each individual \code{plot}.}
+\item{...}{additional arguments to each individual \code{plot}.}
 
 \item{series}{Matches an unidentified forecast layer with a coloured object
 on the plot.}
@@ -48,16 +48,16 @@ library(ggplot2)
 
 lungDeaths <- cbind(mdeaths, fdeaths)
 fit <- tslm(lungDeaths ~ trend + season)
-fcast <- forecast(fit, h=10)
+fcast <- forecast(fit, h = 10)
 plot(fcast)
 autoplot(fcast)
 
-carPower <- as.matrix(mtcars[,c("qsec","hp")])
-carmpg <- mtcars[,"mpg"]
+carPower <- as.matrix(mtcars[, c("qsec", "hp")])
+carmpg <- mtcars[, "mpg"]
 fit <- lm(carPower ~ carmpg)
-fcast <- forecast(fit, newdata=data.frame(carmpg=30))
-plot(fcast, xlab="Year")
-autoplot(fcast, xlab=rep("Year",2))
+fcast <- forecast(fit, newdata = data.frame(carmpg = 30))
+plot(fcast, xlab = "Year")
+autoplot(fcast, xlab = rep("Year", 2))
 
 }
 \references{
@@ -66,7 +66,7 @@ and practice}, 2nd edition, OTexts: Melbourne, Australia.
 \url{https://otexts.com/fpp2/}
 }
 \seealso{
-\code{\link[forecast]{plot.forecast}}, \code{\link[stats]{plot.ts}}
+\code{\link[=plot.forecast]{plot.forecast()}}, \code{\link[stats:plot.ts]{stats::plot.ts()}}
 }
 \author{
 Mitchell O'Hara-Wild

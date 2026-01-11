@@ -2,10 +2,10 @@
 
 # Compute AR roots
 arroots <- function(object) {
-  if (!any(is.element(class(object), c("Arima", "ar")))) {
+  if (!inherits(object, c("Arima", "ar"))) {
     stop("object must be of class Arima or ar")
   }
-  if (is.element("Arima", class(object))) {
+  if (is.Arima(object)) {
     parvec <- object$model$phi
   } else {
     parvec <- object$ar
@@ -13,31 +13,37 @@ arroots <- function(object) {
   if (length(parvec) > 0) {
     last.nonzero <- max(which(abs(parvec) > 1e-08))
     if (last.nonzero > 0) {
-      return(structure(list(
-        roots = polyroot(c(1, -parvec[1:last.nonzero])),
-        type = "AR"
-      ), class = "armaroots"))
+      return(structure(
+        list(
+          roots = polyroot(c(1, -parvec[1:last.nonzero])),
+          type = "AR"
+        ),
+        class = "armaroots"
+      ))
     }
   }
-  return(structure(list(roots = numeric(0), type = "AR"), class = "armaroots"))
+  structure(list(roots = numeric(0), type = "AR"), class = "armaroots")
 }
 
 # Compute MA roots
 maroots <- function(object) {
-  if (!is.element("Arima", class(object))) {
+  if (!is.Arima(object)) {
     stop("object must be of class Arima")
   }
   parvec <- object$model$theta
   if (length(parvec) > 0) {
     last.nonzero <- max(which(abs(parvec) > 1e-08))
     if (last.nonzero > 0) {
-      return(structure(list(
-        roots = polyroot(c(1, parvec[1:last.nonzero])),
-        type = "MA"
-      ), class = "armaroots"))
+      return(structure(
+        list(
+          roots = polyroot(c(1, parvec[1:last.nonzero])),
+          type = "MA"
+        ),
+        class = "armaroots"
+      ))
     }
   }
-  return(structure(list(roots = numeric(0), type = "MA"), class = "armaroots"))
+  structure(list(roots = numeric(0), type = "MA"), class = "armaroots")
 }
 
 #' @export
@@ -48,12 +54,25 @@ plot.armaroots <- function(x, xlab, ylab, main, ...) {
   oldpar <- par(pty = "s")
   on.exit(par(oldpar))
   plot(
-    c(-1, 1), c(-1, 1),
-    xlab = xlab, ylab = ylab,
-    type = "n", bty = "n", xaxt = "n", yaxt = "n", main = main, ...
+    c(-1, 1),
+    c(-1, 1),
+    xlab = xlab,
+    ylab = ylab,
+    type = "n",
+    bty = "n",
+    xaxt = "n",
+    yaxt = "n",
+    main = main,
+    ...
   )
   axis(1, at = c(-1, 0, 1), line = 0.5, tck = -0.025)
-  axis(2, at = c(-1, 0, 1), labels = c("-i", "0", "i"), line = 0.5, tck = -0.025)
+  axis(
+    2,
+    at = c(-1, 0, 1),
+    labels = c("-i", "0", "i"),
+    line = 0.5,
+    tck = -0.025
+  )
   circx <- seq(-1, 1, length.out = 501)
   circy <- sqrt(1 - circx^2)
   lines(c(circx, circx), c(circy, -circy), col = "gray")
@@ -74,7 +93,7 @@ plot.armaroots <- function(x, xlab, ylab, main, ...) {
 #' Produces a plot of the inverse AR and MA roots of an ARIMA model. Inverse
 #' roots outside the unit circle are shown in red.
 #'
-#' \code{autoplot} will produce an equivalent plot as a ggplot object.
+#' `autoplot` will produce an equivalent plot as a ggplot object.
 #'
 #' @param x Object of class \dQuote{Arima} or \dQuote{ar}.
 #' @param object Object of class \dQuote{Arima} or \dQuote{ar}. Used for ggplot
@@ -84,10 +103,10 @@ plot.armaroots <- function(x, xlab, ylab, main, ...) {
 #' @param main Main title. Default is "Inverse AR roots" or "Inverse MA roots".
 #' @param xlab X-axis label.
 #' @param ylab Y-axis label.
-#' @param ... Other plotting parameters passed to \code{\link[graphics]{par}}.
+#' @param ... Other plotting parameters passed to [graphics::par()].
 #' @return None. Function produces a plot
 #' @author Rob J Hyndman & Mitchell O'Hara-Wild
-#' @seealso \code{\link{Arima}}, \code{\link[stats]{ar}}
+#' @seealso [Arima()], [stats::ar()]
 #' @keywords hplot
 #' @examples
 #'
@@ -104,10 +123,16 @@ plot.armaroots <- function(x, xlab, ylab, main, ...) {
 #' plot(ar.ols(gold[1:61]))
 #' autoplot(ar.ols(gold[1:61]))
 #' @export
-plot.Arima <- function(x, type = c("both", "ar", "ma"), main,
-                       xlab = "Real", ylab = "Imaginary", ...) {
+plot.Arima <- function(
+  x,
+  type = c("both", "ar", "ma"),
+  main,
+  xlab = "Real",
+  ylab = "Imaginary",
+  ...
+) {
   type <- match.arg(type)
-  if (!is.element("Arima", class(x))) {
+  if (!is.Arima(x)) {
     stop("This function is for objects of class 'Arima'.")
   }
 
@@ -135,7 +160,11 @@ plot.Arima <- function(x, type = c("both", "ar", "ma"), main,
       type <- "ar"
     }
   }
-  if ((type == "ar" && (p == 0)) || (type == "ma" && (q == 0)) || (p == 0 && q == 0)) {
+  if (
+    (type == "ar" && (p == 0)) ||
+      (type == "ma" && (q == 0)) ||
+      (p == 0 && q == 0)
+  ) {
     warning("No roots to plot")
     if (missing(main)) {
       main <- "No AR or MA roots"
@@ -158,7 +187,7 @@ plot.Arima <- function(x, type = c("both", "ar", "ma"), main,
 #' @rdname plot.Arima
 #' @export
 plot.ar <- function(x, main, xlab = "Real", ylab = "Imaginary", ...) {
-  if (!is.element("ar", class(x))) {
+  if (!inherits(x, "ar")) {
     stop("This function is for objects of class 'ar'.")
   }
   plot(arroots(x), main = main, xlab = xlab, ylab = ylab, ...)

@@ -20,12 +20,12 @@ as ts().}
 the underlying ts object. The default value is \code{max(seasonal.periods)}.}
 
 \item{...}{Arguments to be passed to the underlying call to \code{ts()}. For
-example \code{start=c(1987,5)}.}
+example \code{start=c(1987, 5)}.}
 }
 \value{
 An object of class \code{c("msts", "ts")}. If there is only one
-seasonal period (i.e., \code{length(seasonal.periods)==1}), then the object
-is of class \code{"ts"}.
+seasonal period (i.e., \code{length(seasonal.periods) == 1}), then the object
+is of class \code{ts}.
 }
 \description{
 msts is an S3 class for multi seasonal time series objects, intended to be
@@ -36,8 +36,8 @@ class, should also work on a msts class.
 }
 \examples{
 
-x <- msts(taylor, seasonal.periods=c(2*24,2*24*7,2*24*365), start=2000+22/52)
-y <- msts(USAccDeaths, seasonal.periods=12, start=1949)
+x <- msts(taylor, seasonal.periods = c(2 * 24, 2 * 24 * 7, 2 * 24 * 365), start = 2000 + 22 / 52)
+y <- msts(USAccDeaths, seasonal.periods = 12, start = 1949)
 
 }
 \author{

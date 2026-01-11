@@ -10,19 +10,21 @@ nnetar(
   y,
   p,
   P = 1,
-  size,
+  size = NULL,
   repeats = 20,
   xreg = NULL,
   lambda = NULL,
   model = NULL,
   subset = NULL,
   scale.inputs = TRUE,
+  parallel = FALSE,
+  num.cores = 2,
   x = y,
   ...
 )
 }
 \arguments{
-\item{y}{A numeric vector or time series of class \code{ts}.}
+\item{y}{a numeric vector or univariate time series of class \code{ts}}
 
 \item{p}{Embedding dimension for non-seasonal time series. Number of
 non-seasonal lags used as inputs. For non-seasonal time series, the default
@@ -40,10 +42,10 @@ number of input nodes (including external regressors, if given) plus 1.}
 \item{repeats}{Number of networks to fit with different random starting
 weights. These are then averaged when producing forecasts.}
 
-\item{xreg}{Optionally, a vector or matrix of external regressors, which
-must have the same number of rows as \code{y}. Must be numeric.}
+\item{xreg}{Optionally, a numerical vector or matrix of external regressors,
+which must have the same number of rows as \code{y}. It should not be a data frame.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
 data transformed before model is estimated.}
@@ -56,17 +58,24 @@ parameters.}
 in the fit. Can be an integer index vector or a logical vector the same
 length as \code{y}. All observations are used by default.}
 
-\item{scale.inputs}{If TRUE, inputs are scaled by subtracting the column
+\item{scale.inputs}{If \code{TRUE}, inputs are scaled by subtracting the column
 means and dividing by their respective standard deviations. If \code{lambda}
 is not \code{NULL}, scaling is applied after Box-Cox transformation.}
 
+\item{parallel}{If \code{TRUE}, then the specification search is done in parallel
+via \code{\link[parallel:clusterApply]{parallel::parLapply()}}. This can give a significant speedup on
+multicore machines.}
+
+\item{num.cores}{Allows the user to specify the amount of parallel processes
+to be used if \code{parallel = TRUE}. If \code{NULL}, then the number of logical cores
+is automatically detected and all available cores are used.}
+
 \item{x}{Deprecated. Included for backwards compatibility.}
 
-\item{\dots}{Other arguments passed to \code{\link[nnet]{nnet}} for
-\code{nnetar}.}
+\item{...}{Other arguments passed to \code{\link[nnet:nnet]{nnet::nnet()}} for \code{nnetar}.}
 }
 \value{
-Returns an object of class "\code{nnetar}".
+Returns an object of class \code{nnetar}.
 
 The function \code{summary} is used to obtain and print a summary of the
 results.
@@ -87,16 +96,15 @@ Feed-forward neural networks with a single hidden layer and lagged inputs
 for forecasting univariate time series.
 }
 \details{
-A feed-forward neural network is fitted with lagged values of \code{y} as
-inputs and a single hidden layer with \code{size} nodes. The inputs are for
-lags 1 to \code{p}, and lags \code{m} to \code{mP} where
-\code{m=frequency(y)}. If \code{xreg} is provided, its columns are also
-used as inputs. If there are missing values in \code{y} or
-\code{xreg}, the corresponding rows (and any others which depend on them as
-lags) are omitted from the fit. A total of \code{repeats} networks are
-fitted, each with random starting weights. These are then averaged when
-computing forecasts. The network is trained for one-step forecasting.
-Multi-step forecasts are computed recursively.
+A feed-forward neural network is fitted with lagged values of \code{y} as inputs
+and a single hidden layer with \code{size} nodes. The inputs are for lags 1 to
+\code{p}, and lags \code{m} to \code{mP} where \code{m = frequency(y)}. If \code{xreg} is provided,
+its columns are also used as inputs. If there are missing values in \code{y} or
+\code{xreg}, the corresponding rows (and any others which depend on them as lags)
+are omitted from the fit. A total of \code{repeats} networks are fitted, each
+with random starting weights. These are then averaged when computing
+forecasts. The network is trained for one-step forecasting. Multi-step
+forecasts are computed recursively.
 
 For non-seasonal data, the fitted model is denoted as an NNAR(p,k) model,
 where k is the number of hidden nodes. This is analogous to an AR(p) model
@@ -110,17 +118,17 @@ fcast <- forecast(fit)
 plot(fcast)
 
 ## Arguments can be passed to nnet()
-fit <- nnetar(lynx, decay=0.5, maxit=150)
+fit <- nnetar(lynx, decay = 0.5, maxit = 150)
 plot(forecast(fit))
 lines(lynx)
 
 ## Fit model to first 100 years of lynx data
-fit <- nnetar(window(lynx,end=1920), decay=0.5, maxit=150)
-plot(forecast(fit,h=14))
+fit <- nnetar(window(lynx, end = 1920), decay = 0.5, maxit = 150)
+plot(forecast(fit, h = 14))
 lines(lynx)
 
 ## Apply fitted model to later data, including all optional arguments
-fit2 <- nnetar(window(lynx,start=1921), model=fit)
+fit2 <- nnetar(window(lynx, start = 1921), model = fit)
 
 }
 \author{

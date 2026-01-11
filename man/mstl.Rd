@@ -4,15 +4,28 @@
 \alias{mstl}
 \title{Multiple seasonal decomposition}
 \usage{
-mstl(x, lambda = NULL, iterate = 2, s.window = 7 + 4 * seq(6), ...)
+mstl(
+  x,
+  lambda = NULL,
+  biasadj = FALSE,
+  iterate = 2,
+  s.window = 7 + 4 * seq(6),
+  ...
+)
 }
 \arguments{
 \item{x}{Univariate time series of class \code{msts} or \code{ts}.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
 data transformed before model is estimated.}
+
+\item{biasadj}{Use adjusted back-transformed mean for Box-Cox
+transformations. If transformed data is used to produce forecasts and fitted
+values, a regular back transformation will result in median forecasts. If
+biasadj is \code{TRUE}, an adjustment will be made to produce mean forecasts
+and fitted values.}
 
 \item{iterate}{Number of iterations to use to refine the seasonal component.}
 
@@ -20,22 +33,22 @@ data transformed before model is estimated.}
 the same value is used for all seasonal components. Otherwise, it should be a vector
 of the same length as the number of seasonal components (or longer).}
 
-\item{...}{Other arguments are passed to \code{\link[stats]{stl}}.}
+\item{...}{Other arguments are passed to \code{\link[stats:stl]{stats::stl()}}.}
 }
 \description{
 Decompose a time series into seasonal, trend and remainder components.
 Seasonal components are estimated iteratively using STL. Multiple seasonal periods are
 allowed. The trend component is computed for the last iteration of STL.
 Non-seasonal time series are decomposed into trend and remainder only.
-In this case, \code{\link[stats]{supsmu}} is used to estimate the trend.
+In this case, \code{\link[stats:supsmu]{stats::supsmu()}} is used to estimate the trend.
 Optionally, the time series may be Box-Cox transformed before decomposition.
-Unlike \code{\link[stats]{stl}}, \code{mstl} is completely automated.
+Unlike \code{\link[stats:stl]{stats::stl()}}, \code{mstl} is completely automated.
 }
 \examples{
 library(ggplot2)
-mstl(taylor) \%>\% autoplot()
-mstl(AirPassengers, lambda = "auto") \%>\% autoplot()
+mstl(taylor) |> autoplot()
+mstl(AirPassengers, lambda = "auto") |> autoplot()
 }
 \seealso{
-\code{\link[stats]{stl}}, \code{\link[stats]{supsmu}}
+\code{\link[stats:stl]{stats::stl()}}, \code{\link[stats:supsmu]{stats::supsmu()}}
 }

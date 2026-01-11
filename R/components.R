@@ -8,48 +8,48 @@
 #' trend-cycle component or remainder component from a time series
 #' decomposition.
 #'
-#' @param object Object created by \code{\link[stats]{decompose}},
-#' \code{\link[stats]{stl}} or \code{\link{tbats}}.
+#' @param object Object created by [stats::decompose()],
+#' [stats::stl()] or [tbats()].
 #' @return Univariate time series.
 #' @author Rob J Hyndman
-#' @seealso \code{\link[stats]{stl}}, \code{\link[stats]{decompose}},
-#' \code{\link{tbats}}, \code{\link{seasadj}}.
+#' @seealso [stats::stl()], [stats::decompose()], [tbats()], [seasadj()].
 #' @keywords ts
 #' @examples
 #' plot(USAccDeaths)
-#' fit <- stl(USAccDeaths, s.window="periodic")
-#' lines(trendcycle(fit),col="red")
+#' fit <- stl(USAccDeaths, s.window = "periodic")
+#' lines(trendcycle(fit), col = "red")
 #'
 #' library(ggplot2)
-#' autoplot(cbind(
-#' 	    Data=USAccDeaths,
-#' 	    Seasonal=seasonal(fit),
-#'   	  Trend=trendcycle(fit),
-#' 	    Remainder=remainder(fit)),
-#'     facets=TRUE) +
-#'   ylab("") + xlab("Year")
+#' autoplot(
+#'   cbind(
+#'     Data = USAccDeaths,
+#'     Seasonal = seasonal(fit),
+#'     Trend = trendcycle(fit),
+#'     Remainder = remainder(fit)
+#'   ),
+#'   facets = TRUE
+#' ) +
+#'   labs(x = "Year", y = "")
 #'
 #' @export
 seasonal <- function(object) {
-  if ("mstl" %in% class(object)) {
-    cols <- grep("Season", colnames(object))
+  if (inherits(object, "mstl")) {
+    cols <- grep("Season", colnames(object), fixed = TRUE)
     return(object[, cols])
-  }
-  else if ("stl" %in% class(object)) {
+  } else if (inherits(object, "stl")) {
     return(object$time.series[, "seasonal"])
-  } else if ("decomposed.ts" %in% class(object)) {
+  } else if (inherits(object, "decomposed.ts")) {
     return(object$seasonal)
-  } else if ("tbats" %in% class(object)) {
+  } else if (inherits(object, "tbats")) {
     comp <- tbats.components(object)
-    scols <- grep("season", colnames(comp))
+    scols <- grep("season", colnames(comp), fixed = TRUE)
     season <- ts(rowSums(comp[, scols, drop = FALSE]))
     if (!is.null(object$lambda)) {
       season <- InvBoxCox(season, object$lambda)
     }
     tsp(season) <- tsp(comp)
     return(season)
-  }
-  else if ("seas" %in% class(object)) {
+  } else if (inherits(object, "seas")) {
     return(object$data[, "seasonal"])
   } else {
     stop("Unknown object type")
@@ -59,20 +59,20 @@ seasonal <- function(object) {
 #' @rdname seasonal
 #' @export
 trendcycle <- function(object) {
-  if ("mstl" %in% class(object)) {
+  if (inherits(object, "mstl")) {
     return(object[, "Trend"])
-  } else if ("stl" %in% class(object)) {
+  } else if (inherits(object, "stl")) {
     return(object$time.series[, "trend"])
-  } else if ("decomposed.ts" %in% class(object)) {
+  } else if (inherits(object, "decomposed.ts")) {
+    # 	else if("tbats" %in% class(object))
     return(object$trend)
-  } # 	else if("tbats" %in% class(object))
-  # 	{
-  #     trnd <- tbats.components(object)[,"level"]
-  #     if (!is.null(object$lambda))
-  #       trnd <- InvBoxCox(trnd, object$lambda)
-  #     return(trnd)
-  #   }
-  else if ("seas" %in% class(object)) {
+  } else if (inherits(object, "seas")) {
+    # 	{
+    #     trnd <- tbats.components(object)[,"level"]
+    #     if (!is.null(object$lambda))
+    #       trnd <- InvBoxCox(trnd, object$lambda)
+    #     return(trnd)
+    #   }
     return(seasextract_w_na_action(object, "trend"))
   } else {
     stop("Unknown object type")
@@ -82,23 +82,23 @@ trendcycle <- function(object) {
 #' @rdname seasonal
 #' @export
 remainder <- function(object) {
-  if ("mstl" %in% class(object)) {
+  if (inherits(object, "mstl")) {
     return(object[, "Remainder"])
-  } else if ("stl" %in% class(object)) {
+  } else if (inherits(object, "stl")) {
     return(object$time.series[, "remainder"])
-  } else if ("decomposed.ts" %in% class(object)) {
+  } else if (inherits(object, "decomposed.ts")) {
+    # 	else if("tbats" %in% class(object))
     return(object$random)
-  } # 	else if("tbats" %in% class(object))
-  # 	{
-  # 		comp <- tbats.components(object)
-  # 		trnd <- comp[,"level"]
-  # 		scols <- grep("season",colnames(comp))
-  #     season <- rowSums(comp[,scols,drop=FALSE])
-  #     irreg <- ts(comp[,'observed'] - trnd - season)
-  #     tsp(irreg) <- tsp(comp)
-  #     return(irreg)
-  #   }
-  else if ("seas" %in% class(object)) {
+  } else if (inherits(object, "seas")) {
+    # 	{
+    # 		comp <- tbats.components(object)
+    # 		trnd <- comp[,"level"]
+    # 		scols <- grep("season",colnames(comp))
+    #     season <- rowSums(comp[,scols,drop=FALSE])
+    #     irreg <- ts(comp[,'observed'] - trnd - season)
+    #     tsp(irreg) <- tsp(comp)
+    #     return(irreg)
+    #   }
     return(seasextract_w_na_action(object, "irregular"))
   } else {
     stop("Unknown object type")

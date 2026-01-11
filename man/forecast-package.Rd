@@ -28,6 +28,7 @@ Authors:
   \item Gabriel Caceres (\href{https://orcid.org/0000-0002-2947-2023}{ORCID})
   \item Leanne Chhay
   \item Kirill Kuroptev
+  \item Maximilian Mücke (\href{https://orcid.org/0009-0000-9432-9795}{ORCID})
   \item Mitchell O'Hara-Wild (\href{https://orcid.org/0000-0001-6729-7695}{ORCID})
   \item Fotios Petropoulos (\href{https://orcid.org/0000-0003-3039-4955}{ORCID})
   \item Slava Razbash
@@ -49,4 +50,4 @@ Other contributors:
 }
 
 }
-\keyword{package}
+\keyword{internal}

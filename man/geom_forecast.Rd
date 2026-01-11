@@ -39,10 +39,10 @@ mapping.}
 \item{data}{The data to be displayed in this layer. There are three options:
 
 If \code{NULL}, the default, the data is inherited from the plot data as
-specified in the call to \code{\link[ggplot2]{ggplot}}.
+specified in the call to \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}}.
 
 A \code{data.frame}, or other object, will override the plot data. All
-objects will be fortified to produce a data frame. See \code{\link[ggplot2]{fortify}}
+objects will be fortified to produce a data frame. See \code{\link[ggplot2:fortify]{ggplot2::fortify()}}
 for which variables will be created.
 
 A \code{function} will be called with a single argument, the plot data. The
@@ -64,19 +64,19 @@ never includes, and \code{TRUE} always includes.}
 \item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics, rather
 than combining with them. This is most useful for helper functions that
 define both data and aesthetics and shouldn't inherit behaviour from the
-default plot specification, e.g. \code{\link[ggplot2]{borders}}.}
+default plot specification, e.g. \code{\link[ggplot2:annotation_borders]{ggplot2::borders()}}.}
 
 \item{PI}{If \code{FALSE}, confidence intervals will not be plotted, giving
 only the forecast line.}
 
-\item{showgap}{If \code{showgap=FALSE}, the gap between the historical
+\item{showgap}{If \code{showgap = FALSE}, the gap between the historical
 observations and the forecasts is removed.}
 
 \item{series}{Matches an unidentified forecast layer with a coloured object
 on the plot.}
 
-\item{...}{Additional arguments for \code{\link{forecast.ts}}, other
-arguments are passed on to \code{\link[ggplot2]{layer}}. These are often aesthetics,
+\item{...}{Additional arguments for \code{\link[=forecast.ts]{forecast.ts()}}, other
+arguments are passed on to \code{\link[ggplot2:layer]{ggplot2::layer()}}. These are often aesthetics,
 used to set an aesthetic to a fixed value, like \code{color = "red"} or
 \code{alpha = .5}. They may also be parameters to the paired geom/stat.}
 }
@@ -109,29 +109,30 @@ lungDeaths <- cbind(mdeaths, fdeaths)
 autoplot(lungDeaths) + geom_forecast()
 
 # Using fortify.ts
-p <- ggplot(aes(x=x, y=y), data=USAccDeaths)
+p <- ggplot(aes(x = x, y = y), data = USAccDeaths)
 p <- p + geom_line()
 p + geom_forecast()
 
 # Without fortify.ts
-data <- data.frame(USAccDeaths=as.numeric(USAccDeaths), time=as.numeric(time(USAccDeaths)))
-p <- ggplot(aes(x=time, y=USAccDeaths), data=data)
+data <- data.frame(USAccDeaths = as.numeric(USAccDeaths),
+                   time = as.numeric(time(USAccDeaths)))
+p <- ggplot(aes(x = time, y = USAccDeaths), data = data)
 p <- p + geom_line()
 p + geom_forecast()
 
-p + geom_forecast(h=60)
-p <- ggplot(aes(x=time, y=USAccDeaths), data=data)
-p + geom_forecast(level=c(70,98))
-p + geom_forecast(level=c(70,98),colour="lightblue")
+p + geom_forecast(h = 60)
+p <- ggplot(aes(x = time, y = USAccDeaths), data = data)
+p + geom_forecast(level = c(70, 98))
+p + geom_forecast(level = c(70, 98), colour = "lightblue")
 
 #Add forecasts to multivariate series with colour groups
 lungDeaths <- cbind(mdeaths, fdeaths)
-autoplot(lungDeaths) + geom_forecast(forecast(mdeaths), series="mdeaths")
+autoplot(lungDeaths) + geom_forecast(forecast(mdeaths), series = "mdeaths")
 }
 
 }
 \seealso{
-\code{\link[generics]{forecast}}, \code{\link[ggplot2]{ggproto}}
+\code{\link[generics:forecast]{generics::forecast()}}, \code{\link[ggplot2:ggproto]{ggplot2::ggproto()}}
 }
 \author{
 Mitchell O'Hara-Wild

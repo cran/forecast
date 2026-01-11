@@ -1,6 +1,6 @@
 #' Exponential smoothing state space model
 #'
-#' Returns ets model applied to \code{y}.
+#' Returns ets model applied to `y`.
 #'
 #' Based on the classification of methods as described in Hyndman et al (2008).
 #'
@@ -11,7 +11,8 @@
 #'
 #' @aliases print.ets summary.ets as.character.ets coef.ets tsdiag.ets
 #'
-#' @param y a numeric vector or time series of class \code{ts}
+#' @inheritParams forecast.ts
+#' @param y a numeric vector or univariate time series of class `ts`
 #' @param model Usually a three-character string identifying method using the
 #' framework terminology of Hyndman et al. (2002) and Hyndman et al. (2008).
 #' The first letter denotes the error type ("A", "M" or "Z"); the second letter
@@ -21,60 +22,54 @@
 #' simple exponential smoothing with additive errors, "MAM" is multiplicative
 #' Holt-Winters' method with multiplicative errors, and so on.
 #'
-#' It is also possible for the model to be of class \code{"ets"}, and equal to
-#' the output from a previous call to \code{ets}. In this case, the same model
-#' is fitted to \code{y} without re-estimating any smoothing parameters. See
-#' also the \code{use.initial.values} argument.
-#' @param damped If TRUE, use a damped trend (either additive or
-#' multiplicative). If NULL, both damped and non-damped trends will be tried
-#' and the best model (according to the information criterion \code{ic})
+#' It is also possible for the model to be of class `ets`, and equal to
+#' the output from a previous call to `ets`. In this case, the same model
+#' is fitted to `y` without re-estimating any smoothing parameters. See
+#' also the `use.initial.values` argument.
+#' @param damped If `TRUE`, use a damped trend (either additive or
+#' multiplicative). If `NULL`, both damped and non-damped trends will be
+#' tried and the best model (according to the information criterion `ic`)
 #' returned.
-#' @param alpha Value of alpha. If NULL, it is estimated.
-#' @param beta Value of beta. If NULL, it is estimated.
-#' @param gamma Value of gamma. If NULL, it is estimated.
-#' @param phi Value of phi. If NULL, it is estimated.
-#' @param additive.only If TRUE, will only consider additive models. Default is
-#' FALSE.
-#' @param lambda Box-Cox transformation parameter. If \code{lambda="auto"},
-#' then a transformation is automatically selected using \code{BoxCox.lambda}.
+#' @param alpha Value of alpha. If `NULL`, it is estimated.
+#' @param beta Value of beta. If `NULL`, it is estimated.
+#' @param gamma Value of gamma. If `NULL`, it is estimated.
+#' @param phi Value of phi. If `NULL`, it is estimated.
+#' @param additive.only If `TRUE`, will only consider additive models. Default is
+#' `FALSE`. When `lambda` is specified, `additive.only` is set to `TRUE`.
+#' @param lambda Box-Cox transformation parameter. If `lambda = "auto"`,
+#' then a transformation is automatically selected using `BoxCox.lambda`.
 #' The transformation is ignored if NULL. Otherwise,
-#' data transformed before model is estimated. When \code{lambda} is specified,
-#' \code{additive.only} is set to \code{TRUE}.
-#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.
-#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.
+#' data transformed before model is estimated.
+#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi). Ignored if `bounds = "admissible"`.
+#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi). Ignored if `bounds = "admissible"`.
 #' @param opt.crit Optimization criterion. One of "mse" (Mean Square Error),
-#' "amse" (Average MSE over first \code{nmse} forecast horizons), "sigma"
+#' "amse" (Average MSE over first `nmse` forecast horizons), "sigma"
 #' (Standard deviation of residuals), "mae" (Mean of absolute residuals), or
 #' "lik" (Log-likelihood, the default).
-#' @param nmse Number of steps for average multistep MSE (1<=\code{nmse}<=30).
-#' @param bounds Type of parameter space to impose: \code{"usual" } indicates
+#' @param nmse Number of steps for average multistep MSE (1<=`nmse`<=30).
+#' @param bounds Type of parameter space to impose: `"usual"` indicates
 #' all parameters must lie between specified lower and upper bounds;
-#' \code{"admissible"} indicates parameters must lie in the admissible space;
-#' \code{"both"} (default) takes the intersection of these regions.
+#' `"admissible"` indicates parameters must lie in the admissible space;
+#' `"both"` (default) takes the intersection of these regions.
 #' @param ic Information criterion to be used in model selection.
-#' @param restrict If \code{TRUE} (default), the models with infinite variance
+#' @param restrict If `TRUE` (default), the models with infinite variance
 #' will not be allowed.
-#' @param allow.multiplicative.trend If \code{TRUE}, models with multiplicative
+#' @param allow.multiplicative.trend If `TRUE`, models with multiplicative
 #' trend are allowed when searching for a model. Otherwise, the model space
 #' excludes them. This argument is ignored if a multiplicative trend model is
-#' explicitly requested (e.g., using \code{model="MMN"}).
-#' @param use.initial.values If \code{TRUE} and \code{model} is of class
-#' \code{"ets"}, then the initial values in the model are also not
+#' explicitly requested (e.g., using `model = "MMN"`).
+#' @param use.initial.values If `TRUE` and `model` is of class
+#' `"ets"`, then the initial values in the model are also not
 #' re-estimated.
-#' @param na.action A function which indicates what should happen when the data
-#' contains NA values. By default, the largest contiguous portion of the
-#' time-series will be used.
-#' @param ... Other undocumented arguments.
-#' @inheritParams forecast.ts
+#' @param ... Other arguments are ignored.
 #'
-#' @return An object of class "\code{ets}".
+#' @return An object of class `ets`.
 #'
-#' The generic accessor functions \code{fitted.values} and \code{residuals}
-#' extract useful features of the value returned by \code{ets} and associated
+#' The generic accessor functions `fitted.values` and `residuals`
+#' extract useful features of the value returned by `ets` and associated
 #' functions.
 #' @author Rob J Hyndman
-#' @seealso \code{\link[stats]{HoltWinters}}, \code{\link{rwf}},
-#' \code{\link{Arima}}.
+#' @seealso [stats::HoltWinters()], [rwf()], [Arima()].
 #' @references Hyndman, R.J., Koehler, A.B., Snyder, R.D., and Grose, S. (2002)
 #' "A state space framework for automatic forecasting using exponential
 #' smoothing methods", \emph{International J. Forecasting}, \bold{18}(3),
@@ -86,46 +81,50 @@
 #'
 #' Hyndman, R.J., Koehler, A.B., Ord, J.K., and Snyder, R.D. (2008)
 #' \emph{Forecasting with exponential smoothing: the state space approach},
-#' Springer-Verlag. \url{http://www.exponentialsmoothing.net}.
+#' Springer-Verlag. \url{https://robjhyndman.com/expsmooth/}.
 #' @keywords ts
 #' @examples
 #' fit <- ets(USAccDeaths)
 #' plot(forecast(fit))
 #'
 #' @export
-ets <- function(y, model="ZZZ", damped=NULL,
-                alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, additive.only=FALSE, lambda=NULL, biasadj=FALSE,
-                lower=c(rep(0.0001, 3), 0.8), upper=c(rep(0.9999, 3), 0.98),
-                opt.crit=c("lik", "amse", "mse", "sigma", "mae"), nmse=3, bounds=c("both", "usual", "admissible"),
-                ic=c("aicc", "aic", "bic"), restrict=TRUE, allow.multiplicative.trend=FALSE,
-                use.initial.values=FALSE, na.action = c("na.contiguous", "na.interp", "na.fail"), ...) {
+ets <- function(
+  y,
+  model = "ZZZ",
+  damped = NULL,
+  alpha = NULL,
+  beta = NULL,
+  gamma = NULL,
+  phi = NULL,
+  additive.only = FALSE,
+  lambda = NULL,
+  biasadj = FALSE,
+  lower = c(rep(0.0001, 3), 0.8),
+  upper = c(rep(0.9999, 3), 0.98),
+  opt.crit = c("lik", "amse", "mse", "sigma", "mae"),
+  nmse = 3,
+  bounds = c("both", "usual", "admissible"),
+  ic = c("aicc", "aic", "bic"),
+  restrict = TRUE,
+  allow.multiplicative.trend = FALSE,
+  use.initial.values = FALSE,
+  ...
+) {
   # dataname <- substitute(y)
   opt.crit <- match.arg(opt.crit)
   bounds <- match.arg(bounds)
   ic <- match.arg(ic)
-  if(!is.function(na.action)){
-    na.fn_name <- match.arg(na.action)
-    na.action <- get(na.fn_name)
-  }
+  seriesname <- deparse1(substitute(y))
 
-  seriesname <- deparse(substitute(y))
-
-  if (any(class(y) %in% c("data.frame", "list", "matrix", "mts"))) {
+  if (inherits(y, c("data.frame", "list", "matrix", "mts"))) {
     stop("y should be a univariate time series")
   }
   y <- as.ts(y)
+  ny <- length(y)
 
   # Check if data is constant
   if (missing(model) && is.constant(y)) {
     return(ses(y, alpha = 0.99999, initial = "simple")$model)
-  }
-
-  # Remove missing values near ends
-  ny <- length(y)
-  y <- na.action(y)
-  if (ny != length(y) && na.fn_name == "na.contiguous") {
-    warning("Missing values encountered. Using longest contiguous portion of time series")
-    ny <- length(y)
   }
 
   orig.y <- y
@@ -135,15 +134,19 @@ ets <- function(y, model="ZZZ", damped=NULL,
   if (!is.null(lambda)) {
     y <- BoxCox(y, lambda)
     lambda <- attr(y, "lambda")
+    attr(lambda, "biasadj") <- biasadj
     additive.only <- TRUE
   }
 
   if (nmse < 1 || nmse > 30) {
     stop("nmse out of range")
   }
-  m <- frequency(y)
-  if(abs(m - round(m)) > 1e-4) {
-    warning("Non-integer seasonal period. Only non-seasonal models will be considered.")
+  m <- max(1, frequency(y))
+  if (abs(m - round(m)) > 1e-4) {
+    warning(
+      "Non-integer seasonal period. Only non-seasonal models will be considered."
+    )
+    m <- 1
   } else {
     m <- round(m)
   }
@@ -153,7 +156,7 @@ ets <- function(y, model="ZZZ", damped=NULL,
   }
 
   # If model is an ets object, re-fit model to new data
-  if ("ets" %in% class(model)) {
+  if (is.ets(model)) {
     # Prevent alpha being zero (to avoid divide by zero in the C code)
     alpha <- max(model$par["alpha"], 1e-10)
     beta <- model$par["beta"]
@@ -168,7 +171,11 @@ ets <- function(y, model="ZZZ", damped=NULL,
     if (is.na(phi)) {
       phi <- NULL
     }
-    modelcomponents <- paste(model$components[1], model$components[2], model$components[3], sep = "")
+    modelcomponents <- paste0(
+      model$components[1],
+      model$components[2],
+      model$components[3]
+    )
     damped <- (model$components[4] == "TRUE")
     if (use.initial.values) {
       errortype <- substr(modelcomponents, 1, 1)
@@ -176,7 +183,20 @@ ets <- function(y, model="ZZZ", damped=NULL,
       seasontype <- substr(modelcomponents, 3, 3)
 
       # Recompute errors from pegelsresid.C
-      e <- pegelsresid.C(y, m, model$initstate, errortype, trendtype, seasontype, damped, alpha, beta, gamma, phi, nmse)
+      e <- pegelsresid.C(
+        y,
+        m,
+        model$initstate,
+        errortype,
+        trendtype,
+        seasontype,
+        damped,
+        alpha,
+        beta,
+        gamma,
+        phi,
+        nmse
+      )
 
       # Compute error measures
       np <- length(model$par) + 1
@@ -189,36 +209,43 @@ ets <- function(y, model="ZZZ", damped=NULL,
 
       # Compute states, fitted values and residuals
       tsp.y <- tsp(y)
-      model$states <- ts(e$states, frequency = tsp.y[3], start = tsp.y[1] - 1 / tsp.y[3])
+      model$states <- ts(
+        e$states,
+        frequency = tsp.y[3],
+        start = tsp.y[1] - 1 / tsp.y[3]
+      )
       colnames(model$states)[1] <- "l"
       if (trendtype != "N") {
         colnames(model$states)[2] <- "b"
       }
       if (seasontype != "N") {
-        colnames(model$states)[(2 + (trendtype != "N")):ncol(model$states)] <- paste("s", 1:m, sep = "")
+        colnames(model$states)[
+          (2 + (trendtype != "N")):ncol(model$states)
+        ] <- paste0("s", 1:m)
       }
-      if (errortype == "A") {
-        model$fitted <- ts(y - e$e, frequency = tsp.y[3], start = tsp.y[1])
-      } else {
-        model$fitted <- ts(y / (1 + e$e), frequency = tsp.y[3], start = tsp.y[1])
-      }
+      model$fitted <- ts(e$fits, frequency = tsp.y[3], start = tsp.y[1])
       model$residuals <- ts(e$e, frequency = tsp.y[3], start = tsp.y[1])
-      model$sigma2 <- sum(model$residuals ^ 2, na.rm = TRUE) / (ny - np)
+      model$sigma2 <- sum(model$residuals^2, na.rm = TRUE) / (ny - np)
       model$x <- orig.y
       model$series <- seriesname
       if (!is.null(lambda)) {
-        model$fitted <- InvBoxCox(model$fitted, lambda, biasadj, var(model$residuals))
-        attr(lambda, "biasadj") <- biasadj
+        model$fitted <- InvBoxCox(
+          model$fitted,
+          lambda,
+          biasadj,
+          var(model$residuals)
+        )
       }
       model$lambda <- lambda
 
       # Return model object
       return(model)
-    }
-    else {
+    } else {
       model <- modelcomponents
       if (missing(use.initial.values)) {
-        message("Model is being refit with current smoothing parameters but initial states are being re-estimated.\nSet 'use.initial.values=TRUE' if you want to re-use existing initial values.")
+        message(
+          "Model is being refit with current smoothing parameters but initial states are being re-estimated.\nSet 'use.initial.values=TRUE' if you want to re-use existing initial values."
+        )
       }
     }
   }
@@ -227,13 +254,13 @@ ets <- function(y, model="ZZZ", damped=NULL,
   trendtype <- substr(model, 2, 2)
   seasontype <- substr(model, 3, 3)
 
-  if (!is.element(errortype, c("M", "A", "Z"))) {
+  if (!errortype %in% c("M", "A", "Z")) {
     stop("Invalid error type")
   }
-  if (!is.element(trendtype, c("N", "A", "M", "Z"))) {
+  if (!trendtype %in% c("N", "A", "M", "Z")) {
     stop("Invalid trend type")
   }
-  if (!is.element(seasontype, c("N", "A", "M", "Z"))) {
+  if (!seasontype %in% c("N", "A", "M", "Z")) {
     stop("Invalid season type")
   }
 
@@ -249,10 +276,12 @@ ets <- function(y, model="ZZZ", damped=NULL,
     }
   }
   if (m > 24) {
-    if (is.element(seasontype, c("A", "M"))) {
+    if (seasontype %in% c("A", "M")) {
       stop("Frequency too high")
     } else if (seasontype == "Z") {
-      warning("I can't handle data with frequency greater than 24. Seasonality will be ignored. Try stlf() if you need seasonal forecasts.")
+      warning(
+        "I can't handle data with frequency greater than 24. Seasonality will be ignored. Try stlf() if you need seasonal forecasts."
+      )
       substr(model, 3, 3) <- seasontype <- "N"
       # m <- 1
     }
@@ -260,26 +289,27 @@ ets <- function(y, model="ZZZ", damped=NULL,
 
   # Check inputs
   if (restrict) {
-    if ((errortype == "A" && (trendtype == "M" || seasontype == "M")) |
-      (errortype == "M" && trendtype == "M" && seasontype == "A") ||
-      (additive.only && (errortype == "M" || trendtype == "M" || seasontype == "M"))) {
+    if (
+      (errortype == "A" && (trendtype == "M" || seasontype == "M")) ||
+        (errortype == "M" && trendtype == "M" && seasontype == "A") ||
+        (additive.only &&
+          (errortype == "M" || trendtype == "M" || seasontype == "M"))
+    ) {
       stop("Forbidden model combination")
     }
   }
 
-  data.positive <- (min(y) > 0)
+  data.positive <- (min(y, na.rm=TRUE) > 0)
 
   if (!data.positive && errortype == "M") {
     stop("Inappropriate model for data with negative or zero values")
   }
 
-  if (!is.null(damped)) {
-    if (damped && trendtype == "N") {
-      stop("Forbidden model combination")
-    }
+  if (!is.null(damped) && damped && trendtype == "N") {
+    stop("Forbidden model combination")
   }
 
-  n <- length(y)
+  n <- sum(!is.na(y))
   # Check we have enough data to fit a model
   npars <- 2L # alpha + l0
   if (trendtype == "A" || trendtype == "M") {
@@ -294,84 +324,120 @@ ets <- function(y, model="ZZZ", damped=NULL,
 
   # Produce something non-optimized for tiny data sets
   if (n <= npars + 4L) {
-    if (!is.null(damped)) {
-      if (damped) {
-        warning("Not enough data to use damping")
-      }
+    if (!is.null(damped) && damped) {
+      warning("Not enough data to use damping")
     }
     if (seasontype == "A" || seasontype == "M") {
-      fit <- try(HoltWintersZZ(
-        orig.y,
-        alpha = alpha, beta = beta, gamma = gamma, phi = phi,
-        exponential = (trendtype == "M"),
-        seasonal = ifelse(seasontype != "A", "multiplicative", "additive"),
-        lambda = lambda, biasadj = biasadj, warnings = FALSE
-      ), silent = TRUE)
-      if (!("try-error" %in% class(fit))) {
+      fit <- try(
+        HoltWintersZZ(
+          orig.y,
+          alpha = alpha,
+          beta = beta,
+          gamma = gamma,
+          phi = phi,
+          exponential = (trendtype == "M"),
+          seasonal = if (seasontype != "A") "multiplicative" else "additive",
+          lambda = lambda,
+          biasadj = biasadj,
+          warnings = FALSE
+        ),
+        silent = TRUE
+      )
+      if (!inherits(fit, "try-error")) {
         fit$call <- match.call()
         fit$method <- as.character(fit)
-        fit$series <- deparse(substitute(y))
+        fit$series <- deparse1(substitute(y))
         return(fit)
-      }
-      else {
+      } else {
         warning("Seasonal component could not be estimated")
       }
     }
     if (trendtype == "A" || trendtype == "M") {
-      fit <- try(HoltWintersZZ(
-        orig.y,
-        alpha = alpha, beta = beta, gamma = FALSE, phi = phi,
-        exponential = (trendtype == "M"),
-        lambda = lambda, biasadj = biasadj, warnings = FALSE
-      ), silent = TRUE)
-      if (!("try-error" %in% class(fit))) {
+      fit <- try(
+        HoltWintersZZ(
+          orig.y,
+          alpha = alpha,
+          beta = beta,
+          gamma = FALSE,
+          phi = phi,
+          exponential = (trendtype == "M"),
+          lambda = lambda,
+          biasadj = biasadj,
+          warnings = FALSE
+        ),
+        silent = TRUE
+      )
+      if (!inherits(fit, "try-error")) {
         fit$call <- match.call()
         fit$method <- as.character(fit)
-        fit$series <- deparse(substitute(y))
+        fit$series <- deparse1(substitute(y))
         return(fit)
-      }
-      else {
+      } else {
         warning("Trend component could not be estimated")
       }
     }
     if (trendtype == "N" && seasontype == "N") {
-      fit <- try(HoltWintersZZ(
-        orig.y,
-        alpha = alpha, beta = FALSE, gamma = FALSE,
-        lambda = lambda, biasadj = biasadj, warnings = FALSE
-      ), silent = TRUE)
-      if (!("try-error" %in% class(fit))) {
+      fit <- try(
+        HoltWintersZZ(
+          orig.y,
+          alpha = alpha,
+          beta = FALSE,
+          gamma = FALSE,
+          lambda = lambda,
+          biasadj = biasadj,
+          warnings = FALSE
+        ),
+        silent = TRUE
+      )
+      if (!inherits(fit, "try-error")) {
         fit$call <- match.call()
         fit$method <- as.character(fit)
-        fit$series <- deparse(substitute(y))
+        fit$series <- deparse1(substitute(y))
         return(fit)
       }
     }
     # Try holt and ses and return best
-    fit1 <- try(HoltWintersZZ(
-      orig.y,
-      alpha = alpha, beta = beta, gamma = FALSE, phi = phi,
-      exponential = (trendtype == "M"),
-      lambda = lambda, biasadj = biasadj, warnings = FALSE
-    ), silent = TRUE)
-    fit2 <- try(HoltWintersZZ(
-      orig.y,
-      alpha = alpha, beta = FALSE, gamma = FALSE, phi = phi,
-      exponential = (trendtype == "M"),
-      lambda = lambda, biasadj = biasadj, warnings = FALSE
-    ), silent = TRUE)
-    if ("try-error" %in% class(fit1)) {
+    fit1 <- try(
+      HoltWintersZZ(
+        orig.y,
+        alpha = alpha,
+        beta = beta,
+        gamma = FALSE,
+        phi = phi,
+        exponential = (trendtype == "M"),
+        lambda = lambda,
+        biasadj = biasadj,
+        warnings = FALSE
+      ),
+      silent = TRUE
+    )
+    fit2 <- try(
+      HoltWintersZZ(
+        orig.y,
+        alpha = alpha,
+        beta = FALSE,
+        gamma = FALSE,
+        phi = phi,
+        exponential = (trendtype == "M"),
+        lambda = lambda,
+        biasadj = biasadj,
+        warnings = FALSE
+      ),
+      silent = TRUE
+    )
+    if (inherits(fit1, "try-error")) {
       fit <- fit2
     } else if (fit1$sigma2 < fit2$sigma2) {
       fit <- fit1
     } else {
       fit <- fit2
     }
-    if("try-error" %in% class(fit))
+    if (inherits(fit, "try-error")) {
       stop("Unable to estimate a model.")
+    }
     fit$call <- match.call()
     fit$method <- as.character(fit)
-    fit$series <- deparse(substitute(y))
+    fit$series <- deparse1(substitute(y))
     return(fit)
   }
 
@@ -393,48 +459,69 @@ ets <- function(y, model="ZZZ", damped=NULL,
     damped <- c(TRUE, FALSE)
   }
   best.ic <- Inf
-  for (i in 1:length(errortype))
-  {
-    for (j in 1:length(trendtype))
-    {
-      for (k in 1:length(seasontype))
-      {
-        for (l in 1:length(damped))
-        {
+  for (i in seq_along(errortype)) {
+    for (j in seq_along(trendtype)) {
+      for (k in seq_along(seasontype)) {
+        for (l in seq_along(damped)) {
           if (trendtype[j] == "N" && damped[l]) {
             next
           }
           if (restrict) {
-            if (errortype[i] == "A" && (trendtype[j] == "M" || seasontype[k] == "M")) {
+            if (
+              errortype[i] == "A" &&
+                (trendtype[j] == "M" || seasontype[k] == "M")
+            ) {
               next
             }
-            if (errortype[i] == "M" && trendtype[j] == "M" && seasontype[k] == "A") {
+            if (
+              errortype[i] == "M" && trendtype[j] == "M" && seasontype[k] == "A"
+            ) {
               next
             }
-            if (additive.only && (errortype[i] == "M" || trendtype[j] == "M" || seasontype[k] == "M")) {
+            if (
+              additive.only &&
+                (errortype[i] == "M" ||
+                  trendtype[j] == "M" ||
+                  seasontype[k] == "M")
+            ) {
               next
             }
           }
           if (!data.positive && errortype[i] == "M") {
             next
           }
-          fit <- try(etsmodel(
-            y, errortype[i], trendtype[j], seasontype[k], damped[l], alpha, beta, gamma, phi,
-            lower = lower, upper = upper, opt.crit = opt.crit, nmse = nmse, bounds = bounds, ...
-          ), silent=TRUE)
-          if(is.element("try-error", class(fit)))
+          fit <- try(
+            etsmodel(
+              y,
+              errortype[i],
+              trendtype[j],
+              seasontype[k],
+              damped[l],
+              alpha,
+              beta,
+              gamma,
+              phi,
+              lower = lower,
+              upper = upper,
+              opt.crit = opt.crit,
+              nmse = nmse,
+              bounds = bounds,
+              ...
+            ),
+            silent = TRUE
+          )
+          if (inherits(fit, "try-error")) {
             fit.ic <- Inf
-          else
+          } else {
             fit.ic <- switch(ic, aic = fit$aic, bic = fit$bic, aicc = fit$aicc)
-          if (!is.na(fit.ic)) {
-            if (fit.ic < best.ic) {
-              model <- fit
-              best.ic <- fit.ic
-              best.e <- errortype[i]
-              best.t <- trendtype[j]
-              best.s <- seasontype[k]
-              best.d <- damped[l]
-            }
+          }
+          if (!is.na(fit.ic) && fit.ic < best.ic) {
+            model <- fit
+            best.ic <- fit.ic
+            best.e <- errortype[i]
+            best.t <- trendtype[j]
+            best.s <- seasontype[k]
+            best.d <- damped[l]
           }
         }
       }
@@ -445,7 +532,16 @@ ets <- function(y, model="ZZZ", damped=NULL,
   }
 
   model$m <- m
-  model$method <- paste("ETS(", best.e, ",", best.t, ifelse(best.d, "d", ""), ",", best.s, ")", sep = "")
+  model$method <- paste0(
+    "ETS(",
+    best.e,
+    ",",
+    best.t,
+    if (best.d) "d" else "",
+    ",",
+    best.s,
+    ")"
+  )
   model$series <- seriesname
   model$components <- c(best.e, best.t, best.s, best.d)
   model$call <- match.call()
@@ -455,24 +551,25 @@ ets <- function(y, model="ZZZ", damped=NULL,
   model$x <- orig.y
   if (!is.null(lambda)) {
     model$fitted <- InvBoxCox(model$fitted, lambda, biasadj, model$sigma2)
-    attr(lambda, "biasadj") <- biasadj
   }
 
   model$lambda <- lambda
   # model$call$data <- dataname
 
-  return(structure(model, class = "ets"))
+  structure(model, class = c("fc_model", "ets"))
 }
 
 #' @export
 as.character.ets <- function(x, ...) {
-  paste(
+  paste0(
     "ETS(",
-    x$components[1], ",",
+    x$components[1],
+    ",",
     x$components[2],
-    ifelse(x$components[4], "d", ""), ",",
-    x$components[3], ")",
-    sep = ""
+    if (x$components[4]) "d" else "",
+    ",",
+    x$components[3],
+    ")"
   )
 }
 
@@ -512,9 +609,26 @@ as.character.ets <- function(x, ...) {
 #   list(lower=myLower, upper=myUpper)
 # }
 
-etsmodel <- function(y, errortype, trendtype, seasontype, damped,
-                     alpha=NULL, beta=NULL, gamma=NULL, phi=NULL,
-                     lower, upper, opt.crit, nmse, bounds, maxit=2000, control=NULL, seed=NULL, trace=FALSE) {
+etsmodel <- function(
+  y,
+  errortype,
+  trendtype,
+  seasontype,
+  damped,
+  alpha = NULL,
+  beta = NULL,
+  gamma = NULL,
+  phi = NULL,
+  lower,
+  upper,
+  opt.crit,
+  nmse,
+  bounds,
+  maxit = 2000,
+  control = NULL,
+  seed = NULL,
+  trace = FALSE
+) {
   tsp.y <- tsp(y)
   if (is.null(tsp.y)) {
     tsp.y <- c(1, length(y), 1)
@@ -538,7 +652,19 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   }
 
   # Initialize smoothing parameters
-  par <- initparam(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m, bounds)
+  par <- initparam(
+    alpha,
+    beta,
+    gamma,
+    phi,
+    trendtype,
+    seasontype,
+    damped,
+    lower,
+    upper,
+    m,
+    bounds
+  )
   names(alpha) <- names(beta) <- names(gamma) <- names(phi) <- NULL
   par.noopt <- c(alpha = alpha, beta = beta, gamma = gamma, phi = phi)
   if (!is.null(par.noopt)) {
@@ -560,7 +686,17 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   #    if(errortype=="M" | trendtype=="M" | seasontype=="M")
   #        bounds="usual"
   if (!check.param(alpha, beta, gamma, phi, lower, upper, bounds, m)) {
-    print(paste("Model: ETS(", errortype, ",", trendtype, ifelse(damped, "d", ""), ",", seasontype, ")", sep = ""))
+    cat(
+      "Model: ETS(",
+      errortype,
+      ",",
+      trendtype,
+      if (damped) "d" else "",
+      ",",
+      seasontype,
+      ")",
+      sep = ""
+    )
     stop("Parameters out of range")
   }
 
@@ -572,122 +708,62 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   upper <- c(upper, rep(Inf, nstate))
 
   np <- length(par)
-  if (np >= length(y) - 1) { # Not enough data to continue
-    return(list(aic = Inf, bic = Inf, aicc = Inf, mse = Inf, amse = Inf, fit = NULL, par = par, states = init.state))
+  if (np >= length(y) - 1) {
+    # Not enough data to continue
+    return(list(
+      aic = Inf,
+      bic = Inf,
+      aicc = Inf,
+      mse = Inf,
+      amse = Inf,
+      fit = NULL,
+      par = par,
+      states = init.state
+    ))
   }
 
-  # -------------------------------------------------
-
-  #  if(is.null(seed)) seed <- 1000*runif(1)
-
-  # if(solver=="malschains" || solver=="malschains_c") {
-
-  #   malschains <- NULL
-  #   if(!myRequire("Rmalschains"))
-  #     stop("malschains optimizer unavailable")
-
-  #   func <- NULL
-  #   #env <- NULL
-
-  #   if(solver=="malschains") {
-
-  #     func <- function(myPar) {
-  #       names(myPar) <- names(par)
-  #       res <- lik(myPar,y=y,nstate=nstate, errortype=errortype, trendtype=trendtype,
-  #           seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
-  #           opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt))
-  #       res
-  #     }
-
-  #     env <- new.env()
-
-  #   } else {
-
-  #     env <- etsTargetFunctionInit(par=par, y=y, nstate=nstate, errortype=errortype, trendtype=trendtype,
-  #         seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
-  #         opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt))
-
-  #     func <- .Call("etsGetTargetFunctionRmalschainsPtr", PACKAGE="forecast")
-
-  #   }
-
-  #   myBounds <- getNewBounds(par, lower, upper, nstate)
-
-  #   if(is.null(control)) {
-  #     control <- Rmalschains::malschains.control(ls="simplex", lsOnly=TRUE)
-  #   }
-
-  #   control$optimum <- if(opt.crit=="lik") -1e12 else 0
-
-  #   fredTmp <- Rmalschains::malschains(func, env=env, lower=myBounds$lower, upper=myBounds$upper,
-  #       maxEvals=maxit, seed=seed, initialpop=par, control=control)
-
-  #   fred <- NULL
-  #   fred$par <- fredTmp$sol
-
-  #   fit.par <- fred$par
-
-  #   names(fit.par) <- names(par)
-
-  #  } else if (solver=="Rdonlp2") {
-  #
-  #    donlp2 <- NULL
-  #    myRequire("Rdonlp2")
-  #
-  #    env <- etsTargetFunctionInit(par=par, y=y, nstate=nstate, errortype=errortype, trendtype=trendtype,
-  #        seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
-  #        opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt))
-  #
-  #    func <- .Call("etsGetTargetFunctionRdonlp2Ptr", PACKAGE="forecast")
-  #
-  #    myBounds <- getNewBounds(par, lower, upper, nstate)
-  #
-  #    fred <- donlp2(par, func, env=env, par.lower=myBounds$lower, par.upper=myBounds$upper)#, nlin.lower=c(-1), nlin.upper=c(1)) #nlin.lower=c(0,-Inf, -Inf, -Inf), nlin.upper=c(0,0,0,0))
-  #
-  #    fit.par <- fred$par
-  #
-  #    names(fit.par) <- names(par)
-
-  #  } else if(solver=="optim_c"){
-
   env <- etsTargetFunctionInit(
-    par = par, y = y, nstate = nstate, errortype = errortype, trendtype = trendtype,
-    seasontype = seasontype, damped = damped, par.noopt = par.noopt, lowerb = lower, upperb = upper,
-    opt.crit = opt.crit, nmse = as.integer(nmse), bounds = bounds, m = m, pnames = names(par), pnames2 = names(par.noopt)
+    par = par,
+    y = y,
+    nstate = nstate,
+    errortype = errortype,
+    trendtype = trendtype,
+    seasontype = seasontype,
+    damped = damped,
+    par.noopt = par.noopt,
+    lowerb = lower,
+    upperb = upper,
+    opt.crit = opt.crit,
+    nmse = as.integer(nmse),
+    bounds = bounds,
+    m = m,
+    pnames = names(par),
+    pnames2 = names(par.noopt)
   )
 
   fred <- .Call(
-    "etsNelderMead", par, env, -Inf,
-    sqrt(.Machine$double.eps), 1.0, 0.5, 2.0, trace, maxit, PACKAGE = "forecast"
+    "etsNelderMead",
+    par,
+    env,
+    -Inf,
+    sqrt(.Machine$double.eps),
+    1.0,
+    0.5,
+    2.0,
+    trace,
+    maxit,
+    PACKAGE = "forecast"
   )
-
   fit.par <- fred$par
-
   names(fit.par) <- names(par)
-
-  # } else { #if(solver=="optim")
-
-  #   # Optimize parameters and state
-  #   if(length(par)==1)
-  #     method <- "Brent"
-  #   else
-  #   	method <- "Nelder-Mead"
-
-  #   fred <- optim(par,lik,method=method,y=y,nstate=nstate, errortype=errortype, trendtype=trendtype,
-  #       seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
-  #       opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt),
-  #       control=list(maxit=maxit))
-
-  #   fit.par <- fred$par
-  #   names(fit.par) <- names(par)
-  # }
-
-  # -------------------------------------------------
-
   init.state <- fit.par[(np - nstate + 1):np]
-  # Add extra state
+
+    # Add extra state
   if (seasontype != "N") {
-    init.state <- c(init.state, m * (seasontype == "M") - sum(init.state[(2 + (trendtype != "N")):nstate]))
+    init.state <- c(
+      init.state,
+      m * (seasontype == "M") - sum(init.state[(2 + (trendtype != "N")):nstate])
+    )
   }
 
   if (!is.na(fit.par["alpha"])) {
@@ -703,7 +779,20 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     phi <- fit.par["phi"]
   }
 
-  e <- pegelsresid.C(y, m, init.state, errortype, trendtype, seasontype, damped, alpha, beta, gamma, phi, nmse)
+  e <- pegelsresid.C(
+    y,
+    m,
+    init.state,
+    errortype,
+    trendtype,
+    seasontype,
+    damped,
+    alpha,
+    beta,
+    gamma,
+    phi,
+    nmse
+  )
 
   np <- np + 1
   ny <- length(y)
@@ -720,26 +809,42 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     colnames(states)[2] <- "b"
   }
   if (seasontype != "N") {
-    colnames(states)[(2 + (trendtype != "N")):ncol(states)] <- paste("s", 1:m, sep = "")
+    colnames(states)[(2 + (trendtype != "N")):ncol(states)] <- paste0("s", 1:m)
   }
 
-  tmp <- c("alpha", rep("beta", trendtype != "N"), rep("gamma", seasontype != "N"), rep("phi", damped))
-  fit.par <- c(fit.par, par.noopt)
-  #    fit.par <- fit.par[order(names(fit.par))]
-  if (errortype == "A") {
-    fits <- y - e$e
-  } else {
-    fits <- y / (1 + e$e)
-  }
-
-  return(list(
-    loglik = -0.5 * e$lik, aic = aic, bic = bic, aicc = aicc, mse = mse, amse = amse, fit = fred, residuals = ts(e$e, frequency = tsp.y[3], start = tsp.y[1]), fitted = ts(fits, frequency = tsp.y[3], start = tsp.y[1]),
-    states = states, par = fit.par
-  ))
+  list(
+    loglik = -0.5 * e$lik,
+    aic = aic,
+    bic = bic,
+    aicc = aicc,
+    mse = mse,
+    amse = amse,
+    fit = fred,
+    residuals = ts(e$e, frequency = tsp.y[3], start = tsp.y[1]),
+    fitted = ts(e$fits, frequency = tsp.y[3], start = tsp.y[1]),
+    states = states,
+    par = c(fit.par, par.noopt)
+  )
 }
 
-etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.noopt, lowerb, upperb,
-                                  opt.crit, nmse, bounds, m, pnames, pnames2) {
+etsTargetFunctionInit <- function(
+  par,
+  y,
+  nstate,
+  errortype,
+  trendtype,
+  seasontype,
+  damped,
+  par.noopt,
+  lowerb,
+  upperb,
+  opt.crit,
+  nmse,
+  bounds,
+  m,
+  pnames,
+  pnames2
+) {
   names(par) <- pnames
   names(par.noopt) <- pnames2
   alpha <- c(par["alpha"], par.noopt["alpha"])["alpha"]
@@ -751,8 +856,7 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
     if (is.na(beta)) {
       stop("beta Problem!")
     }
-  }
-  else {
+  } else {
     beta <- NULL
   }
   if (seasontype != "N") {
@@ -760,8 +864,7 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
     if (is.na(gamma)) {
       stop("gamma Problem!")
     }
-  }
-  else {
+  } else {
     m <- 1
     gamma <- NULL
   }
@@ -770,8 +873,7 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
     if (is.na(phi)) {
       stop("phi Problem!")
     }
-  }
-  else {
+  } else {
     phi <- NULL
   }
 
@@ -786,29 +888,21 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
   givenGamma <- FALSE
   givenPhi <- FALSE
 
-  if (!is.null(par.noopt["alpha"])) {
-    if (!is.na(par.noopt["alpha"])) {
-      optAlpha <- FALSE
-      givenAlpha <- TRUE
-    }
+  if (!is.null(par.noopt["alpha"]) && !is.na(par.noopt["alpha"])) {
+    optAlpha <- FALSE
+    givenAlpha <- TRUE
   }
-  if (!is.null(par.noopt["beta"])) {
-    if (!is.na(par.noopt["beta"])) {
-      optBeta <- FALSE
-      givenBeta <- TRUE
-    }
+  if (!is.null(par.noopt["beta"]) && !is.na(par.noopt["beta"])) {
+    optBeta <- FALSE
+    givenBeta <- TRUE
   }
-  if (!is.null(par.noopt["gamma"])) {
-    if (!is.na(par.noopt["gamma"])) {
-      optGamma <- FALSE
-      givenGamma <- TRUE
-    }
+  if (!is.null(par.noopt["gamma"]) && !is.na(par.noopt["gamma"])) {
+    optGamma <- FALSE
+    givenGamma <- TRUE
   }
-  if (!is.null(par.noopt["phi"])) {
-    if (!is.na(par.noopt["phi"])) {
-      optPhi <- FALSE
-      givenPhi <- TRUE
-    }
+  if (!is.null(par.noopt["phi"]) && !is.na(par.noopt["phi"])) {
+    optPhi <- FALSE
+    givenPhi <- TRUE
   }
 
   if (!damped) {
@@ -834,21 +928,53 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
   env <- new.env()
 
   res <- .Call(
-    "etsTargetFunctionInit", y = y, nstate = nstate, errortype = switch(errortype, "A" = 1, "M" = 2),
-    trendtype = switch(trendtype, "N" = 0, "A" = 1, "M" = 2), seasontype = switch(seasontype, "N" = 0, "A" = 1, "M" = 2),
-    damped = damped, lowerb = lowerb, upperb = upperb,
-    opt.crit = opt.crit, nmse = as.integer(nmse), bounds = bounds, m = m,
-    optAlpha, optBeta, optGamma, optPhi,
-    givenAlpha, givenBeta, givenGamma, givenPhi,
-    alpha, beta, gamma, phi, env, PACKAGE = "forecast"
+    "etsTargetFunctionInit",
+    y = y,
+    nstate = nstate,
+    errortype = switch(errortype, "A" = 1, "M" = 2),
+    trendtype = switch(trendtype, "N" = 0, "A" = 1, "M" = 2),
+    seasontype = switch(seasontype, "N" = 0, "A" = 1, "M" = 2),
+    damped = damped,
+    lowerb = lowerb,
+    upperb = upperb,
+    opt.crit = opt.crit,
+    nmse = as.integer(nmse),
+    bounds = bounds,
+    m = m,
+    optAlpha,
+    optBeta,
+    optGamma,
+    optPhi,
+    givenAlpha,
+    givenBeta,
+    givenGamma,
+    givenPhi,
+    alpha,
+    beta,
+    gamma,
+    phi,
+    env,
+    PACKAGE = "forecast"
   )
   res
 }
 
-initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m, bounds) {
-  if(bounds == "admissible") {
-    lower[1L:3L] <- lower[1L:3L]*0
-    upper[1L:3L] <- upper[1L:3L]*0 + 1e-3
+initparam <- function(
+  alpha,
+  beta,
+  gamma,
+  phi,
+  trendtype,
+  seasontype,
+  damped,
+  lower,
+  upper,
+  m,
+  bounds
+) {
+  if (bounds == "admissible") {
+    lower[1L:3L] <- lower[1L:3L] * 0
+    upper[1L:3L] <- upper[1L:3L] * 0 + 1e-3
   } else if (any(lower > upper)) {
     stop("Inconsistent parameter boundaries")
   }
@@ -860,8 +986,7 @@ initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lo
       alpha <- lower[1] + 2e-3
     }
     par <- c(alpha = alpha)
-  }
-  else {
+  } else {
     par <- numeric(0)
   }
 
@@ -896,7 +1021,7 @@ initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lo
     par <- c(par, phi = phi)
   }
 
-  return(par)
+  par
 }
 
 check.param <- function(alpha, beta, gamma, phi, lower, upper, bounds, m) {
@@ -927,7 +1052,7 @@ check.param <- function(alpha, beta, gamma, phi, lower, upper, bounds, m) {
       return(0)
     }
   }
-  return(1)
+  1
 }
 
 initstate <- function(y, trendtype, seasontype) {
@@ -935,24 +1060,33 @@ initstate <- function(y, trendtype, seasontype) {
     # Do decomposition
     m <- frequency(y)
     n <- length(y)
+    y <- na.interp(y)
     if (n < 4) {
       stop("You've got to be joking (not enough data).")
-    } else if (n < 3 * m) # Fit simple Fourier model.
-    {
+    } else if (n < 3 * m) {
+      # Fit simple Fourier model
       fouriery <- fourier(y, 1)
       fit <- tslm(y ~ trend + fouriery)
       if (seasontype == "A") {
-        y.d <- list(seasonal = y - fit$coefficients[1] - fit$coefficients[2] * (1:n))
-      } else { # seasontype=="M". Biased method, but we only need a starting point
-        y.d <- list(seasonal = y / (fit$coefficients[1] + fit$coefficients[2] * (1:n)))
+        y.d <- list(
+          seasonal = y - fit$coefficients[1] - fit$coefficients[2] * (1:n)
+        )
+      } else {
+        # seasontype=="M". Biased method, but we only need a starting point
+        y.d <- list(
+          seasonal = y / (fit$coefficients[1] + fit$coefficients[2] * (1:n))
+        )
       }
-    }
-    else { # n is large enough to do a decomposition
-      y.d <- decompose(y, type = switch(seasontype, A = "additive", M = "multiplicative"))
+    } else {
+      # n is large enough to do a decomposition
+      y.d <- decompose(
+        y,
+        type = switch(seasontype, A = "additive", M = "multiplicative")
+      )
     }
 
     init.seas <- rev(y.d$seasonal[2:m]) # initial seasonal component
-    names(init.seas) <- paste("s", 0:(m - 2), sep = "")
+    names(init.seas) <- paste0("s", 0:(m - 2))
     # Seasonally adjusted data
     if (seasontype == "A") {
       y.sa <- y - y.d$seasonal
@@ -963,23 +1097,20 @@ initstate <- function(y, trendtype, seasontype) {
       }
       y.sa <- y / pmax(y.d$seasonal, 1e-2)
     }
-  }
-  else # non-seasonal model
-  {
+  } else {
+    # non-seasonal model
     m <- 1
     init.seas <- NULL
     y.sa <- y
   }
 
-  maxn <- min(max(10, 2 * m), length(y.sa))
-
+  maxn <- min(max(10, 2*m), length(y.sa))
   if (trendtype == "N") {
-    l0 <- mean(y.sa[1:maxn])
+    l0 <- mean(head(y.sa, maxn))
     b0 <- NULL
-  }
-  else # Simple linear regression on seasonally adjusted data
-  {
-    fit <- lsfit(1:maxn, y.sa[1:maxn])
+  } else {
+    # Simple linear regression on seasonally adjusted data
+    fit <- lsfit(seq(maxn), head(y.sa, maxn))
     if (trendtype == "A") {
       l0 <- fit$coefficients[1]
       b0 <- fit$coefficients[2]
@@ -989,20 +1120,20 @@ initstate <- function(y, trendtype, seasontype) {
         l0 <- l0 * (1 + 1e-3)
         b0 <- b0 * (1 - 1e-3)
       }
-    }
-    else # if(trendtype=="M")
-    {
+    } else {
+      # if(trendtype=="M")
       l0 <- fit$coefficients[1] + fit$coefficients[2] # First fitted value
       if (abs(l0) < 1e-8) {
         l0 <- 1e-7
       }
       b0 <- (fit$coefficients[1] + 2 * fit$coefficients[2]) / l0 # Ratio of first two fitted values
       l0 <- l0 / b0 # First fitted value divided by b0
-      if (abs(b0) > 1e10) { # Avoid infinite slopes
+      if (abs(b0) > 1e10) {
+        # Avoid infinite slopes
         b0 <- sign(b0) * 1e10
       }
-      if (l0 < 1e-8 || b0 < 1e-8) # Simple linear approximation didn't work.
-      {
+      if (l0 < 1e-8 || b0 < 1e-8) {
+        # Simple linear approximation didn't work.
         l0 <- max(y.sa[1], 1e-3)
         b0 <- max(y.sa[2] / y.sa[1], 1e-3)
       }
@@ -1013,16 +1144,27 @@ initstate <- function(y, trendtype, seasontype) {
   if (!is.null(b0)) {
     names(b0) <- "b"
   }
-  return(c(l0, b0, init.seas))
+  c(l0, b0, init.seas)
 }
 
-lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.noopt, lowerb, upperb,
-                opt.crit, nmse, bounds, m, pnames, pnames2) {
-
-  # browser()
-
-  # cat("par: ", par, "\n")
-
+lik <- function(
+  par,
+  y,
+  nstate,
+  errortype,
+  trendtype,
+  seasontype,
+  damped,
+  par.noopt,
+  lowerb,
+  upperb,
+  opt.crit,
+  nmse,
+  bounds,
+  m,
+  pnames,
+  pnames2
+) {
   names(par) <- pnames
   names(par.noopt) <- pnames2
   alpha <- c(par["alpha"], par.noopt["alpha"])["alpha"]
@@ -1034,8 +1176,7 @@ lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.no
     if (is.na(beta)) {
       stop("beta Problem!")
     }
-  }
-  else {
+  } else {
     beta <- NULL
   }
   if (seasontype != "N") {
@@ -1043,8 +1184,7 @@ lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.no
     if (is.na(gamma)) {
       stop("gamma Problem!")
     }
-  }
-  else {
+  } else {
     m <- 1
     gamma <- NULL
   }
@@ -1053,8 +1193,7 @@ lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.no
     if (is.na(phi)) {
       stop("phi Problem!")
     }
-  }
-  else {
+  } else {
     phi <- NULL
   }
 
@@ -1067,7 +1206,10 @@ lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.no
   init.state <- par[(np - nstate + 1):np]
   # Add extra state
   if (seasontype != "N") {
-    init.state <- c(init.state, m * (seasontype == "M") - sum(init.state[(2 + (trendtype != "N")):nstate]))
+    init.state <- c(
+      init.state,
+      m * (seasontype == "M") - sum(init.state[(2 + (trendtype != "N")):nstate])
+    )
   }
   # Check states
   if (seasontype == "M") {
@@ -1077,35 +1219,46 @@ lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.no
     }
   }
 
-  e <- pegelsresid.C(y, m, init.state, errortype, trendtype, seasontype, damped, alpha, beta, gamma, phi, nmse)
+  e <- pegelsresid.C(
+    y,
+    m,
+    init.state,
+    errortype,
+    trendtype,
+    seasontype,
+    damped,
+    alpha,
+    beta,
+    gamma,
+    phi,
+    nmse
+  )
 
   if (is.na(e$lik)) {
     return(Inf)
   }
-  if (e$lik < -1e10) { # Avoid perfect fits
+  if (e$lik < -1e10) {
+    # Avoid perfect fits
     return(-1e10)
   }
 
   #      cat("lik: ", e$lik, "\n")
   #    points(alpha,e$lik,col=2)
 
-  if (opt.crit == "lik") {
-    return(e$lik)
-  } else if (opt.crit == "mse") {
-    return(e$amse[1])
-  } else if (opt.crit == "amse") {
-    return(mean(e$amse))
-  } else if (opt.crit == "sigma") {
-    return(mean(e$e ^ 2))
-  } else if (opt.crit == "mae") {
-    return(mean(abs(e$e)))
-  }
+  switch(
+    opt.crit,
+    lik = e$lik,
+    mse = e$amse[1],
+    amse = mean(e$amse),
+    sigma = mean(e$e^2),
+    mae = mean(abs(e$e))
+  )
 }
 
 #' @export
 print.ets <- function(x, ...) {
   cat(paste(x$method, "\n\n"))
-  if(!is.null(x$call)) {
+  if (!is.null(x$call)) {
     cat("Call:", deparse(x$call), "", sep = "\n")
   }
   ncoef <- length(x$initstate)
@@ -1161,12 +1314,25 @@ print.ets <- function(x, ...) {
   #    cat(round(x$bic,4))
 }
 
-pegelsresid.C <- function(y, m, init.state, errortype, trendtype, seasontype, damped, alpha, beta, gamma, phi, nmse) {
+pegelsresid.C <- function(
+  y,
+  m,
+  init.state,
+  errortype,
+  trendtype,
+  seasontype,
+  damped,
+  alpha,
+  beta,
+  gamma,
+  phi,
+  nmse
+) {
   n <- length(y)
   p <- length(init.state)
   x <- numeric(p * (n + 1))
   x[1:p] <- init.state
-  e <- numeric(n)
+  e <- fits <- numeric(n)
   lik <- 0
   if (!damped) {
     phi <- 1
@@ -1179,7 +1345,6 @@ pegelsresid.C <- function(y, m, init.state, errortype, trendtype, seasontype, da
   }
 
   amse <- numeric(nmse)
-
   Cout <- .C(
     "etscalc",
     as.double(y),
@@ -1194,21 +1359,24 @@ pegelsresid.C <- function(y, m, init.state, errortype, trendtype, seasontype, da
     as.double(gamma),
     as.double(phi),
     as.double(e),
+    as.double(fits),
     as.double(lik),
     as.double(amse),
     as.integer(nmse),
+    NAOK = TRUE,
     PACKAGE = "forecast"
   )
-  if (!is.na(Cout[[13]])) {
-    if (abs(Cout[[13]] + 99999) < 1e-7) {
-      Cout[[13]] <- NA
-    }
-  }
   tsp.y <- tsp(y)
   e <- ts(Cout[[12]])
   tsp(e) <- tsp.y
 
-  return(list(lik = Cout[[13]], amse = Cout[[14]], e = e, states = matrix(Cout[[3]], nrow = n + 1, ncol = p, byrow = TRUE)))
+  list(
+    lik = Cout[[14]],
+    amse = Cout[[15]],
+    e = e,
+    fits = Cout[[13]],
+    states = matrix(Cout[[3]], nrow = n + 1, ncol = p, byrow = TRUE)
+  )
 }
 
 admissible <- function(alpha, beta, gamma, phi, m) {
@@ -1227,9 +1395,8 @@ admissible <- function(alpha, beta, gamma, phi, m) {
         return(0)
       }
     }
-  }
-  else if (m > 1) # Seasonal model
-  {
+  } else if (m > 1) {
+    # Seasonal model
     if (is.null(beta)) {
       beta <- 0
     }
@@ -1244,7 +1411,13 @@ admissible <- function(alpha, beta, gamma, phi, m) {
     }
 
     # End of easy tests. Now use characteristic equation
-    P <- c(phi * (1 - alpha - gamma), alpha + beta - alpha * phi + gamma - 1, rep(alpha + beta - alpha * phi, m - 2), (alpha + beta - phi), 1)
+    P <- c(
+      phi * (1 - alpha - gamma),
+      alpha + beta - alpha * phi + gamma - 1,
+      rep(alpha + beta - alpha * phi, m - 2),
+      (alpha + beta - phi),
+      1
+    )
     roots <- polyroot(P)
 
     # cat("maxpolyroots: ", max(abs(roots)), "\n")
@@ -1254,7 +1427,7 @@ admissible <- function(alpha, beta, gamma, phi, m) {
     }
   }
   # Passed all tests
-  return(1)
+  1
 }
 
 ### PLOT COMPONENTS
@@ -1264,24 +1437,24 @@ admissible <- function(alpha, beta, gamma, phi, m) {
 #' Produces a plot of the level, slope and seasonal components from an ETS
 #' model.
 #'
-#' \code{autoplot} will produce an equivalent plot as a ggplot object.
+#' `autoplot` will produce an equivalent plot as a ggplot object.
 #'
 #' @param x Object of class \dQuote{ets}.
 #' @param object Object of class \dQuote{ets}. Used for ggplot graphics (S3
 #' method consistency).
 #' @param range.bars Logical indicating if each plot should have a bar at its
-#' right side representing relative size. If NULL, automatic selection takes
-#' place.
+#' right side representing relative size. If `NULL`, automatic selection
+#' takes place.
 #' @param ... Other plotting parameters to affect the plot.
 #' @return None. Function produces a plot
 #' @author Rob J Hyndman & Mitchell O'Hara-Wild
-#' @seealso \code{\link{ets}}
+#' @seealso [ets()]
 #' @keywords hplot
 #' @examples
 #'
 #' fit <- ets(USAccDeaths)
 #' plot(fit)
-#' plot(fit,plot.type="single",ylab="",col=1:3)
+#' plot(fit, plot.type = "single", ylab = "", col = 1:3)
 #'
 #' library(ggplot2)
 #' autoplot(fit)
@@ -1296,28 +1469,31 @@ plot.ets <- function(x, ...) {
   if (x$components[3] == "N" && x$components[2] == "N") {
     plot(
       cbind(observed = y, level = x$states[, 1]),
-      main = paste("Decomposition by", x$method, "method"), ...
+      main = paste("Decomposition by", x$method, "method"),
+      ...
     )
-  }
-  else if (x$components[3] == "N") {
+  } else if (x$components[3] == "N") {
     plot(
       cbind(observed = y, level = x$states[, 1], slope = x$states[, "b"]),
-      main = paste("Decomposition by", x$method, "method"), ...
+      main = paste("Decomposition by", x$method, "method"),
+      ...
     )
-  }
-  else if (x$components[2] == "N") {
+  } else if (x$components[2] == "N") {
     plot(
       cbind(observed = y, level = x$states[, 1], season = x$states[, "s1"]),
-      main = paste("Decomposition by", x$method, "method"), ...
+      main = paste("Decomposition by", x$method, "method"),
+      ...
     )
-  }
-  else {
+  } else {
     plot(
       cbind(
-        observed = y, level = x$states[, 1], slope = x$states[, "b"],
+        observed = y,
+        level = x$states[, 1],
+        slope = x$states[, "b"],
         season = x$states[, "s1"]
       ),
-      main = paste("Decomposition by", x$method, "method"), ...
+      main = paste("Decomposition by", x$method, "method"),
+      ...
     )
   }
 }
@@ -1342,27 +1518,26 @@ coef.ets <- function(object, ...) {
 
 #' @rdname fitted.Arima
 #' @export
-fitted.ets <- function(object, h=1, ...) {
+fitted.ets <- function(object, h = 1, ...) {
   if (h == 1) {
-    return(object$fitted)
-  }
-  else {
-    return(hfitted(object = object, h = h, FUN = "ets", ...))
+    object$fitted
+  } else {
+    hfitted(object = object, h = h, FUN = "ets", ...)
   }
 }
 
 #' @export
-hfitted.ets <- function(object, h=1, ...) {
+hfitted.ets <- function(object, h = 1, ...) {
   n <- length(object$x)
   out <- rep(NA_real_, n)
-  for(i in seq_len(n-h+1)) {
-    out[i+h-1] <- .C(
+  for (i in seq_len(n - h + 1)) {
+    out[i + h - 1] <- .C(
       "etsforecast",
       as.double(object$states[i, ]),
       as.integer(object$m),
-      as.integer(switch(object$components[2], "N" = 0, "A" = 1, "M" = 2)),
-      as.integer(switch(object$components[3], "N" = 0, "A" = 1, "M" = 2)),
-      as.double(ifelse(object$components[4] == "FALSE", 1, object$par["phi"])),
+      as.integer(switch(object$components[2], N = 0, A = 1, M = 2)),
+      as.integer(switch(object$components[3], N = 0, A = 1, M = 2)),
+      as.double(if (object$components[4] == "FALSE") 1 else object$par["phi"]),
       as.integer(h),
       as.double(numeric(h)),
       PACKAGE = "forecast"

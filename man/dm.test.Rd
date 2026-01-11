@@ -18,19 +18,19 @@ dm.test(
 
 \item{e2}{Forecast errors from method 2.}
 
-\item{alternative}{a character string specifying the alternative hypothesis,
+\item{alternative}{A character string specifying the alternative hypothesis,
 must be one of \code{"two.sided"} (default), \code{"greater"} or
-\code{"less"}.  You can specify just the initial letter.}
+\code{"less"}. You can specify just the initial letter.}
 
 \item{h}{The forecast horizon used in calculating \code{e1} and \code{e2}.}
 
 \item{power}{The power used in the loss function. Usually 1 or 2.}
 
-\item{varestimator}{a character string specifying the long-run variance estimator.
+\item{varestimator}{A character string specifying the long-run variance estimator.
 Options are \code{"acf"} (default) or \code{"bartlett"}.}
 }
 \value{
-A list with class \code{"htest"} containing the following
+A list with class \code{htest} containing the following
 components:
 \item{statistic}{the value of the DM-statistic.}
 \item{parameter}{the forecast horizon and loss function power used in the test.}
@@ -47,10 +47,10 @@ methods.
 \details{
 This function implements the modified test proposed by Harvey, Leybourne and
 Newbold (1997). The null hypothesis is that the two methods have the same
-forecast accuracy. For \code{alternative="less"}, the alternative hypothesis
+forecast accuracy. For \code{alternative = "less"}, the alternative hypothesis
 is that method 2 is less accurate than method 1. For
-\code{alternative="greater"}, the alternative hypothesis is that method 2 is
-more accurate than method 1. For \code{alternative="two.sided"}, the
+\code{alternative = "greater"}, the alternative hypothesis is that method 2 is
+more accurate than method 1. For \code{alternative = "two.sided"}, the
 alternative hypothesis is that method 1 and method 2 have different levels
 of accuracy. The long-run variance estimator can either the
 auto-correlation estimator \code{varestimator = "acf"}, or the estimator based

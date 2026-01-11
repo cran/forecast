@@ -24,8 +24,14 @@ unParameteriseTBATS <- function(param.vector, control) {
       gamma.start <- 3
     }
     if (control$length.gamma > 0) {
-      gamma.one.vector <- param.vector[gamma.start:(gamma.start + (control$length.gamma / 2) - 1)]
-      gamma.two.vector <- param.vector[(gamma.start + (control$length.gamma / 2)):(gamma.start + (control$length.gamma) - 1)]
+      gamma.one.vector <- param.vector[
+        gamma.start:(gamma.start + (control$length.gamma / 2) - 1)
+      ]
+      gamma.two.vector <- param.vector[
+        (gamma.start + (control$length.gamma / 2)):(gamma.start +
+          (control$length.gamma) -
+          1)
+      ]
       final.gamma.pos <- gamma.start + control$length.gamma - 1
     } else {
       gamma.one.vector <- NULL
@@ -33,12 +39,16 @@ unParameteriseTBATS <- function(param.vector, control) {
       final.gamma.pos <- gamma.start - 1
     }
     if (control$p != 0) {
-      ar.coefs <- param.vector[(final.gamma.pos + 1):(final.gamma.pos + control$p)]
+      ar.coefs <- param.vector[
+        (final.gamma.pos + 1):(final.gamma.pos + control$p)
+      ]
     } else {
       ar.coefs <- NULL
     }
     if (control$q != 0) {
-      ma.coefs <- param.vector[(final.gamma.pos + control$p + 1):length(param.vector)]
+      ma.coefs <- param.vector[
+        (final.gamma.pos + control$p + 1):length(param.vector)
+      ]
     } else {
       ma.coefs <- NULL
     }
@@ -61,8 +71,14 @@ unParameteriseTBATS <- function(param.vector, control) {
       gamma.start <- 2
     }
     if (control$length.gamma > 0) {
-      gamma.one.vector <- param.vector[gamma.start:(gamma.start + (control$length.gamma / 2) - 1)]
-      gamma.two.vector <- param.vector[(gamma.start + (control$length.gamma / 2)):(gamma.start + (control$length.gamma) - 1)]
+      gamma.one.vector <- param.vector[
+        gamma.start:(gamma.start + (control$length.gamma / 2) - 1)
+      ]
+      gamma.two.vector <- param.vector[
+        (gamma.start + (control$length.gamma / 2)):(gamma.start +
+          (control$length.gamma) -
+          1)
+      ]
       final.gamma.pos <- gamma.start + control$length.gamma - 1
     } else {
       gamma.one.vector <- NULL
@@ -70,21 +86,33 @@ unParameteriseTBATS <- function(param.vector, control) {
       final.gamma.pos <- gamma.start - 1
     }
     if (control$p != 0) {
-      ar.coefs <- param.vector[(final.gamma.pos + 1):(final.gamma.pos + control$p)]
+      ar.coefs <- param.vector[
+        (final.gamma.pos + 1):(final.gamma.pos + control$p)
+      ]
     } else {
       ar.coefs <- NULL
     }
     if (control$q != 0) {
-      ma.coefs <- param.vector[(final.gamma.pos + control$p + 1):length(param.vector)]
+      ma.coefs <- param.vector[
+        (final.gamma.pos + control$p + 1):length(param.vector)
+      ]
     } else {
       ma.coefs <- NULL
     }
   }
-  return(list(lambda = lambda, alpha = alpha, beta = beta, small.phi = small.phi, gamma.one.v = gamma.one.vector, gamma.two.v = gamma.two.vector, ar.coefs = ar.coefs, ma.coefs = ma.coefs))
+  list(
+    lambda = lambda,
+    alpha = alpha,
+    beta = beta,
+    small.phi = small.phi,
+    gamma.one.v = gamma.one.vector,
+    gamma.two.v = gamma.two.vector,
+    ar.coefs = ar.coefs,
+    ma.coefs = ma.coefs
+  )
 }
 
 makeParscale <- function(control) {
-  # print(control)
   if (control$use.box.cox) {
     parscale <- c(.001, .01)
   } else {
@@ -101,17 +129,15 @@ makeParscale <- function(control) {
     parscale <- c(parscale, rep(1e-5, control$length.gamma))
   }
 
-  if ((control$p != 0) | (control$q != 0)) {
+  if ((control$p != 0) || (control$q != 0)) {
     parscale <- c(parscale, rep(1e-1, (control$p + control$q)))
   }
-  # print(parscale)
-  return(parscale)
+  parscale
 }
 ##############################################################################################################################################################################################
 ## BATS related stuff below
 ########################################
 makeParscaleBATS <- function(control) {
-  # print(control)
   if (control$use.box.cox) {
     parscale <- c(.001, .1)
   } else {
@@ -128,14 +154,21 @@ makeParscaleBATS <- function(control) {
     parscale <- c(parscale, rep(1e-2, control$length.gamma))
   }
 
-  if ((control$p != 0) | (control$q != 0)) {
+  if ((control$p != 0) || (control$q != 0)) {
     parscale <- c(parscale, rep(1e-1, (control$p + control$q)))
   }
-  # print(parscale)
-  return(parscale)
+  parscale
 }
 
-parameterise <- function(alpha, beta.v=NULL, small.phi=1, gamma.v=NULL, lambda=NULL, ar.coefs=NULL, ma.coefs=NULL) {
+parameterise <- function(
+  alpha,
+  beta.v = NULL,
+  small.phi = 1,
+  gamma.v = NULL,
+  lambda = NULL,
+  ar.coefs = NULL,
+  ma.coefs = NULL
+) {
   # print("urg")
   # print(lambda)
   if (!is.null(lambda)) {
@@ -184,8 +217,15 @@ parameterise <- function(alpha, beta.v=NULL, small.phi=1, gamma.v=NULL, lambda=N
     q <- 0
   }
   # print(use.box.cox)
-  control <- list(use.beta = use.beta, use.box.cox = use.box.cox, use.damping = use.damping, length.gamma = length.gamma, p = p, q = q)
-  return(list(vect = as.numeric(param.vector), control = control))
+  control <- list(
+    use.beta = use.beta,
+    use.box.cox = use.box.cox,
+    use.damping = use.damping,
+    length.gamma = length.gamma,
+    p = p,
+    q = q
+  )
+  list(vect = as.numeric(param.vector), control = control)
 }
 
 unParameterise <- function(param.vector, control) {
@@ -209,19 +249,25 @@ unParameterise <- function(param.vector, control) {
       gamma.start <- 3
     }
     if (control$length.gamma > 0) {
-      gamma.vector <- param.vector[gamma.start:(gamma.start + control$length.gamma - 1)]
+      gamma.vector <- param.vector[
+        gamma.start:(gamma.start + control$length.gamma - 1)
+      ]
       final.gamma.pos <- gamma.start + control$length.gamma - 1
     } else {
       gamma.vector <- NULL
       final.gamma.pos <- gamma.start - 1
     }
     if (control$p != 0) {
-      ar.coefs <- param.vector[(final.gamma.pos + 1):(final.gamma.pos + control$p)]
+      ar.coefs <- param.vector[
+        (final.gamma.pos + 1):(final.gamma.pos + control$p)
+      ]
     } else {
       ar.coefs <- NULL
     }
     if (control$q != 0) {
-      ma.coefs <- param.vector[(final.gamma.pos + control$p + 1):length(param.vector)]
+      ma.coefs <- param.vector[
+        (final.gamma.pos + control$p + 1):length(param.vector)
+      ]
     } else {
       ma.coefs <- NULL
     }
@@ -244,22 +290,36 @@ unParameterise <- function(param.vector, control) {
       gamma.start <- 2
     }
     if (control$length.gamma > 0) {
-      gamma.vector <- param.vector[gamma.start:(gamma.start + control$length.gamma - 1)]
+      gamma.vector <- param.vector[
+        gamma.start:(gamma.start + control$length.gamma - 1)
+      ]
       final.gamma.pos <- gamma.start + control$length.gamma - 1
     } else {
       gamma.vector <- NULL
       final.gamma.pos <- gamma.start - 1
     }
     if (control$p != 0) {
-      ar.coefs <- param.vector[(final.gamma.pos + 1):(final.gamma.pos + control$p)]
+      ar.coefs <- param.vector[
+        (final.gamma.pos + 1):(final.gamma.pos + control$p)
+      ]
     } else {
       ar.coefs <- NULL
     }
     if (control$q != 0) {
-      ma.coefs <- param.vector[(final.gamma.pos + control$p + 1):length(param.vector)]
+      ma.coefs <- param.vector[
+        (final.gamma.pos + control$p + 1):length(param.vector)
+      ]
     } else {
       ma.coefs <- NULL
     }
   }
-  return(list(lambda = lambda, alpha = alpha, beta = beta, small.phi = small.phi, gamma.v = gamma.vector, ar.coefs = ar.coefs, ma.coefs = ma.coefs))
+  list(
+    lambda = lambda,
+    alpha = alpha,
+    beta = beta,
+    small.phi = small.phi,
+    gamma.v = gamma.vector,
+    ar.coefs = ar.coefs,
+    ma.coefs = ma.coefs
+  )
 }

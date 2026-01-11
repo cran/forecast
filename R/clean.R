@@ -6,22 +6,21 @@
 # Adds seasonality based on a periodic stl decomposition with seasonal series
 # Argument lambda allows for Box-Cox transformation
 
-
 #' Interpolate missing values in a time series
 #'
 #' By default, uses linear interpolation for non-seasonal series. For seasonal series, a
 #' robust STL decomposition is first computed. Then a linear interpolation is applied to the
 #' seasonally adjusted data, and the seasonal component is added back.
 #'
-#' A more general and flexible approach is available using \code{na.approx} in
-#' the \code{zoo} package.
+#' A more general and flexible approach is available using `na.approx` in
+#' the \CRANpkg{zoo} package.
 #'
-#' @param x time series
+#' @param x Time series.
 #' @param linear Should a linear interpolation be used.
 #' @inheritParams forecast.ts
 #' @return Time series
 #' @author Rob J Hyndman
-#' @seealso \code{\link[forecast]{tsoutliers}}
+#' @seealso [tsoutliers()]
 #' @keywords ts
 #' @examples
 #'
@@ -29,8 +28,11 @@
 #' plot(na.interp(gold))
 #'
 #' @export
-na.interp <- function(x, lambda=NULL,
-                      linear=(frequency(x) <= 1 | sum(!is.na(x)) <= 2 * frequency(x))) {
+na.interp <- function(
+  x,
+  lambda = NULL,
+  linear = (frequency(x) <= 1 || sum(!is.na(x)) <= 2 * frequency(x))
+) {
   missng <- is.na(x)
   # Do nothing if no missing values
   if (sum(missng) == 0L) {
@@ -38,7 +40,7 @@ na.interp <- function(x, lambda=NULL,
   }
 
   origx <- x
-  rangex <- range(x, na.rm=TRUE)
+  rangex <- range(x, na.rm = TRUE)
   drangex <- rangex[2L] - rangex[1L]
 
   # Convert to ts
@@ -68,17 +70,20 @@ na.interp <- function(x, lambda=NULL,
   if (linear) {
     # Use linear interpolation
     x <- ts(approx(idx, x[idx], tt, rule = 2)$y)
-  }  else {
+  } else {
     # Otherwise estimate seasonal component robustly
     # Then add to linear interpolation of seasonally adjusted series
     # Fit Fourier series for seasonality and a polynomial for the trend,
     # just to get something reasonable to start with
-    if ("msts" %in% class(x)) {
+    if (inherits(x, "msts")) {
       K <- pmin(trunc(attributes(x)$msts / 2), 20L)
     } else {
       K <- min(trunc(freq / 2), 5)
     }
-    X <- cbind(fourier(x, K), poly(tt, degree = pmin(pmax(trunc(n / 10), 1), 6L)))
+    X <- cbind(
+      fourier(x, K),
+      poly(tt, degree = pmin(pmax(trunc(n / 10), 1), 6L))
+    )
     fit <- lm(x ~ X, na.action = na.exclude)
     pred <- predict(fit, newdata = data.frame(X))
     x[missng] <- pred[missng]
@@ -104,15 +109,19 @@ na.interp <- function(x, lambda=NULL,
   tsp(x) <- tspx
 
   # Check stability and use linear interpolation if there is a problem
-  if(!linear & (max(x) > rangex[2L]+0.5*drangex | min(x) < rangex[1L]-0.5*drangex))
-    return(na.interp(origx, lambda=lambda, linear=TRUE))
-  else
+  if (
+    !linear &&
+      (max(x) > rangex[2L] + 0.5 * drangex ||
+        min(x) < rangex[1L] - 0.5 * drangex)
+  ) {
+    return(na.interp(origx, lambda = lambda, linear = TRUE))
+  } else {
     return(x)
+  }
 }
 
 # Function to identify outliers and replace them with better values
 # Missing values replaced as well if replace.missing=TRUE
-
 
 #' Identify and replace outliers and missing values in a time series
 #'
@@ -120,29 +129,28 @@ na.interp <- function(x, lambda=NULL,
 #' seasonal series. To estimate missing values and outlier replacements,
 #' linear interpolation is used on the (possibly seasonally adjusted) series
 #'
-#' @param x time series
-#' @param replace.missing If TRUE, it not only replaces outliers, but also
-#' interpolates missing values
-#' @param iterate the number of iterations required
+#' @param x Time series.
+#' @param replace.missing If `TRUE`, it not only replaces outliers, but
+#' also interpolates missing values.
+#' @param iterate The number of iterations required.
 #' @inheritParams forecast.ts
 #' @return Time series
 #' @author Rob J Hyndman
 #' @references Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers/}.
-#' @seealso \code{\link[forecast]{na.interp}},
-#' \code{\link[forecast]{tsoutliers}}, \code{\link[stats]{supsmu}}
+#' @seealso [na.interp()], [tsoutliers()], [stats::supsmu()]
 #' @keywords ts
 #' @examples
 #'
 #' cleangold <- tsclean(gold)
 #'
 #' @export
-tsclean <- function(x, replace.missing=TRUE, iterate=2, lambda = NULL) {
+tsclean <- function(x, replace.missing = TRUE, iterate = 2, lambda = NULL) {
   outliers <- tsoutliers(x, iterate = iterate, lambda = lambda)
   x[outliers$index] <- outliers$replacements
   if (replace.missing) {
     x <- na.interp(x, lambda = lambda)
   }
-  return(x)
+  x
 }
 
 # Function to identify time series outlieres
@@ -153,13 +161,13 @@ tsclean <- function(x, replace.missing=TRUE, iterate=2, lambda = NULL) {
 #' seasonal series to identify outliers and estimate their replacements.
 #'
 #'
-#' @param x time series
-#' @param iterate the number of iterations required
+#' @param x Time series.
+#' @param iterate The number of iterations required.
 #' @inheritParams forecast.ts
 #' @return \item{index}{Indicating the index of outlier(s)}
 #' \item{replacement}{Suggested numeric values to replace identified outliers}
 #' @author Rob J Hyndman
-#' @seealso \code{\link[forecast]{na.interp}}, \code{\link[forecast]{tsclean}}
+#' @seealso [na.interp()], [tsclean()]
 #' @references Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers/}.
 #' @keywords ts
 #' @examples
@@ -168,7 +176,7 @@ tsclean <- function(x, replace.missing=TRUE, iterate=2, lambda = NULL) {
 #' tsoutliers(gold)
 #'
 #' @export
-tsoutliers <- function(x, iterate=2, lambda=NULL) {
+tsoutliers <- function(x, iterate = 2, lambda = NULL) {
   n <- length(x)
   freq <- frequency(x)
 
@@ -194,7 +202,7 @@ tsoutliers <- function(x, iterate=2, lambda=NULL) {
 
   # Seasonally adjust data if necessary
   if (freq > 1 && n > 2 * freq) {
-    fit <- mstl(xx, robust=TRUE)
+    fit <- mstl(xx, robust = TRUE)
     # Check if seasonality is sufficient to warrant adjustment
     rem <- remainder(fit)
     detrend <- xx - trendcycle(fit)
@@ -233,18 +241,19 @@ tsoutliers <- function(x, iterate=2, lambda=NULL) {
   # Do no more than 2 iterations regardless of the value of iterate
   if (iterate > 1) {
     tmp <- tsoutliers(x, iterate = 1, lambda = lambda)
-    if (length(tmp$index) > 0) # Found some more
-    {
+    if (length(tmp$index) > 0) {
+      # Found some more
       outliers <- sort(unique(c(outliers, tmp$index)))
       x[outliers] <- NA
-      if(sum(!is.na(x)) == 1L) {
+      if (sum(!is.na(x)) == 1L) {
         # Only one non-missing value
         x[is.na(x)] <- x[!is.na(x)]
-      } else
+      } else {
         x <- na.interp(x, lambda = lambda)
+      }
     }
   }
 
   # Return outlier indexes and replacements
-  return(list(index = outliers, replacements = x[outliers]))
+  list(index = outliers, replacements = x[outliers])
 }

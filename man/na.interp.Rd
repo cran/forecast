@@ -7,13 +7,13 @@
 na.interp(
   x,
   lambda = NULL,
-  linear = (frequency(x) <= 1 | sum(!is.na(x)) <= 2 * frequency(x))
+  linear = (frequency(x) <= 1 || sum(!is.na(x)) <= 2 * frequency(x))
 )
 }
 \arguments{
-\item{x}{time series}
+\item{x}{Time series.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
 data transformed before model is estimated.}
@@ -30,7 +30,7 @@ seasonally adjusted data, and the seasonal component is added back.
 }
 \details{
 A more general and flexible approach is available using \code{na.approx} in
-the \code{zoo} package.
+the \CRANpkg{zoo} package.
 }
 \examples{
 
@@ -39,7 +39,7 @@ plot(na.interp(gold))
 
 }
 \seealso{
-\code{\link[forecast]{tsoutliers}}
+\code{\link[=tsoutliers]{tsoutliers()}}
 }
 \author{
 Rob J Hyndman

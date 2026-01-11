@@ -13,8 +13,8 @@ trendcycle(object)
 remainder(object)
 }
 \arguments{
-\item{object}{Object created by \code{\link[stats]{decompose}},
-\code{\link[stats]{stl}} or \code{\link{tbats}}.}
+\item{object}{Object created by \code{\link[stats:decompose]{stats::decompose()}},
+\code{\link[stats:stl]{stats::stl()}} or \code{\link[=tbats]{tbats()}}.}
 }
 \value{
 Univariate time series.
@@ -26,22 +26,24 @@ decomposition.
 }
 \examples{
 plot(USAccDeaths)
-fit <- stl(USAccDeaths, s.window="periodic")
-lines(trendcycle(fit),col="red")
+fit <- stl(USAccDeaths, s.window = "periodic")
+lines(trendcycle(fit), col = "red")
 
 library(ggplot2)
-autoplot(cbind(
-	    Data=USAccDeaths,
-	    Seasonal=seasonal(fit),
-  	  Trend=trendcycle(fit),
-	    Remainder=remainder(fit)),
-    facets=TRUE) +
-  ylab("") + xlab("Year")
+autoplot(
+  cbind(
+    Data = USAccDeaths,
+    Seasonal = seasonal(fit),
+    Trend = trendcycle(fit),
+    Remainder = remainder(fit)
+  ),
+  facets = TRUE
+) +
+  labs(x = "Year", y = "")
 
 }
 \seealso{
-\code{\link[stats]{stl}}, \code{\link[stats]{decompose}},
-\code{\link{tbats}}, \code{\link{seasadj}}.
+\code{\link[stats:stl]{stats::stl()}}, \code{\link[stats:decompose]{stats::decompose()}}, \code{\link[=tbats]{tbats()}}, \code{\link[=seasadj]{seasadj()}}.
 }
 \author{
 Rob J Hyndman

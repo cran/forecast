@@ -51,30 +51,29 @@ taperedacf(
 taperedpacf(x, ...)
 }
 \arguments{
-\item{x}{a univariate or multivariate (not Ccf) numeric time series object
+\item{x}{A univariate or multivariate (not Ccf) numeric time series object
 or a numeric vector or matrix.}
 
-\item{lag.max}{maximum lag at which to calculate the acf. Default is
+\item{lag.max}{Maximum lag at which to calculate the acf. Default is
 $10*log10(N/m)$ where $N$ is the number of observations and $m$ the number
 of series. Will be automatically limited to one less than the number of
 observations in the series.}
 
-\item{type}{character string giving the type of acf to be computed. Allowed
-values are \dQuote{\code{correlation}} (the default),
-\dQuote{\code{covariance}} or \dQuote{\code{partial}}.}
+\item{type}{Character string giving the type of acf to be computed. Allowed
+values are \code{"correlation"} (the default), \code{"covariance"} or \code{"partial"}.}
 
 \item{plot}{logical. If \code{TRUE} (the default) the resulting acf, pacf or
 ccf is plotted.}
 
-\item{na.action}{function to handle missing values. Default is
-\code{\link[stats]{na.contiguous}}.  Useful alternatives are
-\code{\link[stats]{na.pass}} and \code{\link{na.interp}}.}
+\item{na.action}{Function to handle missing values. Default is
+\code{\link[stats:na.contiguous]{stats::na.contiguous()}}. Useful alternatives are \code{\link[stats:na.fail]{stats::na.pass()}} and
+\code{\link[=na.interp]{na.interp()}}.}
 
 \item{demean}{Should covariances be about the sample means?}
 
 \item{...}{Additional arguments passed to the plotting function.}
 
-\item{y}{a univariate numeric time series object or a numeric vector.}
+\item{y}{A univariate numeric time series object or a numeric vector.}
 
 \item{calc.ci}{If \code{TRUE}, confidence intervals for the ACF/PACF
 estimates are calculated.}
@@ -86,7 +85,7 @@ confidence intervals.}
 }
 \value{
 The \code{Acf}, \code{Pacf} and \code{Ccf} functions return objects
-of class "acf" as described in \code{\link[stats]{acf}} from the stats
+of class "acf" as described in \code{\link[stats:acf]{stats::acf()}} from the stats
 package. The \code{taperedacf} and \code{taperedpacf} functions return
 objects of class "mpacf".
 }
@@ -99,11 +98,10 @@ autocorrelation function of a (possibly multivariate) time series. Function
 univariate series.
 }
 \details{
-The functions improve the \code{\link[stats]{acf}},
-\code{\link[stats]{pacf}} and \code{\link[stats]{ccf}} functions. The main
-differences are that \code{Acf} does not plot a spike at lag 0 when
-\code{type=="correlation"} (which is redundant) and the horizontal axes show
-lags in time units rather than seasonal units.
+The functions improve the \code{\link[stats:acf]{stats::acf()}}, \code{\link[stats:acf]{stats::pacf()}} and \code{\link[stats:acf]{stats::ccf()}}
+functions. The main differences are that \code{Acf} does not plot a spike at lag
+0 when \code{type = "correlation"} (which is redundant) and the horizontal axes
+show lags in time units rather than seasonal units.
 
 The tapered versions implement the ACF and PACF estimates and plots
 described in Hyndman (2015), based on the banded and tapered estimates of
@@ -114,8 +112,8 @@ autocovariance proposed by McMurry and Politis (2010).
 Acf(wineind)
 Pacf(wineind)
 \dontrun{
-taperedacf(wineind, nsim=50)
-taperedpacf(wineind, nsim=50)
+taperedacf(wineind, nsim = 50)
+taperedpacf(wineind, nsim = 50)
 }
 
 }
@@ -129,8 +127,7 @@ autocovariance matrices and the linear process bootstrap. \emph{Journal of
 Time Series Analysis}, 31(6), 471-482.
 }
 \seealso{
-\code{\link[stats]{acf}}, \code{\link[stats]{pacf}},
-\code{\link[stats]{ccf}}, \code{\link{tsdisplay}}
+\code{\link[stats:acf]{stats::acf()}}, \code{\link[stats:acf]{stats::pacf()}}, \code{\link[stats:acf]{stats::ccf()}}, \code{\link[=tsdisplay]{tsdisplay()}}
 }
 \author{
 Rob J Hyndman

@@ -9,23 +9,29 @@ as.Date.timeDate <- timeDate::as.Date.timeDate
 #' period in a major financial center.
 #'
 #' Useful for trading days length adjustments. More on how to define "business
-#' days", please refer to \code{\link[timeDate]{isBizday}}.
+#' days", please refer to [timeDate::isBizday()].
 #'
-#' @param x Monthly or quarterly time series
+#' @param x Monthly or quarterly time series.
 #' @param FinCenter Major financial center.
 #' @return Time series
 #' @author Earo Wang
-#' @seealso \code{\link[forecast]{monthdays}}
+#' @seealso [monthdays()]
 #' @keywords ts
 #' @examples
 #'
 #' x <- ts(rnorm(30), start = c(2013, 2), frequency = 12)
 #' bizdays(x, FinCenter = "New York")
 #' @export
-bizdays <- function(x, FinCenter = c(
-                      "New York", "London", "NERC", "Toronto",
-                      "Zurich"
-                    )) {
+bizdays <- function(
+  x,
+  FinCenter = c(
+    "New York",
+    "London",
+    "NERC",
+    "Toronto",
+    "Zurich"
+  )
+) {
   # Return the number of trading days corresponding to the input ts
   #
   # Args:
@@ -42,18 +48,16 @@ bizdays <- function(x, FinCenter = c(
   years <- start(x)[1L]:end(x)[1L]
   # Grab the holidays from years and financial center
   FinCenter <- match.arg(FinCenter)
-  if (FinCenter == "New York") {
-    holidays <- timeDate::holidayNYSE(years)
-  } else if (FinCenter == "London") {
-    holidays <- timeDate::holidayLONDON(years)
-  } else if (FinCenter == "NERC") {
-    holidays <- timeDate::holidayNERC(years)
-  } else if (FinCenter == "Toronto") {
-    holidays <- timeDate::holidayTSX(years)
-  } else if (FinCenter == "Zurich") {
-    holidays <- timeDate::holidayZURICH(years)
-  }
-  if (freq == 12L) { # monthly data
+  holidays <- switch(
+    FinCenter,
+    "New York" = timeDate::holidayNYSE(years),
+    "London" = timeDate::holidayLONDON(years),
+    "NERC" = timeDate::holidayNERC(years),
+    "Toronto" = timeDate::holidayTSX(years),
+    "Zurich" = timeDate::holidayZURICH(years)
+  )
+  if (freq == 12L) {
+    # monthly data
     date <- zoo::as.Date(time(x))
     start <- date[1L]
     end <- seq(date[length(date)], length.out = 2L, by = "month")[2L] - 1L
@@ -61,7 +65,8 @@ bizdays <- function(x, FinCenter = c(
     # Grab business days
     biz <- days.len[timeDate::isBizday(days.len, holidays = holidays)]
     bizdays <- format(biz, format = "%Y-%m")
-  } else if (freq == 4L) { # Quarterly data
+  } else if (freq == 4L) {
+    # Quarterly data
     date <- zoo::as.Date(time(x))
     start <- date[1L]
     end <- seq(date[length(date)], length.out = 2L, by = "3 month")[2L] - 1L
@@ -80,7 +85,7 @@ bizdays <- function(x, FinCenter = c(
   # }
   num.days <- table(bizdays)
   out <- ts(num.days, start = tsp(x)[1L], frequency = freq)
-  return(out)
+  out
 }
 
 
@@ -89,13 +94,13 @@ bizdays <- function(x, FinCenter = c(
 #' Returns a vector of 0's and 1's or fractional results if Easter spans March
 #' and April in the observed time period. Easter is defined as the days from
 #' Good Friday to Easter Sunday inclusively, plus optionally Easter Monday if
-#' \code{easter.mon=TRUE}.
+#' `easter.mon = TRUE`.
 #'
 #' Useful for adjusting calendar effects.
 #'
-#' @param x Monthly or quarterly time series
-#' @param easter.mon If TRUE, the length of Easter holidays includes Easter
-#' Monday.
+#' @param x Monthly or quarterly time series.
+#' @param easter.mon If `TRUE`, the length of Easter holidays includes.
+#' Easter Monday.
 #' @return Time series
 #' @author Earo Wang
 #' @keywords ts
@@ -155,12 +160,12 @@ easter <- function(x, easter.mon = FALSE) {
   if (length(index) != 0L) {
     values <- denominator - dif[index]
     new.index <- index[1L]
-    for (i in 1L:length(index)) {
+    for (i in seq_along(index)) {
       dif <- append(dif, values = values[i], new.index)
       new.index <- index[i + 1L] + i
     }
     dummies[dummies == 1L] <- round(dif / unclass(denominator), digits = 2)
   }
   out <- ts(dummies, start = tsp(x)[1L], frequency = freq)
-  return(out)
+  out
 }

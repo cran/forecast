@@ -1,7 +1,13 @@
 ###############################################################################
 
 # TBATS code
-cutWTBATS <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
+cutWTBATS <- function(
+  use.beta,
+  w.tilda.transpose,
+  seasonal.periods,
+  p = 0,
+  q = 0
+) {
   mask.vector <- numeric(length(seasonal.periods))
   i <- length(seasonal.periods)
   while (i > 1) {
@@ -24,7 +30,9 @@ cutWTBATS <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
     } else if (mask.vector[w.pos.counter] < 0) {
       # Cut more than one off
       w.pos <- w.pos + s
-      w.tilda.transpose <- w.tilda.transpose[, -c((w.pos + mask.vector[w.pos.counter] + 1):w.pos)]
+      w.tilda.transpose <- w.tilda.transpose[,
+        -c((w.pos + mask.vector[w.pos.counter] + 1):w.pos)
+      ]
       w.pos <- w.pos + mask.vector[w.pos.counter]
     } else {
       w.pos <- w.pos + s
@@ -33,18 +41,18 @@ cutWTBATS <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
     }
     w.pos.counter <- w.pos.counter + 1
   }
-  if ((p != 0) | (q != 0)) {
+  if ((p != 0) || (q != 0)) {
     end.cut <- ncol(w.tilda.transpose)
     start.cut <- end.cut - (p + q) + 1
     w.tilda.transpose <- w.tilda.transpose[, -c(start.cut:end.cut)]
   }
 
-  return(list(matrix = w.tilda.transpose, mask.vector = mask.vector))
+  list(matrix = w.tilda.transpose, mask.vector = mask.vector)
 }
 
 # BATS code below
 #########
-cutW <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
+cutW <- function(use.beta, w.tilda.transpose, seasonal.periods, p = 0, q = 0) {
   mask.vector <- numeric(length(seasonal.periods))
   i <- length(seasonal.periods)
   while (i > 1) {
@@ -59,10 +67,8 @@ cutW <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
     for (s in length(seasonal.periods):2) {
       for (j in (s - 1):1) {
         hcf <- findGCD(seasonal.periods[s], seasonal.periods[j])
-        if (hcf != 1) {
-          if ((mask.vector[s] != 1) && (mask.vector[j] != 1)) {
-            mask.vector[s] <- hcf * -1
-          }
+        if (hcf != 1 && mask.vector[s] != 1 && mask.vector[j] != 1) {
+          mask.vector[s] <- hcf * -1
         }
       }
     }
@@ -78,7 +84,9 @@ cutW <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
     } else if (mask.vector[w.pos.counter] < 0) {
       # Cut more than one off
       w.pos <- w.pos + s
-      w.tilda.transpose <- w.tilda.transpose[, -c((w.pos + mask.vector[w.pos.counter] + 1):w.pos)]
+      w.tilda.transpose <- w.tilda.transpose[,
+        -c((w.pos + mask.vector[w.pos.counter] + 1):w.pos)
+      ]
       w.pos <- w.pos + mask.vector[w.pos.counter]
     } else {
       w.pos <- w.pos + s
@@ -87,16 +95,23 @@ cutW <- function(use.beta, w.tilda.transpose, seasonal.periods, p=0, q=0) {
     }
     w.pos.counter <- w.pos.counter + 1
   }
-  if ((p != 0) | (q != 0)) {
+  if ((p != 0) || (q != 0)) {
     end.cut <- ncol(w.tilda.transpose)
     start.cut <- end.cut - (p + q) + 1
     w.tilda.transpose <- w.tilda.transpose[, -c(start.cut:end.cut)]
   }
 
-  return(list(matrix = w.tilda.transpose, mask.vector = mask.vector))
+  list(matrix = w.tilda.transpose, mask.vector = mask.vector)
 }
 
-calcSeasonalSeeds <- function(use.beta, coefs, seasonal.periods, mask.vector, p=0, q=0) {
+calcSeasonalSeeds <- function(
+  use.beta,
+  coefs,
+  seasonal.periods,
+  mask.vector,
+  p = 0,
+  q = 0
+) {
   x.pos.counter <- 1
   sum.k <- 0
   if (use.beta) {
@@ -122,8 +137,16 @@ calcSeasonalSeeds <- function(use.beta, coefs, seasonal.periods, mask.vector, p=
       sum.k <- sum.k + k / s
       # create the current.periodicity vector
       current.periodicity <- extract - k / s
-      current.periodicity <- matrix(current.periodicity, nrow = length(current.periodicity), ncol = 1)
-      additional <- matrix(-k / s, nrow = (-1 * mask.vector[x.pos.counter]), ncol = 1)
+      current.periodicity <- matrix(
+        current.periodicity,
+        nrow = length(current.periodicity),
+        ncol = 1
+      )
+      additional <- matrix(
+        -k / s,
+        nrow = (-1 * mask.vector[x.pos.counter]),
+        ncol = 1
+      )
       current.periodicity <- rbind(current.periodicity, additional)
       new.x.nought <- rbind(new.x.nought, current.periodicity)
       x.pos <- x.pos + s + mask.vector[x.pos.counter]
@@ -135,7 +158,11 @@ calcSeasonalSeeds <- function(use.beta, coefs, seasonal.periods, mask.vector, p=
       # create the current.periodicity vector
       current.periodicity <- coefs[(x.pos + 1):(x.pos + s - 1)] - k / s
       current.periodicity <- c(current.periodicity, -k / s)
-      current.periodicity <- matrix(current.periodicity, nrow = length(current.periodicity), ncol = 1)
+      current.periodicity <- matrix(
+        current.periodicity,
+        nrow = length(current.periodicity),
+        ncol = 1
+      )
       new.x.nought <- rbind(new.x.nought, current.periodicity)
       x.pos <- x.pos + s - 1
     }
@@ -144,22 +171,26 @@ calcSeasonalSeeds <- function(use.beta, coefs, seasonal.periods, mask.vector, p=
   }
   # print(new.x.nought)
   # Lastly, get the arma error seed states, if they exist.
-  if ((p != 0) | (q != 0)) {
+  if ((p != 0) || (q != 0)) {
     arma.seed.states <- numeric((p + q))
-    arma.seed.states <- matrix(arma.seed.states, nrow = length(arma.seed.states), ncol = 1)
+    arma.seed.states <- matrix(
+      arma.seed.states,
+      nrow = length(arma.seed.states),
+      ncol = 1
+    )
     # Final value of x.nought
     x.nought <- rbind(new.x.nought, arma.seed.states)
   } else {
     x.nought <- new.x.nought
   }
-  return(x.nought)
+  x.nought
 }
 
 findGCD <- function(larger, smaller) {
   remainder <- larger %% smaller
   if (remainder != 0) {
-    return(findGCD(smaller, remainder))
+    findGCD(smaller, remainder)
   } else {
-    return(smaller)
+    smaller
   }
 }

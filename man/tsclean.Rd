@@ -7,14 +7,14 @@
 tsclean(x, replace.missing = TRUE, iterate = 2, lambda = NULL)
 }
 \arguments{
-\item{x}{time series}
+\item{x}{Time series.}
 
-\item{replace.missing}{If TRUE, it not only replaces outliers, but also
-interpolates missing values}
+\item{replace.missing}{If \code{TRUE}, it not only replaces outliers, but
+also interpolates missing values.}
 
-\item{iterate}{the number of iterations required}
+\item{iterate}{The number of iterations required.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
 data transformed before model is estimated.}
@@ -36,8 +36,7 @@ cleangold <- tsclean(gold)
 Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers/}.
 }
 \seealso{
-\code{\link[forecast]{na.interp}},
-\code{\link[forecast]{tsoutliers}}, \code{\link[stats]{supsmu}}
+\code{\link[=na.interp]{na.interp()}}, \code{\link[=tsoutliers]{tsoutliers()}}, \code{\link[stats:supsmu]{stats::supsmu()}}
 }
 \author{
 Rob J Hyndman

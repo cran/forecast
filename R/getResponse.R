@@ -2,20 +2,17 @@
 # If a Box-Cox transformation is used, the series returned here should
 # be on the original scale, not the Box-Cox transformed scale.
 
-
-
 #' Get response variable from time series model.
 #'
-#' \code{getResponse} is a generic function for extracting the historical data
-#' from a time series model (including \code{Arima}, \code{ets}, \code{ar},
-#' \code{fracdiff}), a linear model of class \code{lm}, or a forecast object.
-#' The function invokes particular \emph{methods} which depend on the class of
-#' the first argument.
+#' `getResponse` is a generic function for extracting the historical data from
+#' a time series model (including `Arima`, `ets`, `ar`, `fracdiff`), a linear
+#' model of class `lm`, or a forecast object. The function invokes particular
+#' \emph{methods} which depend on the class of the first argument.
 #'
 #'
 #' @param object a time series model or forecast object.
 #' @param ... Additional arguments that are ignored.
-#' @return A numerical vector or a time series object of class \code{ts}.
+#' @return A numerical vector or a time series object of class `ts`.
 #' @author Rob J Hyndman
 #' @keywords ts
 #'
@@ -26,7 +23,11 @@ getResponse <- function(object, ...) UseMethod("getResponse")
 #' @export
 getResponse.default <- function(object, ...) {
   if (is.list(object)) {
-    return(object$x)
+    output <- object$x
+    if (is.null(output)) {
+      output <- object$y
+    }
+    return(output)
   } else {
     return(NULL)
   }
@@ -35,10 +36,9 @@ getResponse.default <- function(object, ...) {
 #' @rdname getResponse
 #' @export
 getResponse.lm <- function(object, ...) {
-  if(!is.null(object[["x"]])){
+  if (!is.null(object[["x"]])) {
     object[["x"]]
-  }
-  else{
+  } else {
     responsevar <- deparse(formula(object)[[2]])
     model.frame(object$model)[, responsevar]
   }
@@ -47,7 +47,7 @@ getResponse.lm <- function(object, ...) {
 #' @rdname getResponse
 #' @export
 getResponse.Arima <- function(object, ...) {
-  if (is.element("x", names(object))) {
+  if ("x" %in% names(object)) {
     x <- object$x
   } else {
     series.name <- object$series
@@ -55,21 +55,23 @@ getResponse.Arima <- function(object, ...) {
       return(NULL)
     } else {
       x <- try(eval.parent(parse(text = series.name)), silent = TRUE)
-      if (is.element("try-error", class(x))) { # Try one level further up the chain
+      if (inherits(x, "try-error")) {
+        # Try one level further up the chain
         x <- try(eval.parent(parse(text = series.name), 2), silent = TRUE)
       }
-      if (is.element("try-error", class(x))) { # Give up
+      if (inherits(x, "try-error")) {
+        # Give up
         return(NULL)
       }
     }
   }
-  return(as.ts(x))
+  as.ts(x)
 }
 
 #' @rdname getResponse
 #' @export
 getResponse.fracdiff <- function(object, ...) {
-  if (is.element("x", names(object))) {
+  if ("x" %in% names(object)) {
     x <- object$x
   } else {
     series.name <- as.character(object$call)[2]
@@ -77,15 +79,17 @@ getResponse.fracdiff <- function(object, ...) {
       stop("missing original time series")
     } else {
       x <- try(eval.parent(parse(text = series.name)), silent = TRUE)
-      if (is.element("try-error", class(x))) { # Try one level further up the chain
+      if (inherits(x, "try-error")) {
+        # Try one level further up the chain
         x <- try(eval.parent(parse(text = series.name), 2), silent = TRUE)
       }
-      if (is.element("try-error", class(x))) { # Give up
+      if (inherits(x, "try-error")) {
+        # Give up
         return(NULL)
       }
     }
   }
-  return(as.ts(x))
+  as.ts(x)
 }
 
 #' @rdname getResponse
@@ -97,33 +101,33 @@ getResponse.ar <- function(object, ...) {
 #' @rdname getResponse
 #' @export
 getResponse.tbats <- function(object, ...) {
-  if (is.element("y", names(object))) {
+  if ("y" %in% names(object)) {
     y <- object$y
   } else {
     return(NULL)
   }
-  return(as.ts(y))
+  as.ts(y)
 }
 
 #' @rdname getResponse
 #' @export
 getResponse.bats <- function(object, ...) {
-  return(getResponse.tbats(object, ...))
+  getResponse.tbats(object, ...)
 }
 
 #' @rdname getResponse
 #' @export
 getResponse.mforecast <- function(object, ...) {
-  return(do.call(cbind, lapply(object$forecast, function(x) x$x)))
+  do.call(cbind, lapply(object$forecast, function(x) x$x))
 }
 
 #' @rdname getResponse
 #' @export
 getResponse.baggedModel <- function(object, ...) {
-  if (is.element("y", names(object))) {
+  if ("y" %in% names(object)) {
     y <- object$y
   } else {
     return(NULL)
   }
-  return(as.ts(y))
+  as.ts(y)
 }

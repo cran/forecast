@@ -21,7 +21,7 @@ modelAR(
 )
 }
 \arguments{
-\item{y}{A numeric vector or time series of class \code{ts}.}
+\item{y}{a numeric vector or univariate time series of class \code{ts}}
 
 \item{p}{Embedding dimension for non-seasonal time series. Number of
 non-seasonal lags used as inputs. For non-seasonal time series, the default
@@ -31,19 +31,19 @@ seasonally adjusted data (from an stl decomposition).}
 
 \item{P}{Number of seasonal lags used as inputs.}
 
-\item{FUN}{Function used for model fitting. Must accept argument \code{x}
-and \code{y} for the predictors and response, respectively (\code{formula}
-object not currently supported).}
+\item{FUN}{Function used for model fitting. Must accept argument \code{x} and \code{y}
+for the predictors and response, respectively (\code{formula} object not
+currently supported).}
 
 \item{predict.FUN}{Prediction function used to apply \code{FUN} to new data.
 Must accept an object of class \code{FUN} as its first argument, and a
 data frame or matrix of new data for its second argument. Additionally,
 it should return fitted values when new data is omitted.}
 
-\item{xreg}{Optionally, a vector or matrix of external regressors, which
-must have the same number of rows as \code{y}. Must be numeric.}
+\item{xreg}{Optionally, a numerical vector or matrix of external regressors,
+which must have the same number of rows as \code{y}. It should not be a data frame.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
 data transformed before model is estimated.}
@@ -56,23 +56,22 @@ parameters.}
 in the fit. Can be an integer index vector or a logical vector the same
 length as \code{y}. All observations are used by default.}
 
-\item{scale.inputs}{If TRUE, inputs are scaled by subtracting the column
+\item{scale.inputs}{If \code{TRUE}, inputs are scaled by subtracting the column
 means and dividing by their respective standard deviations. If \code{lambda}
 is not \code{NULL}, scaling is applied after Box-Cox transformation.}
 
 \item{x}{Deprecated. Included for backwards compatibility.}
 
-\item{\dots}{Other arguments passed to \code{FUN} for
-\code{modelAR}.}
+\item{...}{Other arguments passed to \code{FUN} for \code{modelAR}.}
 }
 \value{
-Returns an object of class "\code{modelAR}".
+Returns an object of class \code{modelAR}.
 
 The function \code{summary} is used to obtain and print a summary of the
 results.
 
 The generic accessor functions \code{fitted.values} and \code{residuals}
-extract useful features of the value returned by \code{nnetar}.
+extract useful features of the value returned by \code{modelAR}.
 
 \item{model}{A list containing information about the fitted model}
 \item{method}{The name of the forecasting method as a character string}
@@ -88,14 +87,35 @@ user-defined model
 }
 \details{
 This is an experimental function and only recommended for advanced users.
-The selected model is fitted with lagged values of \code{y} as
-inputs. The inputs are for
-lags 1 to \code{p}, and lags \code{m} to \code{mP} where
-\code{m=frequency(y)}. If \code{xreg} is provided, its columns are also
-used as inputs. If there are missing values in \code{y} or
-\code{xreg}, the corresponding rows (and any others which depend on them as
-lags) are omitted from the fit. The model is trained for one-step
-forecasting. Multi-step forecasts are computed recursively.
+The selected model is fitted with lagged values of \verb{y as inputs. The inputs are for lags 1 to }p\verb{, and lags }m\code{to}mP\code{where}m = frequency(y)\verb{. If }xreg\verb{is provided, its columns are also used as inputs. If there are missing values in}y\code{or}xreg`, the corresponding rows (and any others
+which depend on them as lags) are omitted from the fit. The model is trained
+for one-step forecasting. Multi-step forecasts are computed recursively.
+}
+\examples{
+## Set up functions
+my_lm <- function(x, y) {
+ structure(lsfit(x,y), class = "lsfit")
+}
+predict.lsfit <- function(object, newdata = NULL) {
+  n <- length(object$qr$qt)
+  if(is.null(newdata)) {
+    z <- numeric(n)
+    z[seq_len(object$qr$rank)] <- object$qr$qt[seq_len(object$qr$rank)]
+    as.numeric(qr.qy(object$qr, z))
+  } else {
+    sum(object$coefficients * c(1, newdata))
+  }
+}
+# Fit an AR(2) model
+fit <- modelAR(
+  y = lynx,
+  p = 2,
+  FUN = my_lm,
+  predict.FUN = predict.lsfit,
+  lambda = 0.5,
+  scale.inputs = TRUE
+)
+forecast(fit, h = 20) |> autoplot()
 }
 \author{
 Rob J Hyndman and Gabriel Caceres

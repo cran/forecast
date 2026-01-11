@@ -25,7 +25,7 @@ auto.arima(
   stepwise = TRUE,
   nmodels = 94,
   trace = FALSE,
-  approximation = (length(x) > 150 | frequency(x) > 12),
+  approximation = (length(x) > 150 || frequency(x) > 12),
   method = NULL,
   truncate = NULL,
   xreg = NULL,
@@ -44,7 +44,7 @@ auto.arima(
 )
 }
 \arguments{
-\item{y}{a univariate time series}
+\item{y}{a numeric vector or univariate time series of class \code{ts}}
 
 \item{d}{Order of first-differencing. If missing, will choose a value based
 on \code{test}.}
@@ -52,20 +52,20 @@ on \code{test}.}
 \item{D}{Order of seasonal-differencing. If missing, will choose a value
 based on \code{season.test}.}
 
-\item{max.p}{Maximum value of p}
+\item{max.p}{Maximum value of p.}
 
-\item{max.q}{Maximum value of q}
+\item{max.q}{Maximum value of q.}
 
-\item{max.P}{Maximum value of P}
+\item{max.P}{Maximum value of P.}
 
-\item{max.Q}{Maximum value of Q}
+\item{max.Q}{Maximum value of Q.}
 
 \item{max.order}{Maximum value of p+q+P+Q if model selection is not
 stepwise.}
 
-\item{max.d}{Maximum number of non-seasonal differences}
+\item{max.d}{Maximum number of non-seasonal differences.}
 
-\item{max.D}{Maximum number of seasonal differences}
+\item{max.D}{Maximum number of seasonal differences.}
 
 \item{start.p}{Starting value of p in stepwise procedure.}
 
@@ -104,14 +104,13 @@ seasonal period to avoid excessive computation times.}
 \item{truncate}{An integer value indicating how many observations to use in
 model selection. The last \code{truncate} values of the series are used to
 select a model when \code{truncate} is not \code{NULL} and
-\code{approximation=TRUE}. All observations are used if either
-\code{truncate=NULL} or \code{approximation=FALSE}.}
+\code{approximation = TRUE}. All observations are used if either
+\code{truncate = NULL} or \code{approximation = FALSE}.}
 
-\item{xreg}{Optionally, a numerical vector or matrix of external regressors, which
-must have the same number of rows as \code{y}. (It should not be a data frame.)}
+\item{xreg}{Optionally, a numerical vector or matrix of external regressors,
+which must have the same number of rows as \code{y}. It should not be a data frame.}
 
-\item{test}{Type of unit root test to use. See \code{\link{ndiffs}} for
-details.}
+\item{test}{Type of unit root test to use. See \code{\link[=ndiffs]{ndiffs()}} for details.}
 
 \item{test.args}{Additional arguments to be passed to the unit root test.}
 
@@ -121,37 +120,39 @@ Other possibilities involve seasonal unit root tests.}
 
 \item{seasonal.test.args}{Additional arguments to be passed to the seasonal
 unit root test.
-See \code{\link{nsdiffs}} for details.}
+See \code{\link[=nsdiffs]{nsdiffs()}} for details.}
 
 \item{allowdrift}{If \code{TRUE}, models with drift terms are considered.}
 
 \item{allowmean}{If \code{TRUE}, models with a non-zero mean are considered.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
 data transformed before model is estimated.}
 
 \item{biasadj}{Use adjusted back-transformed mean for Box-Cox
-transformations. If transformed data is used to produce forecasts and fitted values,
-a regular back transformation will result in median forecasts. If biasadj is TRUE,
-an adjustment will be made to produce mean forecasts and fitted values.}
+transformations. If transformed data is used to produce forecasts and fitted
+values, a regular back transformation will result in median forecasts. If
+biasadj is \code{TRUE}, an adjustment will be made to produce mean forecasts
+and fitted values.}
 
-\item{parallel}{If \code{TRUE} and \code{stepwise = FALSE}, then the
-specification search is done in parallel. This can give a significant
-speedup on multicore machines.}
+\item{parallel}{If \code{TRUE} and \code{stepwise = FALSE}, then the specification
+search is done in parallel via \code{\link[parallel:mclapply]{parallel::mclapply()}}. This can give a
+significant speedup on multicore machines. On Windows, this option always
+fails because forking is not supported.}
 
 \item{num.cores}{Allows the user to specify the amount of parallel processes
-to be used if \code{parallel = TRUE} and \code{stepwise = FALSE}. If
-\code{NULL}, then the number of logical cores is automatically detected and
-all available cores are used.}
+to be used if \code{parallel = TRUE} and \code{stepwise = FALSE}. If \code{NULL}, then the
+number of logical cores is automatically detected and all available cores
+are used.}
 
 \item{x}{Deprecated. Included for backwards compatibility.}
 
-\item{...}{Additional arguments to be passed to \code{\link[stats]{arima}}.}
+\item{...}{Additional arguments to be passed to \code{\link[stats:arima]{stats::arima()}}.}
 }
 \value{
-Same as for \code{\link{Arima}}
+Same as for \code{\link[=Arima]{Arima()}}
 }
 \description{
 Returns best ARIMA model according to either AIC, AICc or BIC value. The
@@ -161,7 +162,7 @@ provided.
 \details{
 The default arguments are designed for rapid estimation of models for many time series.
 If you are analysing just one time series, and can afford to take some more time, it
-is recommended that you set \code{stepwise=FALSE} and \code{approximation=FALSE}.
+is recommended that you set \code{stepwise = FALSE} and \code{approximation = FALSE}.
 
 Non-stepwise selection can be slow, especially for seasonal data. The stepwise
 algorithm outlined in Hyndman & Khandakar (2008) is used except that the default
@@ -172,7 +173,7 @@ Hyndman and Khandakar (2008).
 }
 \examples{
 fit <- auto.arima(WWWusage)
-plot(forecast(fit,h=20))
+plot(forecast(fit, h = 20))
 
 }
 \references{
@@ -185,7 +186,7 @@ for time series data", \emph{Data Mining and Knowledge Discovery},
 \bold{13}(3), 335-364.
 }
 \seealso{
-\code{\link{Arima}}
+\code{\link[=Arima]{Arima()}}
 }
 \author{
 Rob J Hyndman

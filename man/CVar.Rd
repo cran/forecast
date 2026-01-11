@@ -21,7 +21,7 @@ CVar(
 \item{k}{Number of folds to use for cross-validation.}
 
 \item{FUN}{Function to fit an autoregressive model. Currently, it only works
-with the \code{\link{nnetar}} function.}
+with the \code{\link[=nnetar]{nnetar()}} function.}
 
 \item{cvtrace}{Provide progress information.}
 
@@ -47,14 +47,14 @@ not be used.
 }
 \examples{
 
-modelcv <- CVar(lynx, k=5, lambda=0.15)
+modelcv <- CVar(lynx, k = 5, lambda = 0.15)
 print(modelcv)
 print(modelcv$fold1)
 
 library(ggplot2)
-autoplot(lynx, series="Data") +
-  autolayer(modelcv$testfit, series="Fits") +
-  autolayer(modelcv$residuals, series="Residuals")
+autoplot(lynx, series = "Data") +
+  autolayer(modelcv$testfit, series = "Fits") +
+  autolayer(modelcv$residuals, series = "Residuals")
 ggAcf(modelcv$residuals)
 
 }
@@ -65,7 +65,7 @@ validity of cross-validation for evaluating time series prediction.
 \url{https://robjhyndman.com/publications/cv-time-series/}.
 }
 \seealso{
-\link{CV}, \link{tsCV}.
+\code{\link[=CV]{CV()}}, \code{\link[=tsCV]{tsCV()}}.
 }
 \author{
 Gabriel Caceres and Rob J Hyndman

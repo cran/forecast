@@ -36,7 +36,7 @@ seasonplot(
 \arguments{
 \item{x}{a numeric vector or time series of class \code{ts}.}
 
-\item{season.labels}{Labels for each season in the "year"}
+\item{season.labels}{Labels for each season in the "year".}
 
 \item{year.labels}{Logical flag indicating whether labels for each year of
 data should be plotted on the right.}
@@ -44,7 +44,7 @@ data should be plotted on the right.}
 \item{year.labels.left}{Logical flag indicating whether labels for each year
 of data should be plotted on the left.}
 
-\item{type}{plot type (as for \code{\link[graphics]{plot}}). Not yet
+\item{type}{plot type (as for \code{\link[graphics:plot.default]{graphics::plot()}}). Not yet
 supported for ggseasonplot.}
 
 \item{col}{Colour}
@@ -56,9 +56,9 @@ discrete?}
 
 \item{labelgap}{Distance between year labels and plotted lines}
 
-\item{\dots}{additional arguments to \code{\link[graphics]{plot}}.}
+\item{...}{additional arguments to \code{\link[graphics:plot.default]{graphics::plot()}}.}
 
-\item{s}{seasonal frequency of x}
+\item{s}{seasonal frequency of x.}
 
 \item{main}{Main title.}
 
@@ -75,10 +75,10 @@ chapter 2). This is like a time plot except that the data are plotted
 against the seasons in separate years.
 }
 \examples{
-ggseasonplot(AirPassengers, col=rainbow(12), year.labels=TRUE)
-ggseasonplot(AirPassengers, year.labels=TRUE, continuous=TRUE)
+ggseasonplot(AirPassengers, col = rainbow(12), year.labels = TRUE)
+ggseasonplot(AirPassengers, year.labels = TRUE, continuous = TRUE)
 
-seasonplot(AirPassengers, col=rainbow(12), year.labels=TRUE)
+seasonplot(AirPassengers, col = rainbow(12), year.labels = TRUE)
 
 }
 \references{
@@ -87,7 +87,7 @@ and practice}, 2nd edition, OTexts: Melbourne, Australia.
 \url{https://otexts.com/fpp2/}
 }
 \seealso{
-\code{\link[stats]{monthplot}}
+\code{\link[stats:monthplot]{stats::monthplot()}}
 }
 \author{
 Rob J Hyndman & Mitchell O'Hara-Wild

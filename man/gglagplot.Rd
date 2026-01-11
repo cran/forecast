@@ -7,7 +7,7 @@
 \usage{
 gglagplot(
   x,
-  lags = ifelse(frequency(x) > 9, 16, 9),
+  lags = if (frequency(x) > 9) 16 else 9,
   set.lags = 1:lags,
   diag = TRUE,
   diag.col = "gray",
@@ -21,7 +21,7 @@ gglagplot(
 
 gglagchull(
   x,
-  lags = ifelse(frequency(x) > 1, min(12, frequency(x)), 4),
+  lags = if (frequency(x) > 1) min(12, frequency(x)) else 4,
   set.lags = 1:lags,
   diag = TRUE,
   diag.col = "gray",
@@ -39,7 +39,7 @@ gglagchull(
 
 \item{diag.col}{color to be used for the diagonal if(diag).}
 
-\item{do.lines}{if TRUE, lines will be drawn, otherwise points will be
+\item{do.lines}{if \code{TRUE}, lines will be drawn, otherwise points will be
 drawn.}
 
 \item{colour}{logical indicating if lines should be coloured.}
@@ -50,9 +50,9 @@ discrete?}
 \item{labels}{logical indicating if labels should be used.}
 
 \item{seasonal}{Should the line colour be based on seasonal characteristics
-(TRUE), or sequential (FALSE).}
+(\code{TRUE}), or sequential (\code{FALSE}).}
 
-\item{\dots}{Not used (for consistency with lag.plot)}
+\item{...}{Not used (for consistency with lag.plot)}
 }
 \value{
 None.
@@ -61,27 +61,27 @@ None.
 Plots a lag plot using ggplot.
 }
 \details{
-\dQuote{gglagplot} will plot time series against lagged versions of
+"gglagplot" will plot time series against lagged versions of
 themselves. Helps visualising 'auto-dependence' even when auto-correlations
 vanish.
 
-\dQuote{gglagchull} will layer convex hulls of the lags, layered on a single
+"gglagchull" will layer convex hulls of the lags, layered on a single
 plot. This helps visualise the change in 'auto-dependence' as lags increase.
 }
 \examples{
 
 gglagplot(woolyrnq)
-gglagplot(woolyrnq,seasonal=FALSE)
+gglagplot(woolyrnq, seasonal = FALSE)
 
 lungDeaths <- cbind(mdeaths, fdeaths)
-gglagplot(lungDeaths, lags=2)
-gglagchull(lungDeaths, lags=6)
+gglagplot(lungDeaths, lags = 2)
+gglagchull(lungDeaths, lags = 6)
 
 gglagchull(woolyrnq)
 
 }
 \seealso{
-\code{\link[stats]{lag.plot}}
+\code{\link[stats:lag.plot]{stats::lag.plot()}}
 }
 \author{
 Mitchell O'Hara-Wild

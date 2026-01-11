@@ -7,7 +7,7 @@
 CV(obj)
 }
 \arguments{
-\item{obj}{output from \code{\link[stats]{lm}} or \code{\link{tslm}}}
+\item{obj}{Output from \code{\link[stats:lm]{stats::lm()}} or \code{\link[=tslm]{tslm()}}.}
 }
 \value{
 Numerical vector containing CV, AIC, AICc, BIC and AdjR2 values.
@@ -19,7 +19,7 @@ R^2 values for a linear model.
 }
 \examples{
 
-y <- ts(rnorm(120,0,3) + 20*sin(2*pi*(1:120)/12), frequency=12)
+y <- ts(rnorm(120, 0, 3) + 20 * sin(2 * pi * (1:120) / 12), frequency = 12)
 fit1 <- tslm(y ~ trend + season)
 fit2 <- tslm(y ~ season)
 CV(fit1)
@@ -27,7 +27,7 @@ CV(fit2)
 
 }
 \seealso{
-\code{\link[stats]{AIC}}
+\code{\link[stats:AIC]{stats::AIC()}}
 }
 \author{
 Rob J Hyndman

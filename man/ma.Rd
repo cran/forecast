@@ -11,7 +11,7 @@ ma(x, order, centre = TRUE)
 
 \item{order}{Order of moving average smoother}
 
-\item{centre}{If TRUE, then the moving average is centred for even orders.}
+\item{centre}{If \code{TRUE}, then the moving average is centred for even orders.}
 }
 \value{
 Numerical time series object containing the simple moving average
@@ -32,19 +32,19 @@ where \eqn{k=\frac{m-1}{2}}{k=(m-1)/2}.
 
 When an even \code{order} is specified, the observations averaged will
 include one more observation from the future than the past (k is rounded
-up). If centre is TRUE, the value from two moving averages (where k is
+up). If centre is \code{TRUE}, the value from two moving averages (where k is
 rounded up and down respectively) are averaged, centering the moving
 average.
 }
 \examples{
 
 plot(wineind)
-sm <- ma(wineind,order=12)
-lines(sm,col="red")
+sm <- ma(wineind, order = 12)
+lines(sm, col = "red")
 
 }
 \seealso{
-\code{\link[stats]{decompose}}
+\code{\link[stats:decompose]{stats::decompose()}}
 }
 \author{
 Rob J Hyndman

@@ -20,13 +20,11 @@ fourierf(x, K, h)
 Numerical matrix.
 }
 \description{
-\code{fourier} returns a matrix containing terms from a Fourier series, up
-to order \code{K}, suitable for use in \code{\link{Arima}},
-\code{\link{auto.arima}}, or \code{\link{tslm}}.
+\code{fourier} returns a matrix containing terms from a Fourier series, up to
+order \code{K}, suitable for use in \code{\link[=Arima]{Arima()}}, \code{\link[=auto.arima]{auto.arima()}}, or \code{\link[=tslm]{tslm()}}.
 }
 \details{
-\code{fourierf} is deprecated, instead use the \code{h} argument in
-\code{fourier}.
+\code{fourierf} is deprecated, instead use the \code{h} argument in \code{fourier}.
 
 The period of the Fourier terms is determined from the time series
 characteristics of \code{x}. When \code{h} is missing, the length of
@@ -53,19 +51,28 @@ library(ggplot2)
 
 # Using Fourier series for a "ts" object
 # K is chosen to minimize the AICc
-deaths.model  <- auto.arima(USAccDeaths, xreg=fourier(USAccDeaths,K=5), seasonal=FALSE)
-deaths.fcast <- forecast(deaths.model, xreg=fourier(USAccDeaths, K=5, h=36))
+deaths.model <- auto.arima(
+  USAccDeaths,
+  xreg = fourier(USAccDeaths, K = 5),
+  seasonal = FALSE
+)
+deaths.fcast <- forecast(
+  deaths.model,
+  xreg = fourier(USAccDeaths, K = 5, h = 36)
+)
 autoplot(deaths.fcast) + xlab("Year")
 
 # Using Fourier series for a "msts" object
 taylor.lm <- tslm(taylor ~ fourier(taylor, K = c(3, 3)))
-taylor.fcast <- forecast(taylor.lm,
-    data.frame(fourier(taylor, K = c(3, 3), h = 270)))
+taylor.fcast <- forecast(
+  taylor.lm,
+  data.frame(fourier(taylor, K = c(3, 3), h = 270))
+)
 autoplot(taylor.fcast)
 
 }
 \seealso{
-\code{\link{seasonaldummy}}
+\code{\link[=seasonaldummy]{seasonaldummy()}}
 }
 \author{
 Rob J Hyndman

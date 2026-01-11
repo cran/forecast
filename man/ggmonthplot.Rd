@@ -18,7 +18,7 @@ ggsubseriesplot(x, labels = NULL, times = time(x), phase = cycle(x), ...)
 
 \item{phase}{A vector of seasonal components}
 
-\item{\dots}{Not used (for consistency with monthplot)}
+\item{...}{Not used (for consistency with monthplot)}
 }
 \value{
 Returns an object of class \code{ggplot}.
@@ -29,9 +29,8 @@ mini time series. The blue lines represent the mean of the observations
 within each season.
 }
 \details{
-The \code{ggmonthplot} function is simply a wrapper for
-\code{ggsubseriesplot} as a convenience for users familiar with
-\code{\link[stats]{monthplot}}.
+The \code{ggmonthplot} function is simply a wrapper for \code{ggsubseriesplot} as a
+convenience for users familiar with \code{\link[stats:monthplot]{stats::monthplot()}}.
 }
 \examples{
 
@@ -40,7 +39,7 @@ ggsubseriesplot(woolyrnq)
 
 }
 \seealso{
-\code{\link[stats]{monthplot}}
+\code{\link[stats:monthplot]{stats::monthplot()}}
 }
 \author{
 Mitchell O'Hara-Wild

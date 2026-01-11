@@ -3,53 +3,22 @@
 
 # Author: RJH
 
-#' Theta method forecast
-#'
-#' Returns forecasts and prediction intervals for a theta method forecast.
+#' Theta model
 #'
 #' The theta method of Assimakopoulos and Nikolopoulos (2000) is equivalent to
-#' simple exponential smoothing with drift. This is demonstrated in Hyndman and
-#' Billah (2003).
-#'
+#' simple exponential smoothing with drift (Hyndman and Billah, 2003).
+#' This function fits the theta model to a time series.
 #' The series is tested for seasonality using the test outlined in A&N. If
 #' deemed seasonal, the series is seasonally adjusted using a classical
-#' multiplicative decomposition before applying the theta method. The resulting
-#' forecasts are then reseasonalized.
+#' multiplicative decomposition before fitting the theta model.
 #'
-#' Prediction intervals are computed using the underlying state space model.
+#' More general theta methods are available in the \CRANpkg{forecTheta}
+#' package.
 #'
-#' More general theta methods are available in the
-#' \code{\link[forecTheta]{forecTheta}} package.
-#'
-#' @param y a numeric vector or time series of class \code{ts}
-#' @param h Number of periods for forecasting
-#' @param level Confidence levels for prediction intervals.
-#' @param fan If TRUE, level is set to seq(51,99,by=3). This is suitable for
-#' fan plots.
-#' @param x Deprecated. Included for backwards compatibility.
-#' @return An object of class "\code{forecast}".
-#'
-#' The function \code{summary} is used to obtain and print a summary of the
-#' results, while the function \code{plot} produces a plot of the forecasts and
-#' prediction intervals.
-#'
-#' The generic accessor functions \code{fitted.values} and \code{residuals}
-#' extract useful features of the value returned by \code{rwf}.
-#'
-#' An object of class \code{"forecast"} is a list containing at least the
-#' following elements: \item{model}{A list containing information about the
-#' fitted model} \item{method}{The name of the forecasting method as a
-#' character string} \item{mean}{Point forecasts as a time series}
-#' \item{lower}{Lower limits for prediction intervals} \item{upper}{Upper
-#' limits for prediction intervals} \item{level}{The confidence values
-#' associated with the prediction intervals} \item{x}{The original time series
-#' (either \code{object} itself or the time series used to create the model
-#' stored as \code{object}).} \item{residuals}{Residuals from the fitted model.
-#' That is x minus fitted values.} \item{fitted}{Fitted values (one-step
-#' forecasts)}
+#' @inheritParams ets
+#' @return An object of class `theta_model`.
 #' @author Rob J Hyndman
-#' @seealso \code{\link[stats]{arima}}, \code{\link{meanf}}, \code{\link{rwf}},
-#' \code{\link{ses}}
+#' @seealso [thetaf()]
 #' @references Assimakopoulos, V. and Nikolopoulos, K. (2000). The theta model:
 #' a decomposition approach to forecasting. \emph{International Journal of
 #' Forecasting} \bold{16}, 521-530.
@@ -58,76 +27,189 @@
 #' \emph{International J. Forecasting}, \bold{19}, 287-290.
 #' @keywords ts
 #' @examples
-#' nile.fcast <- thetaf(Nile)
-#' plot(nile.fcast)
+#' nile_fit <- theta_model(Nile)
+#' forecast(nile_fit) |> autoplot()
 #' @export
-thetaf <- function(y, h = ifelse(frequency(y) > 1, 2 * frequency(y), 10),
-                   level = c(80, 95), fan = FALSE, x = y) {
-  # Check inputs
-  if (fan) {
-    level <- seq(51, 99, by = 3)
-  } else {
-    if (min(level) > 0 && max(level) < 1) {
-      level <- 100 * level
-    } else if (min(level) < 0 || max(level) > 99.99) {
-      stop("Confidence limit out of range")
-    }
-  }
+theta_model <- function(y, lambda = NULL, biasadj = FALSE) {
+  series <- deparse1(substitute(y))
+  n <- length(y)
+  x <- as.ts(y)
+  origy <- y
 
-  # Check seasonality
-  n <- length(x)
-  x <- as.ts(x)
-  m <- frequency(x)
-  if (m > 1 && !is.constant(x) && n > 2 * m) {
-    r <- as.numeric(acf(x, lag.max = m, plot = FALSE)$acf)[-1]
+  if (!is.null(lambda)) {
+    y <- BoxCox(y, lambda)
+    lambda <- attr(y, "lambda")
+    attr(lambda, "biasadj") <- biasadj
+  }
+  # Seasonal decomposition
+  m <- frequency(y)
+  if (m > 1 && !is.constant(y) && n > 2 * m) {
+    r <- as.numeric(acf(y, lag.max = m, plot = FALSE)$acf)[-1]
     stat <- sqrt((1 + 2 * sum(r[-m]^2)) / n)
     seasonal <- (abs(r[m]) / stat > qnorm(0.95))
-  }
-  else {
+  } else {
     seasonal <- FALSE
   }
-
-  # Seasonal decomposition
-  origx <- x
   if (seasonal) {
-    decomp <- decompose(x, type = "multiplicative")
+    decomp <- decompose(y, type = "multiplicative")
     if (any(abs(seasonal(decomp)) < 1e-4)) {
       warning("Seasonal indexes close to zero. Using non-seasonal Theta method")
+      seasonal <- FALSE
     } else {
-      x <- seasadj(decomp)
+      y <- seasadj(decomp)
+      seas_component <- decomp$seasonal
     }
   }
 
-  # Find theta lines
-  fcast <- ses(x, h = h)
-  tmp2 <- lsfit(0:(n - 1), x)$coefficients[2] / 2
-  alpha <- pmax(1e-10, fcast$model$par["alpha"])
-  fcast$mean <- fcast$mean + tmp2 * (0:(h - 1) + (1 - (1 - alpha)^n) / alpha)
+  # Find parameters
+  beta <- lsfit(0:(n - 1), y)$coefficients[2]
+  ses_model <- ets(y, model = "ANN", opt.crit = "mse")
+
+  # Fitted values and residuals
+  fitted <- fitted(ses_model)
+  res <- y - fitted
+  if (seasonal) {
+    fitted <- fitted * seas_component
+  }
+  if (!is.null(lambda)) {
+    fitted <- InvBoxCox(fitted, lambda, biasadj, var(res))
+    res <- y - fitted
+  }
+
+  # Return results
+  structure(
+    list(
+      y = origy,
+      series = series,
+      ses_model = ses_model,
+      alpha = pmax(1e-10, ses_model$par["alpha"]),
+      drift = beta / 2,
+      sigma2 = ses_model$sigma2,
+      fitted = fitted,
+      residuals = origy - fitted,
+      seas_component = if (seasonal) tail(seas_component, m) else NULL,
+      lambda = lambda,
+      call = match.call()
+    ),
+    class = c("fc_model", "theta_model")
+  )
+}
+
+#' @export
+print.theta_model <- function(
+  x,
+  digits = max(3, getOption("digits") - 3),
+  ...
+) {
+  cat("Theta model: ")
+  cat(x$series, "\n")
+  cat("Call:", deparse(x$call), "\n")
+  if (!is.null(x$seas_component)) {
+    cat("Deseasonalized\n")
+  }
+  cat("  alpha:", format(x$alpha, digits = digits), "\n")
+  cat("  drift:", format(x$drift, digits = digits), "\n")
+  cat("  sigma^2:", format(x$sigma2, digits = digits), "\n")
+  invisible(x)
+}
+
+#' Theta method forecasts.
+#'
+#' Returns forecasts and prediction intervals for a theta method forecast.
+#' `thetaf()` is a convenience function that combines `theta_model()` and
+#' `forecast.theta_model()`.
+#' The theta method of Assimakopoulos and Nikolopoulos (2000) is equivalent to
+#' simple exponential smoothing with drift (Hyndman and Billah, 2003).
+#' The series is tested for seasonality using the test outlined in A&N. If
+#' deemed seasonal, the series is seasonally adjusted using a classical
+#' multiplicative decomposition before applying the theta method. The resulting
+#' forecasts are then reseasonalized.
+#' Prediction intervals are computed using the underlying state space model.
+#'
+#' More general theta methods are available in the \CRANpkg{forecTheta}
+#' package.
+#'
+#' @param object An object of class `theta_model` created by [theta_model()].
+#' @inheritParams ses
+#' @return An object of class `forecast`.
+#' @inheritSection forecast.ts forecast class
+#' @author Rob J Hyndman
+#' @seealso [stats::arima()], [meanf()], [rwf()], [ses()]
+#' @references Assimakopoulos, V. and Nikolopoulos, K. (2000). The theta model:
+#' a decomposition approach to forecasting. \emph{International Journal of
+#' Forecasting} \bold{16}, 521-530.
+#'
+#' Hyndman, R.J., and Billah, B. (2003) Unmasking the Theta method.
+#' \emph{International J. Forecasting}, \bold{19}, 287-290.
+#' @keywords ts
+#' @examples
+#' nile_fit <- theta_model(Nile)
+#' forecast(nile_fit) |> autoplot()
+#' @export
+forecast.theta_model <- function(
+  object,
+  h = if (frequency(object$y) > 1) 2 * frequency(object$y) else 10,
+  level = c(80, 95),
+  fan = FALSE,
+  lambda = object$lambda,
+  biasadj = FALSE,
+  ...
+) {
+  # Check inputs
+  level <- getConfLevel(level, fan)
+  seasonal <- !is.null(object$seas_component)
+  m <- frequency(object$y)
+  n <- length(object$y)
+
+  fcast <- forecast(object$ses_model, h = h, level = level, fan = fan, ...)
+  fcast$mean <- fcast$mean +
+    object$drift * (seq(h) - 1 + (1 - (1 - object$alpha)^n) / object$alpha)
 
   # Reseasonalize
   if (seasonal) {
-    fcast$mean <- fcast$mean * rep(tail(decomp$seasonal, m), trunc(1 + h / m))[1:h]
-    fcast$fitted <- fcast$fitted * decomp$seasonal
+    fcast$mean <- fcast$mean *
+      rep(object$seas_component, trunc(1 + h / m))[seq(h)]
   }
-  fcast$residuals <- origx - fcast$fitted
 
   # Find prediction intervals
-  fcast.se <- sqrt(fcast$model$sigma2) * sqrt((0:(h - 1)) * alpha^2 + 1)
+  fcast.se <- sqrt(object$sigma2) * sqrt((0:(h - 1)) * object$alpha^2 + 1)
   nconf <- length(level)
   fcast$lower <- fcast$upper <- ts(matrix(NA, nrow = h, ncol = nconf))
   tsp(fcast$lower) <- tsp(fcast$upper) <- tsp(fcast$mean)
-  for (i in 1:nconf)
-  {
+  for (i in 1:nconf) {
     zt <- -qnorm(0.5 - level[i] / 200)
     fcast$lower[, i] <- fcast$mean - zt * fcast.se
     fcast$upper[, i] <- fcast$mean + zt * fcast.se
   }
 
+  # Back transform
+  if (!is.null(lambda)) {
+    fcast$mean <- InvBoxCox(fcast$mean, lambda, biasadj, fcast.se^2)
+    fcast$upper <- InvBoxCox(fcast$upper, lambda)
+    fcast$lower <- InvBoxCox(fcast$lower, lambda)
+  }
+
   # Return results
-  fcast$x <- origx
-  fcast$level <- level
+  fcast$x <- object$y
   fcast$method <- "Theta"
-  fcast$model <- list(alpha = alpha, drift = tmp2, sigma = fcast$model$sigma2)
-  fcast$model$call <- match.call()
-  return(fcast)
+  fcast$model <- object
+  fcast$series <- object$series
+  fcast$fitted <- object$fitted
+  fcast
+}
+
+#' @rdname forecast.theta_model
+#' @export
+thetaf <- function(
+  y,
+  h = if (frequency(y) > 1) 2 * frequency(y) else 10,
+  level = c(80, 95),
+  fan = FALSE,
+  lambda = NULL,
+  biasadj = FALSE,
+  x = y,
+  ...
+) {
+  fit <- theta_model(x, lambda = lambda, biasadj = biasadj)
+  forecast(fit, h = h, level = level, fan = fan, ...)
 }

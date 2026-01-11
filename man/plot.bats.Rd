@@ -20,13 +20,13 @@
 
 \item{main}{Main title for plot.}
 
-\item{...}{Other plotting parameters passed to \code{\link[graphics]{par}}.}
+\item{...}{Other plotting parameters passed to \code{\link[graphics:par]{graphics::par()}}.}
 
 \item{object}{Object of class \dQuote{bats/tbats}.}
 
 \item{range.bars}{Logical indicating if each plot should have a bar at its
-right side representing relative size. If NULL, automatic selection takes
-place.}
+right side representing relative size. If \code{NULL}, automatic selection
+takes place.}
 }
 \value{
 None. Function produces a plot
@@ -40,11 +40,12 @@ TBATS model. The plotted components are Box-Cox transformed using the estimated 
 \dontrun{
 fit <- tbats(USAccDeaths)
 plot(fit)
-autoplot(fit, range.bars = TRUE)}
+autoplot(fit, range.bars = TRUE)
+}
 
 }
 \seealso{
-\code{\link{bats}},\code{\link{tbats}}
+\code{\link[=bats]{bats()}}], \code{\link[=tbats]{tbats()}}
 }
 \author{
 Rob J Hyndman

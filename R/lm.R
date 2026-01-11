@@ -1,49 +1,48 @@
 #' Fit a linear model with time series components
 #'
-#' \code{tslm} is used to fit linear models to time series including trend and
+#' `tslm` is used to fit linear models to time series including trend and
 #' seasonality components.
 #'
-#' \code{tslm} is largely a wrapper for \code{\link[stats]{lm}()} except that
+#' `tslm` is largely a wrapper for [stats::lm()] except that
 #' it allows variables "trend" and "season" which are created on the fly from
 #' the time series characteristics of the data. The variable "trend" is a
 #' simple time trend and "season" is a factor indicating the season (e.g., the
 #' month or the quarter depending on the frequency of the data).
 #'
-#' @param formula an object of class "formula" (or one that can be coerced to
+#' @param formula An object of class "formula" (or one that can be coerced to
 #' that class): a symbolic description of the model to be fitted.
-#' @param data an optional data frame, list or environment (or object coercible
+#' @param data An optional data frame, list or environment (or object coercible
 #' by as.data.frame to a data frame) containing the variables in the model. If
 #' not found in data, the variables are taken from environment(formula),
 #' typically the environment from which lm is called.
-#' @param subset an optional subset containing rows of data to keep. For best
-#' results, pass a logical vector of rows to keep. Also supports
-#' \code{\link[base]{subset}()} functions.
+#' @param subset An optional subset containing rows of data to keep. For best
+#' results, pass a logical vector of rows to keep. Also supports [subset()]
+#' functions.
 #' @inheritParams forecast.ts
 #'
-#' @param ... Other arguments passed to \code{\link[stats]{lm}()}
+#' @param ... Other arguments passed to [stats::lm()].
 #' @return Returns an object of class "lm".
 #' @author Mitchell O'Hara-Wild and Rob J Hyndman
-#' @seealso \code{\link{forecast.lm}}, \code{\link[stats]{lm}}.
+#' @seealso [forecast.lm()], [stats::lm()].
 #' @keywords stats
 #' @examples
 #'
-#' y <- ts(rnorm(120,0,3) + 1:120 + 20*sin(2*pi*(1:120)/12), frequency=12)
+#' y <- ts(rnorm(120, 0, 3) + 1:120 + 20 * sin(2 * pi * (1:120) / 12), frequency = 12)
 #' fit <- tslm(y ~ trend + season)
-#' plot(forecast(fit, h=20))
+#' plot(forecast(fit, h = 20))
 #'
 #' @export
-tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
+tslm <- function(formula, data, subset, lambda = NULL, biasadj = FALSE, ...) {
   cl <- match.call()
-  if (!("formula" %in% class(formula))) {
+  if (!inherits(formula, "formula")) {
     formula <- stats::as.formula(formula)
   }
   if (missing(data)) {
     mt <- try(terms(formula))
-    if (is.element("try-error", class(mt))) {
+    if (inherits(mt, "try-error")) {
       stop("Cannot extract terms from formula, please provide data argument.")
     }
-  }
-  else {
+  } else {
     mt <- terms(formula, data = data)
   }
 
@@ -56,7 +55,8 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
   for (i in 2:length(vars)) {
     term <- vars[[i]]
     if (!is.symbol(term)) {
-      if (typeof(eval(term[[1]])) == "closure") { # If this term is a function (alike fourier)
+      if (typeof(eval(term[[1]])) == "closure") {
+        # If this term is a function (alike fourier)
         fnvar <- c(fnvar, i)
       }
     }
@@ -84,9 +84,11 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
     dataname <- substitute(data)
   }
   if (!missing(data)) {
-    data <- datamat(do.call(datamat, as.list(vars[-1]), envir = parent.frame()), data)
-  }
-  else {
+    data <- datamat(
+      do.call(datamat, as.list(vars[-1]), envir = parent.frame()),
+      data
+    )
+  } else {
     data <- do.call(datamat, as.list(vars[-1]), envir = parent.frame())
   }
 
@@ -99,12 +101,12 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
 
   ## Get time series attributes from the data
   if (is.null(tsp(data))) {
-    if ((attr(mt, "response") + 1) %in% fnvar) { # Check unevaluated response variable
+    if ((attr(mt, "response") + 1) %in% fnvar) {
+      # Check unevaluated response variable
       tspx <- tsp(eval(attr(mt, "variables")[[attr(mt, "response") + 1]]))
     }
     tspx <- tsp(data[, 1]) # Check for complex ts data.frame
-  }
-  else {
+  } else {
     tspx <- tsp(data)
   }
   if (is.null(tspx)) {
@@ -113,13 +115,16 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
   tsdat <- match(c("trend", "season"), cn, 0L)
 
   ## Create trend and season if missing from the data
-  if (tsdat[1] == 0) { # &tsvar[1]!=0){#If "trend" is not in data, but is in formula
-    trend <- 1:NROW(data)
+  if (tsdat[1] == 0) {
+    # &tsvar[1]!=0){#If "trend" is not in data, but is in formula
+    trend <- seq_len(NROW(data))
     cn <- c(cn, "trend")
     data <- cbind(data, trend)
   }
-  if (tsdat[2] == 0) { # &tsvar[2]!=0){#If "season" is not in data, but is in formula
-    if (tsvar[2] != 0 && tspx[3] <= 1) { # Nonseasonal data, and season requested
+  if (tsdat[2] == 0) {
+    # &tsvar[2]!=0){#If "season" is not in data, but is in formula
+    if (tsvar[2] != 0 && tspx[3] <= 1) {
+      # Nonseasonal data, and season requested
       stop("Non-seasonal data cannot be modelled using a seasonal factor")
     }
     season <- as.factor(cycle(data[, 1]))
@@ -135,7 +140,9 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
     } else if (NCOL(subset) > 1) {
       stop("subset must be a logical vector")
     } else if (NROW(subset) != NROW(data)) {
-      stop("Subset must be the same length as the number of rows in the dataset")
+      stop(
+        "Subset must be the same length as the number of rows in the dataset"
+      )
     }
     warning("Subset has been assumed contiguous")
     timesx <- time(data[, 1])[subset]
@@ -149,6 +156,7 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
     resp_var <- deparse(attr(mt, "variables")[[attr(mt, "response") + 1]])
     data[, resp_var] <- BoxCox(data[, resp_var], lambda)
     lambda <- attr(data[, resp_var], "lambda")
+    attr(lambda, "biasadj") <- biasadj
   }
   if (tsdat[2] == 0 && tsvar[2] != 0) {
     data$season <- factor(data$season) # fix for lost factor information, may not be needed?
@@ -163,133 +171,127 @@ tslm <- function(formula, data, subset, lambda=NULL, biasadj=FALSE, ...) {
   fit$x <- fit$residuals
   fit$x[!is.na(fit$x)] <- model.frame(fit)[, responsevar]
   fit$fitted.values <- ts(fitted(fit))
-  tsp(fit$residuals) <- tsp(fit$x) <- tsp(fit$fitted.values) <- tsp(data[, 1]) <- tspx
+  tsp(fit$residuals) <- tsp(fit$x) <- tsp(fit$fitted.values) <- tsp(data[,
+    1
+  ]) <- tspx
   fit$call <- cl
   fit$method <- "Linear regression model"
   if (exists("dataname")) {
     fit$call$data <- dataname
   }
   if (!is.null(lambda)) {
-    attr(lambda, "biasadj") <- biasadj
     fit$lambda <- lambda
-    fit$fitted.values <- InvBoxCox(fit$fitted.values, lambda, biasadj, var(fit$residuals))
+    fit$fitted.values <- InvBoxCox(
+      fit$fitted.values,
+      lambda,
+      biasadj,
+      var(fit$residuals)
+    )
     fit$x <- InvBoxCox(fit$x, lambda)
   }
   class(fit) <- c("tslm", class(fit))
-  return(fit)
+  fit
 }
 
 #' @export
-fitted.tslm <- function(object, ...){
+fitted.tslm <- function(object, ...) {
   object$fitted.values
 }
 
 #' Forecast a linear model with possible time series components
 #'
-#' \code{forecast.lm} is used to predict linear models, especially those
+#' `forecast.lm` is used to predict linear models, especially those
 #' involving trend and seasonality components.
 #'
-#' \code{forecast.lm} is largely a wrapper for
-#' \code{\link[stats]{predict.lm}()} except that it allows variables "trend"
+#' `forecast.lm` is largely a wrapper for
+#' [stats::predict.lm()] except that it allows variables "trend"
 #' and "season" which are created on the fly from the time series
 #' characteristics of the data. Also, the output is reformatted into a
-#' \code{forecast} object.
+#' `forecast` object.
 #'
+#' @inheritParams forecast.ts
 #' @param object Object of class "lm", usually the result of a call to
-#' \code{\link[stats]{lm}} or \code{\link{tslm}}.
+#' [stats::lm()] or [tslm()].
 #' @param newdata An optional data frame in which to look for variables with
 #' which to predict. If omitted, it is assumed that the only variables are
-#' trend and season, and \code{h} forecasts are produced.
-#' @param level Confidence level for prediction intervals.
-#' @param fan If \code{TRUE}, level is set to seq(51,99,by=3). This is suitable
-#' for fan plots.
-#' @param h Number of periods for forecasting. Ignored if \code{newdata}
+#' trend and season, and `h` forecasts are produced.
+#' @param h Number of periods for forecasting. Ignored if `newdata`
 #' present.
-#' @param ts If \code{TRUE}, the forecasts will be treated as time series
-#' provided the original data is a time series; the \code{newdata} will be
-#' interpreted as related to the subsequent time periods. If \code{FALSE}, any
+#' @param ts If `TRUE`, the forecasts will be treated as time series
+#' provided the original data is a time series; the `newdata` will be
+#' interpreted as related to the subsequent time periods. If `FALSE`, any
 #' time series attributes of the original data will be ignored.
-#' @param ... Other arguments passed to \code{\link[stats]{predict.lm}()}.
-#' @inheritParams forecast.ts
+#' @param ... Other arguments passed to [stats::predict.lm()].
 #'
-#' @return An object of class "\code{forecast}".
-#'
-#' The function \code{summary} is used to obtain and print a summary of the
-#' results, while the function \code{plot} produces a plot of the forecasts and
-#' prediction intervals.
-#'
-#' The generic accessor functions \code{fitted.values} and \code{residuals}
-#' extract useful features of the value returned by \code{forecast.lm}.
-#'
-#' An object of class \code{"forecast"} is a list containing at least the
-#' following elements: \item{model}{A list containing information about the
-#' fitted model} \item{method}{The name of the forecasting method as a
-#' character string} \item{mean}{Point forecasts as a time series}
-#' \item{lower}{Lower limits for prediction intervals} \item{upper}{Upper
-#' limits for prediction intervals} \item{level}{The confidence values
-#' associated with the prediction intervals} \item{x}{The historical data for
-#' the response variable.} \item{residuals}{Residuals from the fitted model.
-#' That is x minus fitted values.} \item{fitted}{Fitted values}
+#' @return An object of class `forecast`.
+#' @inheritSection forecast.ts forecast class
 #' @author Rob J Hyndman
-#' @seealso \code{\link{tslm}}, \code{\link[stats]{lm}}.
+#' @seealso [tslm()], [stats::lm()].
 #' @keywords stats
 #' @examples
 #'
-#' y <- ts(rnorm(120,0,3) + 1:120 + 20*sin(2*pi*(1:120)/12), frequency=12)
+#' y <- ts(rnorm(120, 0, 3) + 1:120 + 20 * sin(2 * pi * (1:120) / 12), frequency = 12)
 #' fit <- tslm(y ~ trend + season)
-#' plot(forecast(fit, h=20))
+#' plot(forecast(fit, h = 20))
 #'
 #' @export
-forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambda=object$lambda, biasadj=NULL, ts=TRUE, ...) {
-  if(h < 1) {
+forecast.lm <- function(
+  object,
+  newdata,
+  h = 10,
+  level = c(80, 95),
+  fan = FALSE,
+  lambda = object$lambda,
+  biasadj = attr(lambda, "biasadj"),
+  ts = TRUE,
+  ...
+) {
+  if (h < 1) {
     stop("The forecast horizon must be at least 1.")
   }
-  if (fan) {
-    level <- seq(51, 99, by = 3)
-  } else {
-    if (min(level) > 0 && max(level) < 1) {
-      level <- 100 * level
-    } else if (min(level) < 0 || max(level) > 99.99) {
-      stop("Confidence limit out of range")
+  level <- getConfLevel(level, fan)
+  if(is.null(biasadj)) {
+    if(!is.null(object$lambda)) {
+      biasadj <- attr(object$lambda, "biasadj")
+    } else {
+      biasadj <- FALSE
     }
   }
-
   if (!is.null(object$data)) {
+    # no longer exists
     origdata <- object$data
-  } # no longer exists
-  else if (!is.null(object$model)) {
+  } else if (!is.null(object$model)) {
     origdata <- object$model
-  }
-  else if (!is.null(object$call$data)) {
+  } else if (!is.null(object$call$data)) {
     origdata <- try(object$data <- eval(object$call$data), silent = TRUE)
-    if (is.element("try-error", class(origdata))) {
-      stop("Could not find data. Try training your model using tslm() or attach data directly to the object via object$data<-modeldata for some object<-lm(formula,modeldata).")
+    if (inherits(origdata, "try-error")) {
+      stop(
+        "Could not find data. Try training your model using tslm() or attach data directly to the object via object$data<-modeldata for some object<-lm(formula,modeldata)."
+      )
     }
-  }
-  else {
+  } else {
     origdata <- as.data.frame(fitted(object) + residuals(object))
   }
-  if (!is.element("data.frame", class(origdata))) {
+  if (!is.data.frame(origdata)) {
     origdata <- as.data.frame(origdata)
-    if (!is.element("data.frame", class(origdata))) {
-      stop("Could not find data.  Try training your model using tslm() or attach data directly to the object via object$data<-modeldata for some object<-lm(formula,modeldata).")
+    if (!is.data.frame(origdata)) {
+      stop(
+        "Could not find data.  Try training your model using tslm() or attach data directly to the object via object$data<-modeldata for some object<-lm(formula,modeldata)."
+      )
     }
   }
 
   # Check if the forecasts will be time series
-  if (ts && is.element("ts", class(origdata))) {
+  if (ts && is.ts(origdata)) {
     tspx <- tsp(origdata)
     timesx <- time(origdata)
-  }
-  else if (ts && is.element("ts", class(origdata[, 1]))) {
+  } else if (ts && is.ts(origdata[, 1])) {
     tspx <- tsp(origdata[, 1])
     timesx <- time(origdata[, 1])
-  }
-  else if (ts && is.element("ts", class(fitted(object)))) {
+  } else if (ts && is.ts(fitted(object))) {
     tspx <- tsp(fitted(object))
     timesx <- time(fitted(object))
-  }
-  else {
+  } else {
     tspx <- NULL
   }
   # if(!is.null(object$call$subset))
@@ -307,27 +309,38 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
   oldterms <- terms(object)
   # Adjust terms for function variables and rename datamat colnames to match.
   if (!missing(newdata)) {
-    reqvars <- as.character(attr(object$terms, "variables")[-1])[-attr(object$terms, "response")]
+    reqvars <- as.character(attr(object$terms, "variables")[-1])[
+      -attr(object$terms, "response")
+    ]
     # Search for time series variables
     tsvar <- match(c("trend", "season"), reqvars, 0L)
     # Check if required variables are functions
-    fnvar <- sapply(reqvars, function(x) !(is.symbol(parse(text = x)[[1]]) || typeof(eval(parse(text = x)[[1]][[1]])) != "closure"))
+    fnvar <- sapply(reqvars, function(x) {
+      !(is.symbol(parse(text = x)[[1]]) ||
+        typeof(eval(parse(text = x)[[1]][[1]])) != "closure")
+    })
     if (!is.data.frame(newdata)) {
       newdata <- datamat(newdata)
-      colnames(newdata)[1] <- ifelse(sum(tsvar > 0), reqvars[-tsvar][1], reqvars[1])
-      warning("newdata column names not specified, defaulting to first variable required.")
+      colnames(newdata)[1] <- if (sum(tsvar > 0)) {
+        reqvars[-tsvar][1]
+      } else {
+        reqvars[1]
+      }
+      warning(
+        "newdata column names not specified, defaulting to first variable required."
+      )
     }
     oldnewdata <- newdata
     newvars <- make.names(colnames(newdata))
     # Check if variables are missing
     misvar <- match(make.names(reqvars), newvars, 0L) == 0L
-    if (any(!misvar & !fnvar)) { # If any variables are not missing/functions, add them to data
+    if (any(!misvar & !fnvar)) {
+      # If any variables are not missing/functions, add them to data
       tmpdata <- datamat(newdata[reqvars[!misvar]])
       rm1 <- FALSE
-    }
-    else {
+    } else {
       # Prefill the datamat
-      tmpdata <- datamat(1:NROW(newdata))
+      tmpdata <- datamat(seq_len(NROW(newdata)))
       rm1 <- TRUE
     }
     # Remove trend and seasonality from required variables
@@ -336,13 +349,14 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
       fnvar <- fnvar[-tsvar]
       misvar <- match(make.names(reqvars), newvars, 0L) == 0L
     }
-    if (any(misvar | fnvar)) { # If any variables are missing/functions
+    if (any(misvar | fnvar)) {
+      # If any variables are missing/functions
       reqvars <- reqvars[misvar | fnvar] # They are required
       fnvar <- fnvar[misvar | fnvar] # Update required function variables
       for (i in reqvars) {
         found <- FALSE
         subvars <- NULL
-        for (j in 1:length(object$coefficients)) {
+        for (j in seq_along(object$coefficients)) {
           subvars[j] <- pmatch(i, names(object$coefficients)[j])
         }
         subvars <- !is.na(subvars)
@@ -361,25 +375,40 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
             colnames(imat) <- subvars
             tmpdata[[length(tmpdata) + 1]] <- imat
             found <- TRUE
-          }
-          else {
+          } else {
             # Attempt to evaluate it as a function
             subvars <- i
           }
         }
-        if (length(subvars) == 1) { # Check if it is a function
-          if (fnvar[match(i, reqvars)]) { # Pre-evaluate function from data
-            tmpdata[[length(tmpdata) + 1]] <- eval(parse(text = subvars)[[1]], newdata)
+        if (length(subvars) == 1) {
+          # Check if it is a function
+          if (fnvar[match(i, reqvars)]) {
+            # Pre-evaluate function from data
+            tmpdata[[length(tmpdata) + 1]] <- eval(
+              parse(text = subvars)[[1]],
+              newdata
+            )
             found <- TRUE
           }
         }
         if (found) {
-          names(tmpdata)[length(tmpdata)] <- paste0("solvedFN___", match(i, reqvars))
+          names(tmpdata)[length(tmpdata)] <- paste0(
+            "solvedFN___",
+            match(i, reqvars)
+          )
           subvarloc <- match(i, lapply(attr(object$terms, "predvars"), deparse))
-          attr(object$terms, "predvars")[[subvarloc]] <- attr(object$terms, "variables")[[subvarloc]] <- parse(text = paste0("solvedFN___", match(i, reqvars)))[[1]]
-        }
-        else {
-          warning(paste0("Could not find required variable ", i, " in newdata. Specify newdata as a named data.frame"))
+          attr(object$terms, "predvars")[[subvarloc]] <- attr(
+            object$terms,
+            "variables"
+          )[[subvarloc]] <- parse(
+            text = paste0("solvedFN___", match(i, reqvars))
+          )[[1]]
+        } else {
+          warning(
+            "Could not find required variable ",
+            i,
+            " in newdata. Specify newdata as a named data.frame"
+          )
         }
       }
     }
@@ -391,11 +420,14 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
   }
   if (!is.null(tspx)) {
     # Always generate trend series
-    trend <- ifelse(is.null(origdata$trend), NCOL(origdata), max(origdata$trend)) + seq_len(h)
+    if (is.null(origdata$trend)) {
+      trend <- NCOL(origdata) + seq_len(h)
+    } else {
+      trend <- max(origdata$trend) + seq_len(h)
+    }
     if (!missing(newdata)) {
       newdata <- cbind(newdata, trend)
-    }
-    else {
+    } else {
       newdata <- datamat(trend)
     }
     # Always generate season series
@@ -427,28 +459,45 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
   predict_object <- object
   predict_object$residuals <- na.omit(as.numeric(object$residuals))
 
-  out <- list()
   nl <- length(level)
-  for (i in 1:nl)
-    out[[i]] <- predict(predict_object, newdata = newdata, se.fit = TRUE, interval = "prediction", level = level[i] / 100, ...)
+  out <- vector("list", nl)
+  for (i in seq_len(nl)) {
+    out[[i]] <- predict(
+      predict_object,
+      newdata = newdata,
+      se.fit = TRUE,
+      interval = "prediction",
+      level = level[i] / 100,
+      ...
+    )
+  }
 
   if (nrow(newdata) != length(out[[1]]$fit[, 1])) {
     stop("Variables not found in newdata")
   }
 
   object$terms <- oldterms
-  if (is.null(object$series)) { # Model produced via lm(), add series attribute
-    object$series <- deparse(attr(oldterms, "variables")[[1 + attr(oldterms, "response")]])
+  if (is.null(object$series)) {
+    # Model produced via lm(), add series attribute
+    object$series <- deparse(attr(oldterms, "variables")[[
+      1 + attr(oldterms, "response")
+    ]])
   }
   fcast <- list(
-    model = object, mean = out[[1]]$fit[, 1], lower = out[[1]]$fit[, 2], upper = out[[1]]$fit[, 3],
-    level = level, x = object$x, series = object$series
+    model = object,
+    mean = out[[1]]$fit[, 1],
+    lower = out[[1]]$fit[, 2],
+    upper = out[[1]]$fit[, 3],
+    level = level,
+    x = object$x,
+    series = object$series
   )
   fcast$method <- "Linear regression model"
   fcast$newdata <- oldnewdata
   fcast$residuals <- residuals(object)
   fcast$fitted <- fitted(object)
-  if (NROW(origdata) != NROW(fcast$x)) { # Give up on ts attributes as some data are missing
+  if (NROW(origdata) != NROW(fcast$x)) {
+    # Give up on ts attributes as some data are missing
     tspx <- NULL
   }
   if (NROW(fcast$x) != NROW(fcast$residuals)) {
@@ -461,16 +510,27 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
     tsp(fcast$x) <- tsp(fcast$residuals) <- tsp(fcast$fitted) <- tspx
   }
   if (nl > 1) {
-    for (i in 2:nl)
-    {
+    for (i in 2:nl) {
       fcast$lower <- cbind(fcast$lower, out[[i]]$fit[, 2])
       fcast$upper <- cbind(fcast$upper, out[[i]]$fit[, 3])
     }
   }
   if (!is.null(tspx)) {
-    fcast$mean <- ts(fcast$mean, start = tspx[2] + 1 / tspx[3], frequency = tspx[3])
-    fcast$upper <- ts(fcast$upper, start = tspx[2] + 1 / tspx[3], frequency = tspx[3])
-    fcast$lower <- ts(fcast$lower, start = tspx[2] + 1 / tspx[3], frequency = tspx[3])
+    fcast$mean <- ts(
+      fcast$mean,
+      start = tspx[2] + 1 / tspx[3],
+      frequency = tspx[3]
+    )
+    fcast$upper <- ts(
+      fcast$upper,
+      start = tspx[2] + 1 / tspx[3],
+      frequency = tspx[3]
+    )
+    fcast$lower <- ts(
+      fcast$lower,
+      start = tspx[2] + 1 / tspx[3],
+      frequency = tspx[3]
+    )
   }
 
   if (!is.null(lambda)) {
@@ -480,7 +540,7 @@ forecast.lm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lambd
     fcast$upper <- InvBoxCox(fcast$upper, lambda)
   }
 
-  return(structure(fcast, class = "forecast"))
+  structure(fcast, class = "forecast")
 }
 
 #' @export
@@ -488,7 +548,7 @@ summary.tslm <- function(object, ...) {
   # Remove NA from object structure as summary.lm() expects (#836)
   object$residuals <- na.omit(as.numeric(object$residuals))
   object$fitted.values <- na.omit(as.numeric(object$fitted.values))
-  if(!is.null(object$lambda)) {
+  if (!is.null(object$lambda)) {
     object$fitted.values <- BoxCox(object$fitted.values, object$lambda)
   }
   NextMethod()
@@ -503,14 +563,14 @@ summary.tslm <- function(object, ...) {
 #' R^2 values for a linear model.
 #'
 #'
-#' @param obj output from \code{\link[stats]{lm}} or \code{\link{tslm}}
+#' @param obj Output from [stats::lm()] or [tslm()].
 #' @return Numerical vector containing CV, AIC, AICc, BIC and AdjR2 values.
 #' @author Rob J Hyndman
-#' @seealso \code{\link[stats]{AIC}}
+#' @seealso [stats::AIC()]
 #' @keywords models
 #' @examples
 #'
-#' y <- ts(rnorm(120,0,3) + 20*sin(2*pi*(1:120)/12), frequency=12)
+#' y <- ts(rnorm(120, 0, 3) + 20 * sin(2 * pi * (1:120) / 12), frequency = 12)
 #' fit1 <- tslm(y ~ trend + season)
 #' fit2 <- tslm(y ~ season)
 #' CV(fit1)
@@ -518,7 +578,7 @@ summary.tslm <- function(object, ...) {
 #'
 #' @export
 CV <- function(obj) {
-  if (!is.element("lm", class(obj))) {
+  if (!inherits(obj, "lm")) {
     stop("This function is for objects of class lm")
   }
   n <- length(obj$residuals)
@@ -526,9 +586,9 @@ CV <- function(obj) {
   aic <- extractAIC(obj)[2] + 2 # add 2 for the variance estimate
   aicc <- aic + 2 * (k + 2) * (k + 3) / (n - k - 3)
   bic <- aic + (k + 2) * (log(n) - 2)
-  cv <- mean((residuals(obj) / (1 - hatvalues(obj))) ^ 2, na.rm = TRUE)
+  cv <- mean((residuals(obj) / (1 - hatvalues(obj)))^2, na.rm = TRUE)
   adjr2 <- summary(obj)$adj
   out <- c(cv, aic, aicc, bic, adjr2)
   names(out) <- c("CV", "AIC", "AICc", "BIC", "AdjR2")
-  return(out)
+  out
 }

@@ -29,12 +29,11 @@ ets(
   restrict = TRUE,
   allow.multiplicative.trend = FALSE,
   use.initial.values = FALSE,
-  na.action = c("na.contiguous", "na.interp", "na.fail"),
   ...
 )
 }
 \arguments{
-\item{y}{a numeric vector or time series of class \code{ts}}
+\item{y}{a numeric vector or univariate time series of class \code{ts}}
 
 \item{model}{Usually a three-character string identifying method using the
 framework terminology of Hyndman et al. (2002) and Hyndman et al. (2008).
@@ -45,41 +44,41 @@ the season type ("N","A","M" or "Z"). In all cases, "N"=none, "A"=additive,
 simple exponential smoothing with additive errors, "MAM" is multiplicative
 Holt-Winters' method with multiplicative errors, and so on.
 
-It is also possible for the model to be of class \code{"ets"}, and equal to
+It is also possible for the model to be of class \code{ets}, and equal to
 the output from a previous call to \code{ets}. In this case, the same model
 is fitted to \code{y} without re-estimating any smoothing parameters. See
 also the \code{use.initial.values} argument.}
 
-\item{damped}{If TRUE, use a damped trend (either additive or
-multiplicative). If NULL, both damped and non-damped trends will be tried
-and the best model (according to the information criterion \code{ic})
+\item{damped}{If \code{TRUE}, use a damped trend (either additive or
+multiplicative). If \code{NULL}, both damped and non-damped trends will be
+tried and the best model (according to the information criterion \code{ic})
 returned.}
 
-\item{alpha}{Value of alpha. If NULL, it is estimated.}
+\item{alpha}{Value of alpha. If \code{NULL}, it is estimated.}
 
-\item{beta}{Value of beta. If NULL, it is estimated.}
+\item{beta}{Value of beta. If \code{NULL}, it is estimated.}
 
-\item{gamma}{Value of gamma. If NULL, it is estimated.}
+\item{gamma}{Value of gamma. If \code{NULL}, it is estimated.}
 
-\item{phi}{Value of phi. If NULL, it is estimated.}
+\item{phi}{Value of phi. If \code{NULL}, it is estimated.}
 
-\item{additive.only}{If TRUE, will only consider additive models. Default is
-FALSE.}
+\item{additive.only}{If \code{TRUE}, will only consider additive models. Default is
+\code{FALSE}. When \code{lambda} is specified, \code{additive.only} is set to \code{TRUE}.}
 
-\item{lambda}{Box-Cox transformation parameter. If \code{lambda="auto"},
+\item{lambda}{Box-Cox transformation parameter. If \code{lambda = "auto"},
 then a transformation is automatically selected using \code{BoxCox.lambda}.
 The transformation is ignored if NULL. Otherwise,
-data transformed before model is estimated. When \code{lambda} is specified,
-\code{additive.only} is set to \code{TRUE}.}
+data transformed before model is estimated.}
 
 \item{biasadj}{Use adjusted back-transformed mean for Box-Cox
-transformations. If transformed data is used to produce forecasts and fitted values,
-a regular back transformation will result in median forecasts. If biasadj is TRUE,
-an adjustment will be made to produce mean forecasts and fitted values.}
+transformations. If transformed data is used to produce forecasts and fitted
+values, a regular back transformation will result in median forecasts. If
+biasadj is \code{TRUE}, an adjustment will be made to produce mean forecasts
+and fitted values.}
 
-\item{lower}{Lower bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.}
+\item{lower}{Lower bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds = "admissible"}.}
 
-\item{upper}{Upper bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.}
+\item{upper}{Upper bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds = "admissible"}.}
 
 \item{opt.crit}{Optimization criterion. One of "mse" (Mean Square Error),
 "amse" (Average MSE over first \code{nmse} forecast horizons), "sigma"
@@ -88,7 +87,7 @@ an adjustment will be made to produce mean forecasts and fitted values.}
 
 \item{nmse}{Number of steps for average multistep MSE (1<=\code{nmse}<=30).}
 
-\item{bounds}{Type of parameter space to impose: \code{"usual" } indicates
+\item{bounds}{Type of parameter space to impose: \code{"usual"} indicates
 all parameters must lie between specified lower and upper bounds;
 \code{"admissible"} indicates parameters must lie in the admissible space;
 \code{"both"} (default) takes the intersection of these regions.}
@@ -101,20 +100,16 @@ will not be allowed.}
 \item{allow.multiplicative.trend}{If \code{TRUE}, models with multiplicative
 trend are allowed when searching for a model. Otherwise, the model space
 excludes them. This argument is ignored if a multiplicative trend model is
-explicitly requested (e.g., using \code{model="MMN"}).}
+explicitly requested (e.g., using \code{model = "MMN"}).}
 
 \item{use.initial.values}{If \code{TRUE} and \code{model} is of class
 \code{"ets"}, then the initial values in the model are also not
 re-estimated.}
 
-\item{na.action}{A function which indicates what should happen when the data
-contains NA values. By default, the largest contiguous portion of the
-time-series will be used.}
-
-\item{...}{Other undocumented arguments.}
+\item{...}{Other arguments are ignored.}
 }
 \value{
-An object of class "\code{ets}".
+An object of class \code{ets}.
 
 The generic accessor functions \code{fitted.values} and \code{residuals}
 extract useful features of the value returned by \code{ets} and associated
@@ -148,11 +143,10 @@ Statistical Mathematics}, \bold{60}(2), 407--426.
 
 Hyndman, R.J., Koehler, A.B., Ord, J.K., and Snyder, R.D. (2008)
 \emph{Forecasting with exponential smoothing: the state space approach},
-Springer-Verlag. \url{http://www.exponentialsmoothing.net}.
+Springer-Verlag. \url{https://robjhyndman.com/expsmooth/}.
 }
 \seealso{
-\code{\link[stats]{HoltWinters}}, \code{\link{rwf}},
-\code{\link{Arima}}.
+\code{\link[stats:HoltWinters]{stats::HoltWinters()}}, \code{\link[=rwf]{rwf()}}, \code{\link[=Arima]{Arima()}}.
 }
 \author{
 Rob J Hyndman

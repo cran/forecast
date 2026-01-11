@@ -30,8 +30,8 @@
 \method{fitted}{tbats}(object, h = 1, ...)
 }
 \arguments{
-\item{object}{An object of class "\code{Arima}", "\code{bats}",
-"\code{tbats}", "\code{ets}" or "\code{nnetar}".}
+\item{object}{An object of class \code{Arima}, \code{bats}, \code{tbats}, \code{ets} or
+\code{nnetar}.}
 
 \item{h}{The number of steps to forecast ahead.}
 
@@ -46,18 +46,17 @@ Returns h-step forecasts for the data used in fitting the model.
 \examples{
 fit <- ets(WWWusage)
 plot(WWWusage)
-lines(fitted(fit), col='red')
-lines(fitted(fit, h=2), col='green')
-lines(fitted(fit, h=3), col='blue')
-legend("topleft", legend=paste("h =",1:3), col=2:4, lty=1)
+lines(fitted(fit), col = "red")
+lines(fitted(fit, h = 2), col = "green")
+lines(fitted(fit, h = 3), col = "blue")
+legend("topleft", legend = paste("h =", 1:3), col = 2:4, lty = 1)
 
 }
 \seealso{
-\code{\link{forecast.Arima}}, \code{\link{forecast.bats}},
-\code{\link{forecast.tbats}}, \code{\link{forecast.ets}},
-\code{\link{forecast.nnetar}}, \code{\link{residuals.Arima}},
-\code{\link{residuals.bats}}, \code{\link{residuals.tbats}},
-\code{\link{residuals.ets}}, \code{\link{residuals.nnetar}}.
+\code{\link[=forecast.Arima]{forecast.Arima()}}, \code{\link[=forecast.bats]{forecast.bats()}}, \code{\link[=forecast.tbats]{forecast.tbats()}},
+\code{\link[=forecast.ets]{forecast.ets()}}, \code{\link[=forecast.nnetar]{forecast.nnetar()}}, \code{\link[=residuals.Arima]{residuals.Arima()}},
+\code{\link[=residuals.bats]{residuals.bats()}} \code{\link[=residuals.tbats]{residuals.tbats()}}, \code{\link[=residuals.ets]{residuals.ets()}},
+\code{\link[=residuals.nnetar]{residuals.nnetar()}}.
 }
 \author{
 Rob J Hyndman & Mitchell O'Hara-Wild
