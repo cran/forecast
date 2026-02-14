@@ -1,139 +1,109 @@
-#include "calcBATS.h"
+#include <RcppArmadillo.h>
+//[[Rcpp::depends(RcppArmadillo)]]
 
-using namespace Rcpp ;
+using namespace Rcpp;
 
-SEXP makeTBATSWMatrix(SEXP smallPhi_s, SEXP kVector_s, SEXP arCoefs_s, SEXP maCoefs_s, SEXP tau_s) {
-	BEGIN_RCPP
-	double *smallPhi, *arCoefs, *maCoefs;
-	int *kVector, *tau;
-	int adjustPhi = 0;
-	R_len_t numSeasonal = 0, numCols = 1, p = 0, q = 0;
+// [[Rcpp::export]]
+List makeTBATSWMatrix(const Nullable<double> &smallPhi,
+                      const Nullable<IntegerVector> &kVector,
+                      const Nullable<NumericVector> &arCoefs,
+                      const Nullable<NumericVector> &maCoefs,
+                      const Nullable<int> &tau) {
+  int adjustPhi = 0;
+  int numCols = 1;
+  int tauVal = 0;
+  int p = 0;
+  int q = 0;
 
-	if(!Rf_isNull(smallPhi_s)) {
-		smallPhi = REAL(smallPhi_s);
-		adjustPhi = 1;
-		numCols = numCols + 1;
-	}
-	if(!Rf_isNull(kVector_s)) {
-		tau = &INTEGER(tau_s)[0];
-		kVector = INTEGER(kVector_s);
-		numSeasonal = LENGTH(kVector_s);
-		numCols = numCols + *tau;
-	}
-	if(!Rf_isNull(arCoefs_s)) {
-			arCoefs = REAL(arCoefs_s);
-			p = LENGTH(arCoefs_s);
-			numCols = numCols + p;
-	}
-	if(!Rf_isNull(maCoefs_s)) {
-			maCoefs = REAL(maCoefs_s);
-			q = LENGTH(maCoefs_s);
-			numCols = numCols + q;
-	}
+  if (smallPhi.isNotNull()) {
+    adjustPhi = 1;
+    numCols++;
+  }
 
-	NumericMatrix wTranspose_r(1, numCols);
-	arma::mat wTranspose(wTranspose_r.begin(), wTranspose_r.nrow(), wTranspose_r.ncol(), false);
+  if (kVector.isNotNull()) {
+    tauVal = as<int>(tau);
+    numCols += tauVal;
+  }
 
-	if(!Rf_isNull(kVector_s)) {
-			wTranspose.zeros();
+  if (arCoefs.isNotNull()) {
+    p = as<NumericVector>(arCoefs).size();
+    numCols += p;
+  }
 
-			int position = adjustPhi;
+  if (maCoefs.isNotNull()) {
+    q = as<NumericVector>(maCoefs).size();
+    numCols += q;
+  }
 
-			for(R_len_t s = 0; s < numSeasonal; s++) {
-				//wTranspose.submat(0,(position+1), 0, (position + kVector[s])) = arma::ones<mat>(1,  kVector[s]);
-				for(int j = (position+1); j <= (position + kVector[s]); j++) {
-					wTranspose(0,j) = 1;
-				}
-				position = position + (2 * kVector[s]);
+  arma::mat wTranspose(1, numCols, arma::fill::zeros);
+  wTranspose(0, 0) = 1.0;
 
-			}
+  if (kVector.isNotNull()) {
+    const IntegerVector kVec = as<IntegerVector>(kVector);
+    int position = adjustPhi;
+    for (int s = 0; s < kVec.size(); s++) {
+      for (int j = position + 1; j <= position + kVec[s]; j++) {
+        wTranspose(0, j) = 1.0;
+      }
+      position += 2 * kVec[s];
+    }
+  }
 
-	}
+  if (adjustPhi == 1) {
+    wTranspose(0, 1) = as<double>(smallPhi);
+  }
 
-	wTranspose(0,0) = 1;
+  if (arCoefs.isNotNull()) {
+    const NumericVector ar = as<NumericVector>(arCoefs);
+    for (int i = 1; i <= p; i++) {
+      wTranspose(0, adjustPhi + tauVal + i) = ar[i - 1];
+    }
+  }
 
-	if(adjustPhi == 1) {
-		wTranspose(0,1) = *smallPhi;
-	}
+  if (maCoefs.isNotNull()) {
+    const NumericVector ma = as<NumericVector>(maCoefs);
+    for (int i = 1; i <= q; i++) {
+      wTranspose(0, adjustPhi + tauVal + p + i) = ma[i - 1];
+    }
+  }
 
-	if(!Rf_isNull(arCoefs_s)) {
-		for(R_len_t i = 1; i <= p; i++) {
-			wTranspose(0,(adjustPhi + *tau +i)) = arCoefs[(i-1)];
-		}
-	}
-
-	if(!Rf_isNull(maCoefs_s)) {
-			for(R_len_t i = 1; i <= q; i++) {
-				wTranspose(0,(adjustPhi + *tau + p + i)) = maCoefs[(i-1)];
-			}
-
-	}
-	arma::mat w = arma::trans(wTranspose);
-	smallPhi = 0;
-	arCoefs = 0;
-	maCoefs = 0;
-	kVector = 0;
-	return List::create(
-			Named("w") = w,
-			Named("w.transpose") = wTranspose
-			);
-
-	END_RCPP
+  return List::create(
+    Named("w") = wTranspose.t(),
+    Named("w.transpose") = wTranspose
+  );
 }
 
-SEXP makeCIMatrix(SEXP k_s, SEXP m_s) {
-	BEGIN_RCPP
+// [[Rcpp::export]]
+arma::mat makeCIMatrix(int k, double m) {
+  const double pi = arma::datum::pi;
+  arma::mat C(k, k, arma::fill::zeros);
 
-  double pi = arma::datum::pi;
-	double lambda, *m;
-	int *k;
-
-	k = &INTEGER(k_s)[0];
-	m = &REAL(m_s)[0];
-	NumericMatrix C(*k, *k);
-	for(int j = 1; j<=*k; j++) {
-		lambda = (2 * pi * j) / *m;
-		C((j-1),(j-1)) = std::cos(lambda);
-	}
-	return wrap(C);
-
-	END_RCPP
+  for (int j = 1; j <= k; j++) {
+    C(j - 1, j - 1) = std::cos((2 * pi * j) / m);
+  }
+  return C;
 }
 
-SEXP makeSIMatrix(SEXP k_s, SEXP m_s) {
-	BEGIN_RCPP
+// [[Rcpp::export]]
+arma::mat makeSIMatrix(int k, double m) {
+  const double pi = arma::datum::pi;
+  arma::mat S(k, k, arma::fill::zeros);
 
-  double pi = arma::datum::pi;
-	double lambda, *m;
-	int *k;
-	k = &INTEGER(k_s)[0];
-	m = &REAL(m_s)[0];
-
-	NumericMatrix S(*k, *k);
-	for(int j = 1; j<=*k; j++) {
-		lambda = (2 * pi * j) / *m;
-		S((j-1),(j-1)) = std::sin(lambda);
-	}
-	return wrap(S);
-
-	END_RCPP
+  for (int j = 1; j <= k; j++) {
+    double lambda = (2 * pi * j) / m;
+    S(j - 1, j - 1) = std::sin(lambda);
+  }
+  return S;
 }
 
-SEXP makeAIMatrix(SEXP C_s, SEXP S_s, SEXP k_s) {
-	int *k;
-	k = &INTEGER(k_s)[0];
+// [[Rcpp::export]]
+arma::mat makeAIMatrix(const arma::mat &C, const arma::mat &S, int k) {
+  arma::mat A(k * 2, k * 2);
 
-	NumericMatrix C_r(C_s);
-	NumericMatrix S_r(S_s);
+  A.submat(0, 0, k - 1, k - 1) = C;
+  A.submat(0, k, k - 1, k * 2 - 1) = S;
+  A.submat(k, 0, k * 2 - 1, k - 1) = -S;
+  A.submat(k, k, k * 2 - 1, k * 2 - 1) = C;
 
-	arma::mat C(C_r.begin(), C_r.nrow(), C_r.ncol(), false);
-	arma::mat S(S_r.begin(), S_r.nrow(), S_r.ncol(), false);
-	arma::mat A((*k * 2), (*k * 2));
-	A.submat(0,0, (*k -1), (*k -1)) = C;
-	A.submat(0,*k, (*k -1), ((*k *2) -1)) = S;
-	A.submat(*k,0, ((*k *2) -1), (*k -1)) = (-1 * S);
-	A.submat(*k,*k, ((*k *2) -1), ((*k *2) -1)) = C;
-
-	return wrap(A);
-
+  return A;
 }

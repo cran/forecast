@@ -13,7 +13,7 @@ forecast.tbats <- function(
   ...
 ) {
   # Check if forecast.tbats called incorrectly
-  if (inherits(object, "bats") & !inherits(object, "tbats")) {
+  if (inherits(object, "bats") && !inherits(object, "tbats")) {
     return(forecast.bats(object, h, level, fan, biasadj, ...))
   }
 
@@ -26,8 +26,8 @@ forecast.tbats <- function(
     ts.frequency <- 1
   }
 
-  if(is.null(biasadj)) {
-    if(!is.null(object$lambda)) {
+  if (is.null(biasadj)) {
+    if (!is.null(object$lambda)) {
       biasadj <- attr(object$lambda, "biasadj")
     } else {
       biasadj <- FALSE
@@ -59,25 +59,21 @@ forecast.tbats <- function(
   }
 
   # Set up the matrices
-  w <- .Call(
-    "makeTBATSWMatrix",
-    smallPhi_s = object$damping.parameter,
-    kVector_s = as.integer(object$k.vector),
-    arCoefs_s = object$ar.coefficients,
-    maCoefs_s = object$ma.coefficients,
-    tau_s = as.integer(tau),
-    PACKAGE = "forecast"
+  w <- makeTBATSWMatrix(
+    smallPhi = object$damping.parameter,
+    kVector = as.integer(object$k.vector),
+    arCoefs = object$ar.coefficients,
+    maCoefs = object$ma.coefficients,
+    tau = as.integer(tau)
   )
 
   if (!is.null(object$seasonal.periods)) {
     gamma.bold <- matrix(0, nrow = 1, ncol = tau)
-    .Call(
-      "updateTBATSGammaBold",
-      gammaBold_s = gamma.bold,
-      kVector_s = as.integer(object$k.vector),
-      gammaOne_s = object$gamma.one.values,
-      gammaTwo_s = object$gamma.two.values,
-      PACKAGE = "forecast"
+    updateTBATSGammaBold(
+      gammaBold = gamma.bold,
+      kVector = as.integer(object$k.vector),
+      gammaOne = object$gamma.one.values,
+      gammaTwo = object$gamma.two.values
     )
   } else {
     gamma.bold <- NULL
@@ -89,13 +85,11 @@ forecast.tbats <- function(
   if (object$q != 0) {
     g[(1 + adj.beta + tau + object$p + 1), 1] <- 1
   }
-  .Call(
-    "updateTBATSGMatrix",
-    g_s = g,
-    gammaBold_s = gamma.bold,
-    alpha_s = object$alpha,
-    beta_s = object$beta.v,
-    PACKAGE = "forecast"
+  updateTBATSGMatrix(
+    g = g,
+    gammaBold = gamma.bold,
+    alpha = object$alpha,
+    beta = object$beta.v
   )
 
   F <- makeTBATSFMatrix(
@@ -223,7 +217,7 @@ as.character.tbats <- function(x, ...) {
   if (!is.null(x$seasonal.periods)) {
     name <- paste0(name, " {")
     M <- length(x$seasonal.periods)
-    for (i in 1:M) {
+    for (i in seq_len(M)) {
       name <- paste0(
         name,
         "<",

@@ -17,10 +17,10 @@ simulate_forecast <- function(
     if (bootstrap) {
       warning("innov being used, not bootstrap")
     }
-    bootstrap = FALSE
+    bootstrap <- FALSE
   }
   sim <- matrix(NA, nrow = npaths, ncol = h)
-  for (i in seq(npaths)) {
+  for (i in seq_len(npaths)) {
     sim[i, ] <- simulate(
       object,
       nsim = h,
@@ -43,11 +43,11 @@ simulate_forecast <- function(
   colnames(lower) <- colnames(upper) <- paste0(level, "%")
   y <- getResponse(object)
   tspy <- tsp(y)
-  if(is.null(tspy)) {
+  if (is.null(tspy)) {
     tspy <- c(1, length(y), 1)
   }
   m <- tspy[3]
-  lower <- ts(lower, start = tspy[2] + 1/m, frequency = m)
-  upper <- ts(upper, start = tspy[2] + 1/m, frequency = m)
+  lower <- ts(lower, start = tspy[2] + 1 / m, frequency = m)
+  upper <- ts(upper, start = tspy[2] + 1 / m, frequency = m)
   return(list(lower = lower, upper = upper))
 }

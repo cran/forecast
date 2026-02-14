@@ -66,24 +66,20 @@ forecast.bats <- function(
   x <- matrix(0, nrow = nrow(object$x), ncol = h)
   y.forecast <- numeric(h)
   # w <- makeWMatrix(small.phi=object$damping.parameter, seasonal.periods=object$seasonal.periods, ar.coefs=object$ar.coefficients, ma.coefs=object$ma.coefficients)
-  w <- .Call(
-    "makeBATSWMatrix",
-    smallPhi_s = object$damping.parameter,
-    sPeriods_s = object$seasonal.periods,
-    arCoefs_s = object$ar.coefficients,
-    maCoefs_s = object$ma.coefficients,
-    PACKAGE = "forecast"
+  w <- makeBATSWMatrix(
+    smallPhi = object$damping.parameter,
+    sPeriods = object$seasonal.periods,
+    arCoefs = object$ar.coefficients,
+    maCoefs = object$ma.coefficients
   )
   # g <- makeGMatrix(alpha=object$alpha, beta=object$beta, gamma.vector=object$gamma.values, seasonal.periods=object$seasonal.periods, p=length(object$ar.coefficients), q=length(object$ma.coefficients))
-  g <- .Call(
-    "makeBATSGMatrix",
+  g <- makeBATSGMatrix(
     object$alpha,
     object$beta,
     object$gamma.values,
     object$seasonal.periods,
     length(object$ar.coefficients),
-    length(object$ma.coefficients),
-    PACKAGE = "forecast"
+    length(object$ma.coefficients)
   )
 
   F <- makeFMatrix(
@@ -111,7 +107,7 @@ forecast.bats <- function(
   variance.multiplier <- numeric(h)
   variance.multiplier[1] <- 1
   if (h > 1) {
-    for (j in 1:(h - 1)) {
+    for (j in seq_len(h - 1)) {
       if (j == 1) {
         f.running <- diag(ncol(F))
       } else {

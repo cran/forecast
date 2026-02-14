@@ -1,15 +1,5 @@
 globalVariables(".data")
 
-#' @inherit ggplot2::autolayer
-#' @export
-autolayer <- function(object, ...) {
-  UseMethod("autolayer")
-}
-
-#' @importFrom ggplot2 autoplot
-#' @export
-ggplot2::autoplot
-
 ggAddExtras <- function(xlab = NA, ylab = NA, main = NA) {
   dots <- eval.parent(quote(list(...)))
   extras <- list()
@@ -106,13 +96,6 @@ ggtsbreaks <- function(x) {
 #'
 #' @export
 autoplot.acf <- function(object, ci = 0.95, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!inherits(object, "acf")) {
     stop("autoplot.acf requires a acf object, use object=object")
   }
@@ -227,7 +210,7 @@ ggAcf <- function(
     plot = FALSE
   )
   object$tsp <- tsp(x)
-  object$periods <- attributes(x)$msts
+  object$periods <- attr(x, "msts")
   object$series <- deparse1(substitute(x))
   if (plot) {
     autoplot(object, ...)
@@ -255,7 +238,7 @@ ggPacf <- function(
     plot = FALSE
   )
   object$tsp <- tsp(x)
-  object$periods <- attributes(x)$msts
+  object$periods <- attr(x, "msts")
   object$series <- deparse1(substitute(x))
   if (plot) {
     autoplot(object, ...)
@@ -295,13 +278,6 @@ ggCcf <- function(
 #' @rdname autoplot.acf
 #' @export
 autoplot.mpacf <- function(object, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!inherits(object, "mpacf")) {
     stop("autoplot.mpacf requires a mpacf object, use object=object")
   }
@@ -364,7 +340,7 @@ autoplot.mpacf <- function(object, ...) {
 
   # Add seasonal x-axis
   if (msts) {
-    periods <- attributes(object$x)$msts
+    periods <- attr(object$x, "msts")
     periods <- periods[periods != freq]
     minorbreaks <- periods * seq(-20:20)
   } else {
@@ -426,13 +402,6 @@ ggtaperedpacf <- function(x, ...) {
 #' @rdname plot.Arima
 #' @export
 autoplot.Arima <- function(object, type = c("both", "ar", "ma"), ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (is.Arima(object)) {
     # Detect type
     type <- match.arg(type)
@@ -544,13 +513,6 @@ autoplot.decomposed.ts <- function(
   range.bars = NULL,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!inherits(object, "decomposed.ts")) {
     stop("autoplot.decomposed.ts requires a decomposed.ts object")
   }
@@ -661,13 +623,6 @@ autoplot.decomposed.ts <- function(
 #' @rdname plot.ets
 #' @export
 autoplot.ets <- function(object, range.bars = NULL, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!is.ets(object)) {
     stop("autoplot.ets requires an ets object, use object=object")
   }
@@ -832,13 +787,6 @@ autoplot.forecast <- function(
   flwd = 0.5,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!is.forecast(object)) {
     stop("autoplot.forecast requires a forecast object, use object=object")
   }
@@ -1046,13 +994,6 @@ autoplot.mforecast <- function(
   colour = FALSE,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!is.mforecast(object)) {
     stop("autoplot.mforecast requires a mforecast object, use object=object")
   }
@@ -1081,13 +1022,6 @@ autoplot.mforecast <- function(
     return(p)
   } else {
     # lm forecasts
-    if (!requireNamespace("grid")) {
-      stop(
-        "grid is needed for this function to work. Install it via install.packages(\"grid\")",
-        call. = FALSE
-      )
-    }
-
     K <- length(object$forecast)
     if (K < 2) {
       warning("Expected at least two plots but forecast required less.")
@@ -1108,7 +1042,7 @@ autoplot.mforecast <- function(
       layout = grid::grid.layout(nrow(gridlayout), ncol(gridlayout))
     ))
 
-    for (i in 1:K) {
+    for (i in seq_len(K)) {
       partialfcast <- object$forecast[[i]]
       partialfcast$model <- mlmsplit(object$model, index = i)
       matchidx <- as.data.frame(which(gridlayout == i, arr.ind = TRUE))
@@ -1145,19 +1079,6 @@ ggtsdisplay <- function(
   theme = NULL,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-  if (!requireNamespace("grid", quietly = TRUE)) {
-    stop(
-      "grid is needed for this function to work. Install it via install.packages(\"grid\")",
-      call. = FALSE
-    )
-  }
-
   if (NCOL(x) > 1) {
     stop("ggtsdisplay is only for univariate time series")
   }
@@ -1340,13 +1261,6 @@ gglagplot <- function(
   seasonal = TRUE,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   freq <- frequency(x)
   if (freq > 1) {
     linecol <- cycle(x)
@@ -1501,13 +1415,6 @@ gglagchull <- function(
   diag.col = "gray",
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   # Make sure lags is evaluated
   tmp <- lags
   x <- as.matrix(x)
@@ -1607,13 +1514,6 @@ ggsubseriesplot <- function(
   phase = cycle(x),
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!is.ts(x)) {
     stop("ggsubseriesplot requires a ts object, use x=object")
   }
@@ -1730,12 +1630,6 @@ ggseasonplot <- function(
   labelgap = 0.04,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
   if (!is.ts(x)) {
     stop("autoplot.seasonplot requires a ts object, use x=object")
   }
@@ -1897,13 +1791,6 @@ ggseasonplot <- function(
 #' @rdname plot.forecast
 #' @export
 autoplot.splineforecast <- function(object, PI = TRUE, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   p <- autoplot(object$x) + autolayer(object)
   p <- p + ggplot2::geom_point(size = 2)
   fit <- data.frame(
@@ -1927,13 +1814,6 @@ autoplot.splineforecast <- function(object, PI = TRUE, ...) {
 #' @rdname autoplot.seas
 #' @export
 autoplot.stl <- function(object, labels = NULL, range.bars = TRUE, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!inherits(object, "stl")) {
     stop("autoplot.stl requires a stl object, use x=object")
   }
@@ -2045,13 +1925,6 @@ autoplot.stl <- function(object, labels = NULL, range.bars = TRUE, ...) {
 #' @rdname autoplot.seas
 #' @export
 autoplot.StructTS <- function(object, labels = NULL, range.bars = TRUE, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!inherits(object, "StructTS")) {
     stop("autoplot.StructTS requires a StructTS object.")
   }
@@ -2162,12 +2035,6 @@ autoplot.StructTS <- function(object, labels = NULL, range.bars = TRUE, ...) {
 #'
 #' @export
 autoplot.seas <- function(object, labels = NULL, range.bars = NULL, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
   if (!inherits(object, "seas")) {
     stop("autoplot.seas requires a seas object")
   }
@@ -2283,12 +2150,6 @@ autoplot.seas <- function(object, labels = NULL, range.bars = NULL, ...) {
 #' @rdname autoplot.ts
 #' @export
 autolayer.mts <- function(object, colour = TRUE, series = NULL, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
   cl <- match.call()
   cl[[1]] <- quote(autolayer)
   cl$object <- quote(object[, i])
@@ -2326,13 +2187,6 @@ autolayer.msts <- function(object, series = NULL, ...) {
 #' @rdname autoplot.ts
 #' @export
 autolayer.ts <- function(object, colour = TRUE, series = NULL, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   tsdata <- data.frame(
     timeVal = as.numeric(time(object)),
     series = if (is.null(series)) deparse1(substitute(object)) else series,
@@ -2458,13 +2312,6 @@ autoplot.ts <- function(
   main = NULL,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!is.ts(object)) {
     stop("autoplot.ts requires a ts object, use object=object")
   }
@@ -2517,13 +2364,6 @@ autoplot.mts <- function(
   main = NULL,
   ...
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (!stats::is.mts(object)) {
     stop("autoplot.mts requires a mts object, use x=object")
   }
@@ -2867,7 +2707,6 @@ GeomForecastPoint <- ggplot2::ggproto(
 )
 
 blendHex <- function(mixcol, seqcol, alpha = 1) {
-  requireNamespace("methods")
   if (is.na(seqcol)) {
     return(mixcol)
   }
@@ -3143,13 +2982,6 @@ gghistogram <- function(
   bins,
   boundary = 0
 ) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop(
-      "ggplot2 is needed for this function to work. Install it via install.packages(\"ggplot2\")",
-      call. = FALSE
-    )
-  }
-
   if (missing(bins)) {
     bins <- min(500, grDevices::nclass.FD(na.exclude(x)))
   }

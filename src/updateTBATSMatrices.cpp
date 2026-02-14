@@ -1,58 +1,41 @@
-#include "calcBATS.h"
+#include <RcppArmadillo.h>
+// [[Rcpp::depends(RcppArmadillo)]]
 
-using namespace Rcpp ;
+using namespace Rcpp;
 
-SEXP updateTBATSGammaBold(SEXP gammaBold_s, SEXP kVector_s, SEXP gammaOne_s, SEXP gammaTwo_s) {
-	BEGIN_RCPP
+// [[Rcpp::export]]
+void updateTBATSGammaBold(NumericMatrix &gammaBold,
+                          const IntegerVector &kVector,
+                          const NumericVector &gammaOne,
+                          const NumericVector &gammaTwo) {
+  int endPos = 0;
 
-	NumericMatrix gammaBold(gammaBold_s);
-	IntegerVector kVector(kVector_s);
-	NumericVector gammaOne(gammaOne_s);
-	NumericVector gammaTwo(gammaTwo_s);
-
-	int endPos = 0;
-	int numK = kVector.size();
-
-	for(int i =0; i < numK; i++) {
-		for(int j = endPos; j < (kVector(i) + endPos); j++) {
-			gammaBold(0,j)=gammaOne(i);
-		}
-		for(int j = (kVector(i) + endPos); j < ((2*kVector(i)) + endPos); j++) {
-			gammaBold(0,j)=gammaTwo(i);
-		}
-		endPos += 2 * kVector(i);
-	}
-
-	return R_NilValue;
-
-	END_RCPP
-
+  for (int i = 0; i < kVector.size(); i++) {
+    for (int j = endPos; j < kVector[i] + endPos; j++) {
+      gammaBold(0, j) = gammaOne[i];
+    }
+    for (int j = kVector[i] + endPos; j < 2 * kVector[i] + endPos; j++) {
+      gammaBold(0, j) = gammaTwo[i];
+    }
+    endPos += 2 * kVector[i];
+  }
 }
 
-SEXP updateTBATSGMatrix(SEXP g_s, SEXP gammaBold_s, SEXP alpha_s, SEXP beta_s) {
-	BEGIN_RCPP
+// [[Rcpp::export]]
+void updateTBATSGMatrix(arma::mat &g,
+                        const Nullable<arma::mat> &gammaBold,
+                        double alpha,
+                        const Nullable<double> &beta) {
+  int adjBeta = 0;
+  g(0, 0) = alpha;
 
-	int adjBeta = 0;
+  if (beta.isNotNull()) {
+    g(1, 0) = as<double>(beta);
+    adjBeta = 1;
+  }
 
-	NumericMatrix g_r(g_s);
-
-	//Rprintf("one\n");
-	g_r(0,0) = REAL(alpha_s)[0];
-	//Rprintf("two\n");
-	if(!Rf_isNull(beta_s)) {
-		//Rprintf("three\n");
-		g_r(1,0) = REAL(beta_s)[0];
-		adjBeta = 1;
-	}
-	//Rprintf("four\n");
-	if(!Rf_isNull(gammaBold_s)) {
-		NumericMatrix gammaBold_r(gammaBold_s);
-		arma::mat gammaBold(gammaBold_r.begin(), gammaBold_r.nrow(), gammaBold_r.ncol(), false);
-		arma::mat g(g_r.begin(), g_r.nrow(), g_r.ncol(), false);
-		g.submat((adjBeta+1), 0,(adjBeta+gammaBold.n_cols), 0) = trans(gammaBold);
-	}
-	//Rprintf("five\n");
-	return R_NilValue;
-
-	END_RCPP
+  if (gammaBold.isNotNull()) {
+    arma::mat gb = as<arma::mat>(gammaBold);
+    g.submat(adjBeta + 1, 0, adjBeta + gb.n_cols, 0) = gb.t();
+  }
 }

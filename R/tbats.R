@@ -804,7 +804,7 @@ filterTBATSSpecifics <- function(
 
 makeSingleFourier <- function(j, m, T) {
   frier <- matrix(0, nrow = T, ncol = 2)
-  for (t in 1:T) {
+  for (t in seq_len(T)) {
     frier[t, 1] <- cos((2 * pi * j) / m)
     frier[t, 2] <- sin((2 * pi * j) / m)
   }
@@ -926,22 +926,15 @@ plot.tbats <- function(x, main = "Decomposition by TBATS model", ...) {
 #' @export
 tbats.components <- function(x) {
   # Get original data, transform if necessary
-  if (!is.null(x$lambda)) {
-    y <- BoxCox(x$y, x$lambda)
-    lambda <- attr(y, "lambda")
-  } else {
-    y <- x$y
-  }
+  y <- if (!is.null(x$lambda)) BoxCox(x$y, x$lambda) else x$y
   # Compute matrices
   tau <- if (!is.null(x$k.vector)) 2 * sum(x$k.vector) else 0
-  w <- .Call(
-    "makeTBATSWMatrix",
-    smallPhi_s = x$damping.parameter,
-    kVector_s = as.integer(x$k.vector),
-    arCoefs_s = x$ar.coefficients,
-    maCoefs_s = x$ma.coefficients,
-    tau_s = as.integer(tau),
-    PACKAGE = "forecast"
+  w <- makeTBATSWMatrix(
+    smallPhi = x$damping.parameter,
+    kVector = as.integer(x$k.vector),
+    arCoefs = x$ar.coefficients,
+    maCoefs = x$ma.coefficients,
+    tau = as.integer(tau)
   )
 
   out <- cbind(observed = c(y), level = x$x[1, ])
@@ -958,7 +951,7 @@ tbats.components <- function(x) {
     w <- w$w.transpose[, -(1:(1 + !is.null(x$beta))), drop = FALSE]
     w <- w[, 1:tau, drop = FALSE]
     j <- cumsum(c(1, 2 * x$k.vector))
-    for (i in 1:nseas) {
+    for (i in seq_len(nseas)) {
       out <- cbind(
         out,
         season = c(

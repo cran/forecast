@@ -15,7 +15,7 @@
 #' start at the value of the first observation.
 #'
 #' @inheritParams forecast.Arima
-#' @param object An object representing a fitted time series model. For example, 
+#' @param object An object representing a fitted time series model. For example,
 #' it may be of class `ets`, `Arima`, `ar`, `nnetar`, etc.
 #' @param nsim Number of periods for the simulated series. Ignored if either
 #' `xreg` or `innov` are not `NULL`. Otherwise the default is
@@ -100,22 +100,20 @@ simulate.ets <- function(
     e <- pmax(-1, e)
   }
   tmp <- ts(
-    .C(
-      "etssimulate",
+    .Call(
+      etssimulate,
       as.double(initstate),
       as.integer(object$m),
-      as.integer(switch(object$components[1], A = 1, M = 2)),
-      as.integer(switch(object$components[2], N = 0, A = 1, M = 2)),
-      as.integer(switch(object$components[3], N = 0, A = 1, M = 2)),
+      switch(object$components[1], A = 1L, M = 2L),
+      switch(object$components[2], N = 0L, A = 1L, M = 2L),
+      switch(object$components[3], N = 0L, A = 1L, M = 2L),
       as.double(object$par["alpha"]),
       as.double(if (object$components[2] == "N") 0 else object$par["beta"]),
       as.double(if (object$components[3] == "N") 0 else object$par["gamma"]),
       as.double(if (object$components[4] == "FALSE") 1 else object$par["phi"]),
       as.integer(nsim),
-      as.double(numeric(nsim)),
-      as.double(e),
-      PACKAGE = "forecast"
-    )[[11]],
+      as.double(e)
+    ),
     frequency = object$m,
     start = if (future) {
       tsp(object$x)[2] + 1 / tsp(object$x)[3]
@@ -866,7 +864,7 @@ simulate.nnetar <- function(
   flag <- rev(tail(xx, n = maxlag))
   ## Simulate by iteratively forecasting and adding innovation
   path <- numeric(nsim)
-  for (i in 1:nsim) {
+  for (i in seq_len(nsim)) {
     newdata <- c(flag[lags], xreg[i, ])
     if (anyNA(newdata)) {
       stop(
@@ -995,7 +993,7 @@ simulate.modelAR <- function(
   flag <- rev(tail(xx, n = maxlag))
   ## Simulate by iteratively forecasting and adding innovation
   path <- numeric(nsim)
-  for (i in 1:nsim) {
+  for (i in seq_len(nsim)) {
     newdata <- c(flag[lags], xreg[i, ])
     if (anyNA(newdata)) {
       stop(

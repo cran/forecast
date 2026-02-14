@@ -309,7 +309,7 @@ nnetar <- function(
   nlag <- length(lags)
   y <- xx[-(1:maxlag)]
   lags.X <- matrix(NA_real_, ncol = nlag, nrow = n - maxlag)
-  for (i in 1:nlag) {
+  for (i in seq_len(nlag)) {
     lags.X[, i] <- xx[(maxlag - lags[i] + 1):(n - lags[i])]
   }
   # Add xreg into lagged matrix
@@ -570,7 +570,7 @@ forecast.nnetar <- function(
   maxlag <- max(lags)
   flag <- rev(tail(xx, n = maxlag))
   # Iterative 1-step forecast
-  for (i in 1:h) {
+  for (i in seq_len(h)) {
     newdata <- c(flag[lags], xxreg[i, ])
     if (anyNA(newdata)) {
       fcast[i] <- NA_real_
@@ -591,7 +591,6 @@ forecast.nnetar <- function(
   }
   # Compute prediction intervals using simulations
   if (isTRUE(PI)) {
-    nint <- length(level)
     hilo <- simulate_forecast(
       object = object,
       h = h,

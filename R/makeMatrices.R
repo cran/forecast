@@ -66,39 +66,33 @@ makeTBATSFMatrix <- function(
     last.pos <- 0
     for (i in seq_along(k.vector)) {
       if (seasonal.periods[i] != 2) {
-        C <- .Call(
-          "makeCIMatrix",
-          k_s = as.integer(k.vector[i]),
-          m_s = as.double(seasonal.periods[i]),
-          PACKAGE = "forecast"
+        C <- makeCIMatrix(
+          k = as.integer(k.vector[i]),
+          m = as.double(seasonal.periods[i])
         )
       } else {
         C <- matrix(0, 1, 1)
       }
-      S <- .Call(
-        "makeSIMatrix",
-        k_s = as.integer(k.vector[i]),
-        m_s = as.double(seasonal.periods[i]),
-        PACKAGE = "forecast"
+      S <- makeSIMatrix(
+        k = as.integer(k.vector[i]),
+        m = as.double(seasonal.periods[i])
       )
 
       # C <- matrix(0,k.vector[i],k.vector[i])
-      # for(j in 1:k.vector[i]) {
+      # for(j in seq_len(k.vector[i])) {
       # 	l <- round((2*pi*j/seasonal.periods[i]), digits=15)
       # 	C[j,j] <- cos(l)
       # }
       # S <- matrix(0,k.vector[i],k.vector[i])
-      # for(j in 1:k.vector[i]) {
+      # for(j in seq_len(k.vector[i])) {
       # 	S[j,j] <- sin(2*pi*j/seasonal.periods[i])
       # }
       # print(C)
       # print(S)
-      Ai <- .Call(
-        "makeAIMatrix",
-        C_s = C,
-        S_s = S,
-        k_s = as.integer(k.vector[i]),
-        PACKAGE = "forecast"
+      Ai <- makeAIMatrix(
+        C = C,
+        S = S,
+        k = as.integer(k.vector[i])
       )
       A[
         (last.pos + 1):(last.pos + (2 * k.vector[i])),
@@ -169,7 +163,7 @@ makeTBATSFMatrix <- function(
 
 # makeWMatrix <- function(small.phi=NULL, seasonal.periods=NULL, ar.coefs=NULL, ma.coefs=NULL) {
 #
-# 	the.list <- .Call("makeBATSWMatrix", smallPhi_s = small.phi, sPeriods_s = as.integer(seasonal.periods), arCoefs_s = ar.coefs, maCoefs_s = ma.coefs, PACKAGE = "forecast")
+# 	the.list <- makeBATSWMatrix(smallPhi = small.phi, sPeriods = as.integer(seasonal.periods), arCoefs = ar.coefs, maCoefs = ma.coefs)
 #
 #
 # 	return(the.list)
@@ -177,7 +171,7 @@ makeTBATSFMatrix <- function(
 # }
 
 # makeGMatrix <- function(alpha, beta=NULL, gamma.vector=NULL, seasonal.periods=NULL, p=0, q=0) {
-# 	li <- .Call("makeBATSGMatrix", alpha, beta, gamma.vector, as.integer(seasonal.periods), as.integer(p), as.integer(q), PACKAGE="forecast")
+# 	li <- makeBATSGMatrix(alpha, beta, gamma.vector, as.integer(seasonal.periods), as.integer(p), as.integer(q))
 #
 # 	return(li)
 # }

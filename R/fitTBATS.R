@@ -35,7 +35,7 @@ fitPreviousTBATSModel <- function(y, model, biasadj = FALSE) {
     tau <- as.integer(2 * sum(model$k.vector))
     gamma.bold <- matrix(0, nrow = 1, ncol = (2 * sum(model$k.vector)))
   } else {
-    tau <- as.integer(0)
+    tau <- 0L
     gamma.bold <- NULL
   }
 
@@ -59,32 +59,26 @@ fitPreviousTBATSModel <- function(y, model, biasadj = FALSE) {
 
   ## Calculate the variance:
   # 1. Re-set up the matrices
-  w <- .Call(
-    "makeTBATSWMatrix",
-    smallPhi_s = small.phi,
-    kVector_s = model$k.vector,
-    arCoefs_s = ar.coefs,
-    maCoefs_s = ma.coefs,
-    tau_s = tau,
-    PACKAGE = "forecast"
+  w <- makeTBATSWMatrix(
+    smallPhi = small.phi,
+    kVector = model$k.vector,
+    arCoefs = ar.coefs,
+    maCoefs = ma.coefs,
+    tau = tau
   )
   if (!is.null(gamma.bold)) {
-    .Call(
-      "updateTBATSGammaBold",
-      gammaBold_s = gamma.bold,
-      kVector_s = model$k.vector,
-      gammaOne_s = gamma.one.v,
-      gammaTwo_s = gamma.two.v,
-      PACKAGE = "forecast"
+    updateTBATSGammaBold(
+      gammaBold = gamma.bold,
+      kVector = model$k.vector,
+      gammaOne = gamma.one.v,
+      gammaTwo = gamma.two.v
     )
   }
-  .Call(
-    "updateTBATSGMatrix",
-    g_s = g,
-    gammaBold_s = gamma.bold,
-    alpha_s = alpha,
-    beta_s = beta.v,
-    PACKAGE = "forecast"
+  updateTBATSGMatrix(
+    g = g,
+    gammaBold = gamma.bold,
+    alpha = alpha,
+    beta = beta.v
   )
   F <- makeTBATSFMatrix(
     alpha = alpha,
@@ -96,8 +90,7 @@ fitPreviousTBATSModel <- function(y, model, biasadj = FALSE) {
     ar.coefs = ar.coefs,
     ma.coefs = ma.coefs
   )
-  .Call(
-    "updateFMatrix",
+  updateFMatrix(
     F,
     small.phi,
     alpha,
@@ -105,8 +98,7 @@ fitPreviousTBATSModel <- function(y, model, biasadj = FALSE) {
     gamma.bold,
     ar.coefs,
     ma.coefs,
-    tau,
-    PACKAGE = "forecast"
+    tau
   )
   # 2. Calculate!
   fitted.values.and.errors <- calcModel(y.touse, model$seed.states, F, g, w)
@@ -272,28 +264,24 @@ fitSpecificTBATS <- function(
   if (!is.null(seasonal.periods)) {
     tau <- as.integer(2 * sum(k.vector))
   } else {
-    tau <- as.integer(0)
+    tau <- 0L
   }
 
-  w <- .Call(
-    "makeTBATSWMatrix",
-    smallPhi_s = small.phi,
-    kVector_s = k.vector,
-    arCoefs_s = ar.coefs,
-    maCoefs_s = ma.coefs,
-    tau_s = tau,
-    PACKAGE = "forecast"
+  w <- makeTBATSWMatrix(
+    smallPhi = small.phi,
+    kVector = k.vector,
+    arCoefs = ar.coefs,
+    maCoefs = ma.coefs,
+    tau = tau
   )
 
   if (!is.null(seasonal.periods)) {
     gamma.bold <- matrix(0, nrow = 1, ncol = (2 * sum(k.vector)))
-    .Call(
-      "updateTBATSGammaBold",
-      gammaBold_s = gamma.bold,
-      kVector_s = k.vector,
-      gammaOne_s = gamma.one.v,
-      gammaTwo_s = gamma.two.v,
-      PACKAGE = "forecast"
+    updateTBATSGammaBold(
+      gammaBold = gamma.bold,
+      kVector = k.vector,
+      gammaOne = gamma.one.v,
+      gammaTwo = gamma.two.v
     )
   } else {
     gamma.bold <- NULL
@@ -305,13 +293,11 @@ fitSpecificTBATS <- function(
   if (q != 0) {
     g[(1 + adj.beta + tau + p + 1), 1] <- 1
   }
-  .Call(
-    "updateTBATSGMatrix",
-    g_s = g,
-    gammaBold_s = gamma.bold,
-    alpha_s = alpha,
-    beta_s = beta.v,
-    PACKAGE = "forecast"
+  updateTBATSGMatrix(
+    g = g,
+    gammaBold = gamma.bold,
+    alpha = alpha,
+    beta = beta.v
   )
   F <- makeTBATSFMatrix(
     alpha = alpha,
@@ -327,60 +313,50 @@ fitSpecificTBATS <- function(
 
   ####
   # Set up environment
-  opt.env <- new.env()
-  assign("F", F, envir = opt.env)
-  assign("w.transpose", w$w.transpose, envir = opt.env)
-  assign("g", g, envir = opt.env)
-  assign("gamma.bold", gamma.bold, envir = opt.env)
-  assign("k.vector", k.vector, envir = opt.env)
-  assign("y", matrix(y, nrow = 1, ncol = length(y)), envir = opt.env)
-  assign("y.hat", matrix(0, nrow = 1, ncol = length(y)), envir = opt.env)
-  assign("e", matrix(0, nrow = 1, ncol = length(y)), envir = opt.env)
-  assign(
-    "x",
-    matrix(0, nrow = length(x.nought), ncol = length(y)),
-    envir = opt.env
-  )
+  opt.env <- new.env(parent = emptyenv())
+  opt.env$F <- F
+  opt.env$w.transpose <- w$w.transpose
+  opt.env$g <- g
+  opt.env$gamma.bold <- gamma.bold
+  opt.env$k.vector <- k.vector
+  opt.env$y <- matrix(y, nrow = 1, ncol = length(y))
+  opt.env$y.hat <- matrix(0, nrow = 1, ncol = length(y))
+  opt.env$e <- matrix(0, nrow = 1, ncol = length(y))
+  opt.env$x <- matrix(0, nrow = length(x.nought), ncol = length(y))
 
   ## Set up matrices to find the seed states
   if (use.box.cox) {
     y.transformed <- BoxCox(y, lambda = lambda)
     lambda <- attr(y.transformed, "lambda")
-    .Call(
-      "calcTBATSFaster",
-      ys = matrix(y.transformed, nrow = 1, ncol = length(y.transformed)),
-      yHats = opt.env$y.hat,
-      wTransposes = opt.env$w.transpose,
-      Fs = opt.env$F,
-      xs = opt.env$x,
-      gs = opt.env$g,
-      es = opt.env$e,
-      xNought_s = x.nought,
-      PACKAGE = "forecast"
+    calcTBATSFaster(
+      y = matrix(y.transformed, nrow = 1, ncol = length(y.transformed)),
+      yHat = opt.env$y.hat,
+      wTranspose = opt.env$w.transpose,
+      F = opt.env$F,
+      x = opt.env$x,
+      g = opt.env$g,
+      e = opt.env$e,
+      xNought = x.nought
     )
     y.tilda <- opt.env$e
   } else {
-    .Call(
-      "calcTBATSFaster",
-      ys = opt.env$y,
-      yHats = opt.env$y.hat,
-      wTransposes = opt.env$w.transpose,
-      Fs = opt.env$F,
-      xs = opt.env$x,
-      gs = opt.env$g,
-      es = opt.env$e,
-      xNought_s = x.nought,
-      PACKAGE = "forecast"
+    calcTBATSFaster(
+      y = opt.env$y,
+      yHat = opt.env$y.hat,
+      wTranspose = opt.env$w.transpose,
+      F = opt.env$F,
+      x = opt.env$x,
+      g = opt.env$g,
+      e = opt.env$e,
+      xNought = x.nought
     )
     y.tilda <- opt.env$e
   }
   w.tilda.transpose <- matrix(0, nrow = length(y), ncol = ncol(w$w.transpose))
   w.tilda.transpose[1, ] <- w$w.transpose
-  w.tilda.transpose <- .Call(
-    "calcWTilda",
-    wTildaTransposes = w.tilda.transpose,
-    Ds = D,
-    PACKAGE = "forecast"
+  w.tilda.transpose <- calcWTilda(
+    wTildaTranspose = w.tilda.transpose,
+    D = D
   )
   # Remove the AR() and MA() bits if they exist
   if ((p != 0) || (q != 0)) {
@@ -404,11 +380,7 @@ fitSpecificTBATS <- function(
   ## Optimisation
   if (use.box.cox) {
     # Un-transform the seed states
-    assign(
-      "x.nought.untransformed",
-      InvBoxCox(x.nought, lambda = lambda),
-      envir = opt.env
-    )
+    opt.env$x.nought.untransformed <- InvBoxCox(x.nought, lambda = lambda)
     # Optimise the likelihood function
     optim.like <- optim(
       par = param.vector$vect,
@@ -457,35 +429,28 @@ fitSpecificTBATS <- function(
 
     ## Calculate the variance:
     # 1. Re-set up the matrices
-    w <- .Call(
-      "makeTBATSWMatrix",
-      smallPhi_s = small.phi,
-      kVector_s = k.vector,
-      arCoefs_s = ar.coefs,
-      maCoefs_s = ma.coefs,
-      tau_s = tau,
-      PACKAGE = "forecast"
+    w <- makeTBATSWMatrix(
+      smallPhi = small.phi,
+      kVector = k.vector,
+      arCoefs = ar.coefs,
+      maCoefs = ma.coefs,
+      tau = tau
     )
     if (!is.null(gamma.bold)) {
-      .Call(
-        "updateTBATSGammaBold",
-        gammaBold_s = gamma.bold,
-        kVector_s = k.vector,
-        gammaOne_s = gamma.one.v,
-        gammaTwo_s = gamma.two.v,
-        PACKAGE = "forecast"
+      updateTBATSGammaBold(
+        gammaBold = gamma.bold,
+        kVector = k.vector,
+        gammaOne = gamma.one.v,
+        gammaTwo = gamma.two.v
       )
     }
-    .Call(
-      "updateTBATSGMatrix",
-      g_s = g,
-      gammaBold_s = gamma.bold,
-      alpha_s = alpha,
-      beta_s = beta.v,
-      PACKAGE = "forecast"
+    updateTBATSGMatrix(
+      g = g,
+      gammaBold = gamma.bold,
+      alpha = alpha,
+      beta = beta.v
     )
-    .Call(
-      "updateFMatrix",
+    updateFMatrix(
       F,
       small.phi,
       alpha,
@@ -493,8 +458,7 @@ fitSpecificTBATS <- function(
       gamma.bold,
       ar.coefs,
       ma.coefs,
-      tau,
-      PACKAGE = "forecast"
+      tau
     )
 
     # 2. Calculate!
@@ -575,35 +539,28 @@ fitSpecificTBATS <- function(
 
     ## Calculate the variance:
     # 1. Re-set up the matrices
-    w <- .Call(
-      "makeTBATSWMatrix",
-      smallPhi_s = small.phi,
-      kVector_s = k.vector,
-      arCoefs_s = ar.coefs,
-      maCoefs_s = ma.coefs,
-      tau_s = tau,
-      PACKAGE = "forecast"
+    w <- makeTBATSWMatrix(
+      smallPhi = small.phi,
+      kVector = k.vector,
+      arCoefs = ar.coefs,
+      maCoefs = ma.coefs,
+      tau = tau
     )
     if (!is.null(gamma.bold)) {
-      .Call(
-        "updateTBATSGammaBold",
-        gammaBold_s = gamma.bold,
-        kVector_s = k.vector,
-        gammaOne_s = gamma.one.v,
-        gammaTwo_s = gamma.two.v,
-        PACKAGE = "forecast"
+      updateTBATSGammaBold(
+        gammaBold = gamma.bold,
+        kVector = k.vector,
+        gammaOne = gamma.one.v,
+        gammaTwo = gamma.two.v
       )
     }
-    .Call(
-      "updateTBATSGMatrix",
-      g_s = g,
-      gammaBold_s = gamma.bold,
-      alpha_s = alpha,
-      beta_s = beta.v,
-      PACKAGE = "forecast"
+    updateTBATSGMatrix(
+      g = g,
+      gammaBold = gamma.bold,
+      alpha = alpha,
+      beta = beta.v
     )
-    .Call(
-      "updateFMatrix",
+    updateFMatrix(
       F,
       small.phi,
       alpha,
@@ -611,8 +568,7 @@ fitSpecificTBATS <- function(
       gamma.bold,
       ar.coefs,
       ma.coefs,
-      tau,
-      PACKAGE = "forecast"
+      tau
     )
     # 2. Calculate!
     fitted.values.and.errors <- calcModel(y, x.nought, F, g, w)
@@ -697,40 +653,33 @@ calcLikelihoodTBATS <- function(
     q <- 0
   }
   x.nought <- BoxCox(opt.env$x.nought.untransformed, lambda = box.cox.parameter)
-  lambda <- attr(x.nought, "lambda")
 
-  .Call(
-    "updateWtransposeMatrix",
-    wTranspose_s = opt.env$w.transpose,
-    smallPhi_s = small.phi,
-    tau_s = as.integer(tau),
-    arCoefs_s = ar.coefs,
-    maCoefs_s = ma.coefs,
-    p_s = as.integer(p),
-    q_s = as.integer(q),
-    PACKAGE = "forecast"
+  updateWtransposeMatrix(
+    wTranspose = opt.env$w.transpose,
+    smallPhi = small.phi,
+    tau = as.integer(tau),
+    arCoefs = ar.coefs,
+    maCoefs = ma.coefs,
+    p = as.integer(p),
+    q = as.integer(q)
   )
 
   if (!is.null(opt.env$gamma.bold)) {
-    .Call(
-      "updateTBATSGammaBold",
-      gammaBold_s = opt.env$gamma.bold,
-      kVector_s = opt.env$k.vector,
-      gammaOne_s = gamma.one.v,
-      gammaTwo_s = gamma.two.v
+    updateTBATSGammaBold(
+      gammaBold = opt.env$gamma.bold,
+      kVector = opt.env$k.vector,
+      gammaOne = gamma.one.v,
+      gammaTwo = gamma.two.v
     )
   }
-  .Call(
-    "updateTBATSGMatrix",
-    g_s = opt.env$g,
-    gammaBold_s = opt.env$gamma.bold,
-    alpha_s = alpha,
-    beta_s = beta.v,
-    PACKAGE = "forecast"
+  updateTBATSGMatrix(
+    g = opt.env$g,
+    gammaBold = opt.env$gamma.bold,
+    alpha = alpha,
+    beta = beta.v
   )
 
-  .Call(
-    "updateFMatrix",
+  updateFMatrix(
     opt.env$F,
     small.phi,
     alpha,
@@ -738,25 +687,21 @@ calcLikelihoodTBATS <- function(
     opt.env$gamma.bold,
     ar.coefs,
     ma.coefs,
-    tau,
-    PACKAGE = "forecast"
+    tau
   )
 
   mat.transformed.y <- BoxCox(opt.env$y, box.cox.parameter)
-  lambda <- attr(mat.transformed.y, "lambda")
   n <- ncol(opt.env$y)
 
-  .Call(
-    "calcTBATSFaster",
-    ys = mat.transformed.y,
-    yHats = opt.env$y.hat,
-    wTransposes = opt.env$w.transpose,
-    Fs = opt.env$F,
-    xs = opt.env$x,
-    gs = opt.env$g,
-    es = opt.env$e,
-    xNought_s = x.nought,
-    PACKAGE = "forecast"
+  calcTBATSFaster(
+    y = mat.transformed.y,
+    yHat = opt.env$y.hat,
+    wTranspose = opt.env$w.transpose,
+    F = opt.env$F,
+    x = opt.env$x,
+    g = opt.env$g,
+    e = opt.env$e,
+    xNought = x.nought
   )
 
   ##
@@ -771,7 +716,7 @@ calcLikelihoodTBATS <- function(
     return(Inf)
   }
 
-  assign("D", (opt.env$F - opt.env$g %*% opt.env$w.transpose), envir = opt.env)
+  opt.env$D <- opt.env$F - opt.env$g %*% opt.env$w.transpose
   if (
     checkAdmissibility(
       opt.env,
@@ -829,39 +774,33 @@ calcLikelihoodNOTransformedTBATS <- function(
     q <- 0
   }
 
-  .Call(
-    "updateWtransposeMatrix",
-    wTranspose_s = opt.env$w.transpose,
-    smallPhi_s = small.phi,
-    tau_s = as.integer(tau),
-    arCoefs_s = ar.coefs,
-    maCoefs_s = ma.coefs,
-    p_s = as.integer(p),
-    q_s = as.integer(q),
-    PACKAGE = "forecast"
+  updateWtransposeMatrix(
+    wTranspose = opt.env$w.transpose,
+    smallPhi = small.phi,
+    tau = as.integer(tau),
+    arCoefs = ar.coefs,
+    maCoefs = ma.coefs,
+    p = as.integer(p),
+    q = as.integer(q)
   )
 
   if (!is.null(opt.env$gamma.bold)) {
-    .Call(
-      "updateTBATSGammaBold",
-      gammaBold_s = opt.env$gamma.bold,
-      kVector_s = opt.env$k.vector,
-      gammaOne_s = gamma.one.v,
-      gammaTwo_s = gamma.two.v
+    updateTBATSGammaBold(
+      gammaBold = opt.env$gamma.bold,
+      kVector = opt.env$k.vector,
+      gammaOne = gamma.one.v,
+      gammaTwo = gamma.two.v
     )
   }
 
-  .Call(
-    "updateTBATSGMatrix",
-    g_s = opt.env$g,
-    gammaBold_s = opt.env$gamma.bold,
-    alpha_s = alpha,
-    beta_s = beta.v,
-    PACKAGE = "forecast"
+  updateTBATSGMatrix(
+    g = opt.env$g,
+    gammaBold = opt.env$gamma.bold,
+    alpha = alpha,
+    beta = beta.v
   )
 
-  .Call(
-    "updateFMatrix",
+  updateFMatrix(
     opt.env$F,
     small.phi,
     alpha,
@@ -869,23 +808,20 @@ calcLikelihoodNOTransformedTBATS <- function(
     opt.env$gamma.bold,
     ar.coefs,
     ma.coefs,
-    tau,
-    PACKAGE = "forecast"
+    tau
   )
 
   n <- ncol(opt.env$y)
 
-  .Call(
-    "calcTBATSFaster",
-    ys = opt.env$y,
-    yHats = opt.env$y.hat,
-    wTransposes = opt.env$w.transpose,
-    Fs = opt.env$F,
-    xs = opt.env$x,
-    gs = opt.env$g,
-    es = opt.env$e,
-    xNought_s = x.nought,
-    PACKAGE = "forecast"
+  calcTBATSFaster(
+    y = opt.env$y,
+    yHat = opt.env$y.hat,
+    wTranspose = opt.env$w.transpose,
+    F = opt.env$F,
+    x = opt.env$x,
+    g = opt.env$g,
+    e = opt.env$e,
+    xNought = x.nought
   )
   ##
   ####
@@ -897,7 +833,7 @@ calcLikelihoodNOTransformedTBATS <- function(
     return(Inf)
   }
 
-  assign("D", (opt.env$F - opt.env$g %*% opt.env$w.transpose), envir = opt.env)
+  opt.env$D <- opt.env$F - opt.env$g %*% opt.env$w.transpose
 
   if (
     checkAdmissibility(

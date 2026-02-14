@@ -1,16 +1,16 @@
 Package: forecast
-Version: 9.0.0
+Version: 9.0.1
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
              via state space models and automatic ARIMA modelling.
 Depends: R (>= 4.1.0)
 Imports: colorspace, fracdiff, generics (>= 0.1.2), ggplot2 (>= 3.4.0),
-        graphics, lmtest, magrittr, nnet, parallel, Rcpp (>= 0.11.0),
-        stats, timeDate, tseries, urca, withr, zoo
+        graphics, lmtest, magrittr, nnet, parallel, Rcpp (>= 0.12.4),
+        stats, timeDate, urca, withr, zoo
 Suggests: forecTheta, knitr, methods, rmarkdown, rticles, scales,
         seasonal, testthat (>= 3.3.0), uroot
-LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.2.35)
+LinkingTo: Rcpp (>= 0.12.4), RcppArmadillo (>= 0.2.35)
 LazyData: yes
 ByteCompile: TRUE
 Authors@R: c(
@@ -45,7 +45,7 @@ RoxygenNote: 7.3.3
 Encoding: UTF-8
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2026-01-10 05:29:15 UTC; hyndman
+Packaged: 2026-02-13 22:51:23 UTC; hyndman
 Author: Rob Hyndman [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut] (ORCID:
@@ -74,4 +74,4 @@ Author: Rob Hyndman [aut, cre, cph] (ORCID:
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2026-01-11 08:40:02 UTC
+Date/Publication: 2026-02-14 22:50:02 UTC

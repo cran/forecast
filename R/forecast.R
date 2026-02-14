@@ -225,7 +225,7 @@ plotlmforecast <- function(
   xlab,
   ...
 ) {
-  xvar <- attributes(terms(object$model))$term.labels
+  xvar <- attr(terms(object$model), "term.labels")
   if (length(xvar) > 1) {
     stop(
       "Forecast plot for regression models only available for a single predictor"
@@ -279,8 +279,8 @@ plotlmforecast <- function(
       }
     }
 
-    for (i in 1:nf) {
-      for (j in 1:nint) {
+    for (i in seq_len(nf)) {
+      for (j in seq_len(nint)) {
         if (shaded) {
           lines(
             rep(object$newdata[i, xvar], 2),
@@ -453,7 +453,6 @@ plot.forecast <- function(
   if (n > 0) {
     xx <- as.ts(xx)
     freq <- frequency(xx)
-    strt <- start(xx)
     nx <- max(which(!is.na(xx)))
     xxx <- xx[1:nx]
     include <- min(include, nx)
@@ -467,7 +466,6 @@ plot.forecast <- function(
     }
   } else {
     freq <- frequency(x$mean)
-    strt <- start(x$mean)
     nx <- include <- 1
     xx <- xxx <- ts(NA, frequency = freq, end = tsp(x$mean)[1] - 1 / freq)
 
@@ -532,9 +530,9 @@ plot.forecast <- function(
         ]
       }
     }
-    for (i in 1:nint) {
+    for (i in seq_len(nint)) {
       if (shadebars) {
-        for (j in 1:npred) {
+        for (j in seq_len(npred)) {
           polygon(
             xxx[j] + c(-0.5, 0.5, 0.5, -0.5) / freq,
             c(rep(x$lower[j, idx[i]], 2), rep(x$upper[j, idx[i]], 2)),
@@ -620,7 +618,7 @@ hfitted.default <- function(object, h = 1, FUN = NULL, ...) {
   if (FUN == "ets") {
     refitarg$use.initial.values <- TRUE
   }
-  for (i in 1:(n - h)) {
+  for (i in seq_len(n - h)) {
     refitarg[[1]] <- ts(x[1:i], start = tspx[1], frequency = tspx[3])
     if (!is.null(object$xreg) && any(colnames(object$xreg) != "drift")) {
       if (any(colnames(object$xreg) == "drift")) {
@@ -730,21 +728,17 @@ as.ts.forecast <- function(x, ...) {
 
 #' @export
 as.data.frame.mforecast <- function(x, ...) {
-  tmp <- lapply(x$forecast, as.data.frame)
-  series <- names(tmp)
-  times <- rownames(tmp[[1]])
-  h <- NROW(tmp[[1]])
-  output <- cbind(Time = times, Series = rep(series[1], h), tmp[[1]])
-  if (length(tmp) > 1) {
-    for (i in 2:length(tmp)) {
-      output <- rbind(
-        output,
-        cbind(Time = times, Series = rep(series[i], h), tmp[[i]])
-      )
-    }
+  dfs <- lapply(x$forecast, as.data.frame)
+  series <- names(dfs)
+  times <- rownames(dfs[[1]])
+  h <- NROW(dfs[[1]])
+  out <- vector("list", length(dfs))
+  for (i in seq_along(out)) {
+    out[[i]] <- cbind(Time = times, Series = rep(series[i], h), dfs[[i]])
   }
-  rownames(output) <- NULL
-  output
+  out <- do.call(rbind, out)
+  rownames(out) <- NULL
+  out
 }
 
 #' @export
@@ -755,13 +749,13 @@ as.data.frame.forecast <- function(x, ...) {
   fr.x <- frequency(x$mean)
   if (ists) {
     out <- ts(out)
-    attributes(out)$tsp <- attributes(x$mean)$tsp
+    attr(out, "tsp") <- attr(x$mean, "tsp")
   }
-  names <- c("Point Forecast")
+  names <- "Point Forecast"
   if (!is.null(x$lower) && !is.null(x$upper) && !is.null(x$level)) {
     x$upper <- as.matrix(x$upper)
     x$lower <- as.matrix(x$lower)
-    for (i in 1:nconf) {
+    for (i in seq_len(nconf)) {
       out <- cbind(out, x$lower[, i, drop = FALSE], x$upper[, i, drop = FALSE])
       names <- c(names, paste("Lo", x$level[i]), paste("Hi", x$level[i]))
     }
