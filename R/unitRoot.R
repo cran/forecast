@@ -389,7 +389,7 @@ seas.heuristic <- function(x) {
 #' @details
 #' The regression equation may include lags of the dependent variable. When lag.method = "fixed", the lag order is fixed to maxlag; otherwise, maxlag is the maximum number of lags considered in a lag selection procedure that minimises the lag.method criterion, which can be AIC or BIC or corrected AIC, AICc, obtained as AIC + (2k(k+1))/(n-k-1), where k is the number of parameters and n is the number of available observations in the model.
 #'
-#' Critical values for the test are based on simulations, which has been smoothed over to produce critical values for all seasonal periods.
+#' Critical values for the test are based on simulations, which have been smoothed over to produce critical values for all seasonal periods.
 #'
 #' @return
 #' ocsb.test returns a list of class "OCSBtest" with the following components:
@@ -477,27 +477,26 @@ ocsb.test <- function(
   }
 
   # Estimate maxlag
-  if (maxlag > 0) {
-    if (lag.method != "fixed") {
-      fits <- lapply(seq_len(maxlag), function(lag) fitOCSB(x, lag, maxlag))
-      icvals <- unlist(switch(
-        lag.method,
-        AIC = lapply(fits, AIC),
-        BIC = lapply(fits, BIC),
-        AICc = lapply(
-          fits,
-          function(x) {
-            k <- x$rank + 1
-            -2 *
-              logLik(x) +
-              2 * k +
-              (2 * k * (k + 1)) / (length(residuals(x)) - k - 1)
-          }
-        )
-      ))
-      id <- which.min(icvals)
-      maxlag <- id - 1
-    }
+  if (maxlag > 0 && lag.method != "fixed") {
+    fits <- lapply(seq_len(maxlag), function(lag) fitOCSB(x, lag, maxlag))
+    icvals <- switch(
+      lag.method,
+      AIC = vapply(fits, AIC, numeric(1)),
+      BIC = vapply(fits, BIC, numeric(1)),
+      AICc = vapply(
+        fits,
+        function(x) {
+          k <- x$rank + 1
+          -2 *
+            logLik(x) +
+            2 * k +
+            (2 * k * (k + 1)) / (length(residuals(x)) - k - 1)
+        },
+        numeric(1)
+      )
+    )
+    id <- which.min(icvals)
+    maxlag <- id - 1
   }
 
   regression <- fitOCSB(x, maxlag, maxlag)

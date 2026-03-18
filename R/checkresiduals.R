@@ -19,7 +19,7 @@
 #' @param ... Other arguments are passed to [ggtsdisplay()].
 #' @return None
 #' @author Rob J Hyndman
-#' @seealso [ggtsdisplay()], [stats::Box.test()], [lmtest::bgtest()
+#' @seealso [ggtsdisplay()], [stats::Box.test()], [lmtest::bgtest()]
 #' @examples
 #'
 #' fit <- ets(WWWusage)
@@ -29,15 +29,9 @@
 checkresiduals <- function(object, lag, test, plot = TRUE, ...) {
   showtest <- TRUE
   if (missing(test)) {
-    if (inherits(object, "lm")) {
-      test <- "BG"
-    } else {
-      test <- "LB"
-    }
-    showtest <- TRUE
-  } else if (test) {
+    test <- if (inherits(object, "lm")) "BG" else "LB"
+  } else if (!isFALSE(test)) {
     test <- match.arg(test, c("LB", "BG"))
-    showtest <- TRUE
   } else {
     showtest <- FALSE
   }

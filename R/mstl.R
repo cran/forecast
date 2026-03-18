@@ -60,6 +60,7 @@ mstl <- function(
   # Transform if necessary
   if (!is.null(lambda)) {
     x <- BoxCox(x, lambda = lambda)
+    lambda <- attr(x, "lambda")
     attr(lambda, "biasadj") <- biasadj
   }
 
@@ -110,6 +111,7 @@ mstl <- function(
   colnames(output)[NCOL(output)] <- "Remainder"
 
   output <- copy_msts(origx, output)
+  attr(output, "lambda") <- lambda
   class(output) <- c("mstl", class(output))
   output
 }
@@ -173,7 +175,7 @@ autoplot.mstl <- function(object, ...) {
 #' lags) of the loess window for seasonal extraction.
 #' @param t.window A number to control the smoothness of the trend. See
 #' [stats::stl()] for details.
-#' @param robust If `TRUE`, robust fitting will used in the loess
+#' @param robust If `TRUE`, robust fitting will be used in the loess
 #' procedure within [stats::stl()].
 #' @param allow.multiplicative.trend If `TRUE`, then ETS models with
 #' multiplicative trends are allowed. Otherwise, only additive or no trend ETS
@@ -340,8 +342,8 @@ forecast.mstl <- function(
   h = frequency(object) * 2,
   level = c(80, 95),
   fan = FALSE,
-  lambda = object$lambda,
-  biasadj = attr(object$lambda, "biasadj"),
+  lambda = attr(object, "lambda"),
+  biasadj = attr(attr(object, "lambda"), "biasadj"),
   xreg = NULL,
   newxreg = NULL,
   allow.multiplicative.trend = FALSE,
@@ -420,7 +422,7 @@ rowSumsTS <- function(mts) {
 #' lags) of the loess window for seasonal extraction.
 #' @param t.window A number to control the smoothness of the trend. See
 #' [stats::stl()] for details.
-#' @param robust If `TRUE`, robust fitting will used in the loess
+#' @param robust If `TRUE`, robust fitting will be used in the loess
 #' procedure within [stats::stl()].
 #' @param allow.multiplicative.trend If `TRUE`, then ETS models with
 #' multiplicative trends are allowed. Otherwise, only additive or no trend ETS

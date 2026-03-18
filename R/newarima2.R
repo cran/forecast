@@ -1,7 +1,7 @@
 #' Fit best ARIMA model to univariate time series
 #'
 #' Returns best ARIMA model according to either AIC, AICc or BIC value. The
-#' function conducts a search over possible model within the order constraints
+#' function conducts a search over possible models within the order constraints
 #' provided.
 #'
 #' The default arguments are designed for rapid estimation of models for many time series.
@@ -260,7 +260,7 @@ auto.arima <- function(
     D <- 0
   } else if (is.na(D)) {
     D <- do.call(
-      "nsdiffs",
+      nsdiffs,
       c(list(xx, test = seasonal.test, max.D = max.D), seasonal.test.args)
     )
     # Make sure xreg is not null after differencing
@@ -291,7 +291,7 @@ auto.arima <- function(
     }
   }
   if (is.na(d)) {
-    d <- do.call("ndiffs", c(list(dx, test = test, max.d = max.d), test.args))
+    d <- do.call(ndiffs, c(list(dx, test = test, max.d = max.d), test.args))
     # Make sure xreg is not null after differencing
     if (d > 0 && !is.null(xregg)) {
       diffxreg <- diff(diffxreg, differences = d, lag = 1)

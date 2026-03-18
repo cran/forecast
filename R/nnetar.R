@@ -363,10 +363,14 @@ nnetar <- function(
   if (useoldmodel) {
     out$nnetargs <- model$nnetargs
   }
-  if (NROW(lags.X[j, , drop = FALSE]) == 1) {
-    fits <- c(rep(NA_real_, maxlag), mean(sapply(fit, predict)))
+  n <- NROW(lags.X[j, , drop = FALSE])
+  if (n == 1L) {
+    fits <- c(rep(NA_real_, maxlag), mean(vapply(fit, predict, numeric(1))))
   } else {
-    fits <- c(rep(NA_real_, maxlag), rowMeans(sapply(fit, predict)))
+    fits <- c(
+      rep(NA_real_, maxlag),
+      rowMeans(vapply(fit, predict, numeric(n)))
+    )
   }
   if (scale.inputs) {
     fits <- fits * scalex$scale + scalex$center
@@ -575,7 +579,7 @@ forecast.nnetar <- function(
     if (anyNA(newdata)) {
       fcast[i] <- NA_real_
     } else {
-      fcast[i] <- mean(sapply(object$model, predict, newdata = newdata))
+      fcast[i] <- mean(vapply(object$model, predict, numeric(1), newdata = newdata))
     }
     flag <- c(fcast[i], flag[-maxlag])
   }

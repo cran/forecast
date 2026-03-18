@@ -7,7 +7,7 @@
 #' For example, the function [forecast.Arima()] makes forecasts based
 #' on the results produced by [stats::arima()].
 #'
-#' If `model = NULL`,the function [forecast.ts()] makes forecasts
+#' If `model = NULL`, the function [forecast.ts()] makes forecasts
 #' using [ets()] models (if the data are non-seasonal or the seasonal
 #' period is 12 or less) or [stlf()] (if the seasonal period is 13 or
 #' more).
@@ -36,8 +36,8 @@
 #' @param allow.multiplicative.trend If `TRUE`, then ETS models with
 #' multiplicative trends are allowed. Otherwise, only additive or no trend ETS
 #' models are permitted.
-#' @param model An object describing a time series model; e.g., one of of class
-#' `ets`, `Arima`, `bats`, `bats`, or `nnetar`.
+#' @param model An object describing a time series model; e.g., one of class
+#' `ets`, `Arima`, `bats`, `tbats`, or `nnetar`.
 #' @param ... Additional arguments affecting the forecasts produced. If
 #' `model = NULL`, `forecast.ts` passes these to [ets()] or
 #' [stlf()] depending on the frequency of the time series. If
@@ -62,7 +62,7 @@
 #' }
 #' The function `summary` can be used to obtain and print a summary of the
 #' results, while the functions `plot` and `autoplot` produce plots of the forecasts and
-#' prediction intervals. The generic accessors functions `fitted.values` and `residuals`
+#' prediction intervals. The generic accessor functions `fitted.values` and `residuals`
 #' extract various useful features from the underlying model.
 #'
 #' @author Rob J Hyndman
@@ -652,7 +652,7 @@ hfitted.default <- function(object, h = 1, FUN = NULL, ...) {
       if (!is.null(object$sigma2)) {
         fcarg$object$sigma2 <- object$sigma2
       }
-      fits[i + h] <- suppressWarnings(do.call("forecast", fcarg)$mean[h])
+      fits[i + h] <- suppressWarnings(do.call(forecast, fcarg)$mean[h])
     }
   }
   fits

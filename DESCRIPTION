@@ -1,5 +1,5 @@
 Package: forecast
-Version: 9.0.1
+Version: 9.0.2
 Title: Forecasting Functions for Time Series and Linear Models
 Description: Methods and tools for displaying and analysing
              univariate time series forecasts including exponential smoothing
@@ -45,7 +45,7 @@ RoxygenNote: 7.3.3
 Encoding: UTF-8
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2026-02-13 22:51:23 UTC; hyndman
+Packaged: 2026-03-17 20:42:42 UTC; hyndman
 Author: Rob Hyndman [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-2140-5352>),
   George Athanasopoulos [aut] (ORCID:
@@ -74,4 +74,4 @@ Author: Rob Hyndman [aut, cre, cph] (ORCID:
   Zhenyu Zhou [ctb]
 Maintainer: Rob Hyndman <Rob.Hyndman@monash.edu>
 Repository: CRAN
-Date/Publication: 2026-02-14 22:50:02 UTC
+Date/Publication: 2026-03-18 06:13:07 UTC
